@@ -307,7 +307,7 @@ function build_lmod_modulefile(package)
    lmod_file:write("local fileName    = myFileName()\n")
    lmod_file:write("local nameVersion = pathJoin(name, version)\n")
    
-   if is_heirarchical(package.definition.pkggroup) then
+   if is_heirarchical(package.definition.pkggroup) and #package.prerequisite ~= 0 then
       lmod_file:write("local prereq = string.match(fileName,\"/" .. package.lmod.base .. "/(.+/.+)/\" .. nameVersion):gsub(\"/\", \"-\")\n")
       lmod_file:write("local packageName = pathJoin(prereq, nameVersion)\n")
    else
