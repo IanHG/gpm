@@ -4,13 +4,7 @@ local lfs = require "lfs"
 local exception = require "exception"
 local path = require "path"
 local argparse = require "argparse"
-
--- Define version number
-version = {  
-   major = 1,
-   minor = 0,
-   patch = 0,
-}
+local version = require "version"
 
 -- Description of this script
 description = {
@@ -29,23 +23,6 @@ config = {
    heirarchical = {},
 }
 
--------------------------------------
--- Get version number.
---
--- @return{String} Version number.
--------------------------------------
-function get_version_number()
-   return version.major .. "." .. version.minor .. "." .. version.patch
-end
-
--------------------------------------
--- Get name and version of program.
---
--- @return{String} Name and version.
--------------------------------------
-function get_version()
-   return description.name .. " Vers. " .. get_version_number()
-end
 
 -------------------------------------
 -- Is pkgtype a hierarchical one?
@@ -178,24 +155,31 @@ function bootstrap_package(args)
 
    -- Bootstrap prerequisite
    package.prerequisite = {}
-   prereq_array = split(args.prereq, ",")
-   for key, value in pairs(prerequisite) do
-      found = false
-      for count = 1, #prereq_array do
-         p = split(prereq_array[count], "=")
-         if value == p[1] then
-            package.prerequisite[value] = p[2]
-            found = true
-            break
+   if #prerequisite ~= 0 then
+      prereq_array = split(args.prereq, ",")
+      for key, value in pairs(prerequisite) do
+         found = false
+         for count = 1, #prereq_array do
+            p = split(prereq_array[count], "=")
+            if value == p[1] then
+               package.prerequisite[value] = p[2]
+               found = true
+               break
+            end
          end
-      end
-      if not found then
-         error("Prequisite '" .. value .. "' not set.")
+         if not found then
+            error("Prequisite '" .. value .. "' not set.")
+         end
       end
    end
    
    -- Setup build, install and modulefile directories
-   package.build_directory = path.join(config.base_build_directory, "build-" .. package.definition.pkg)
+   build_directory = "build-"
+   for key,prereq in pairs(package.prerequisite) do
+      build_directory = build_directory .. string.gsub(prereq, "/", "-") .. "-"
+   end
+   build_directory = build_directory .. package.definition.pkg
+   package.build_directory = path.join(config.base_build_directory, build_directory)
    
    pkginstall = path.join(config.install_directory, package.definition.pkggroup)
    if is_heirarchical(package.definition.pkggroup) then
@@ -269,8 +253,9 @@ end
 -------------------------------------
 function build_package(package)
    -- Load needed modules
+   ml = ""
    for key,value in pairs(package.prerequisite) do
-      execute_command("ml " .. value)
+      ml = ml .. "ml " .. value .. " && "
    end
 
    -- Download package
@@ -284,7 +269,7 @@ function build_package(package)
    lfs.chdir(package_directory)
    for line in string.gmatch(package.build.command, ".*$") do
       line = substitute_placeholders(package.definition, line)
-      execute_command(line)
+      execute_command(ml .. line)
    end
 end
 
@@ -382,8 +367,8 @@ function main()
    parser:flag("--no-lmod", "Do not create Lmod script.")
    parser:flag("--cleanup", "Cleanup by removing build directory after build is complete.")
    parser:flag("--debug", "Print debug information (mostly for developers).")
-   parser:flag("-v --version", "Print '" .. get_version() .. "' and exit."):action(function()
-      print(get_version())
+   parser:flag("-v --version", "Print '" .. version.get_version() .. "' and exit."):action(function()
+      print(version.get_version())
       os.exit(0)
    end)
 
