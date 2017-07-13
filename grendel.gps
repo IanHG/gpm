@@ -1,0 +1,1 @@
+./build-package.lua --config config.lua --gpk gcc --pkv 6.3.0

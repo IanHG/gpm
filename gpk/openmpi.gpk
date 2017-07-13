@@ -1,0 +1,55 @@
+-- Openmpi gpk script
+
+-- Description of the gpk
+description = [[
+OpenMPI - Open Message Passing Interface.
+]]
+
+-- Definition section
+definition = {
+   pkgname = "openmpi",
+   pkggroup = "core",
+   pkgfamily = "mpi",
+}
+
+-- Required types
+prerequisite = {"compiler"}
+
+-- Build section
+build = {
+   -- Source of package
+   source = [[
+      # Download openmpi
+      curl -O https://www.open-mpi.org/software/ompi/v<pkgmajor>.<pkgminor>/downloads/<pkg>.tar.gz
+      
+      # Unpak
+      tar xvf <pkg>.tar.gz
+   ]],
+   -- Build command
+   command = [[
+      # Build openmpi
+      ./configure --prefix=<pkginstall> --enable-mpirun-prefix-by-default --enable-static --with-pmi --with-pmi-libdir=/usr --without-psm
+      
+      make -j<nprocesses>
+      make check
+      make install
+   ]]
+}
+
+-- Lmod section
+lmod = {
+   help = [[This module loads OpenMPI v. <pkgversion>.]],
+   prepend_path = {
+      {'INCLUDE', 'include'},
+      {'PATH', 'bin'},
+      {'MANPATH', 'share/man'},
+      {'INFOPATH', 'share/info'},
+      {'LD_LIBRARY_PATH', 'lib'},
+      {'LD_RUN_PATH', 'lib'},
+      {'PKG_CONFIG_PATH', 'lib/pkgconfig'},
+   },
+}
+
+--[[
+# vi:syntax=lua
+--]]

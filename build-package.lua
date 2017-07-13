@@ -87,6 +87,18 @@ function copy_file(src, dest)
    outfile:close()
 end
 
+function split(inputstr, sep)
+   if sep == nil then
+      sep = "%s"
+   end
+   local t={} ; i=1
+   for str in string.gmatch(inputstr, "([^"..sep.."]+)") do
+      t[i] = str
+      i = i + 1
+   end
+   return t
+end
+
 
 -------------------------------------
 -- Read GPM package file (GPK).
@@ -133,6 +145,16 @@ function bootstrap_package(args)
    package.lmod = lmod
    
    package.definition.pkgversion = args.pkv
+   version_array = split(args.pkv, ".")
+   if version_array[1] then
+      package.definition.pkgmajor = version_array[1]
+   end
+   if version_array[2] then
+      package.definition.pkgminor = version_array[2]
+   end
+   if version_array[3] then
+      package.definition.pkgrevision = version_array[3]
+   end
    package.definition.pkg = package.definition.pkgname .. "-" .. package.definition.pkgversion
    
    pkginstall = path.join(config.install_directory, package.definition.pkggroup)
@@ -215,14 +237,14 @@ function build_lmod_modulefile(package)
    lmod_file:write("-- -*- lua -*-\n")
    lmod_file:write("help(\n")
    lmod_file:write("[[\n")
-   lmod_file:write(package.lmod.help .. "\n")
+   lmod_file:write(substitute_placeholders(package.lmod.help, package.definition) .. "\n")
    lmod_file:write("]])\n")
    lmod_file:write("------------------------------------------------------------------------\n")
    lmod_file:write("-- This file was generated automagically by Grendel Package Manager (GPM)\n")
    lmod_file:write("------------------------------------------------------------------------\n")
    lmod_file:write("-- Description\n")
    lmod_file:write("whatis([[\n")
-   lmod_file:write(package.description)
+   lmod_file:write(substitute_placeholders(package.description, package.definition))
    lmod_file:write("]])\n")
    lmod_file:write("\n")
    lmod_file:write("-- Set family\n")
