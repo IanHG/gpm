@@ -4,20 +4,20 @@
 definition = {
    pkgname = "gcc",
    pkgtype = "compiler",
-   
-   -- Required types
-   prerequisite = [""],
 }
+
+-- Required types
+prerequisite = {""}
 
 -- Build section
 build = {
    -- Source of package
    source = [[
       # Download gcc
-      wget ftp://gcc.gnu.org/pub/gcc/releases/<package>/<package>.tar.bz2
+      wget ftp://gcc.gnu.org/pub/gcc/releases/<pkg>/<pkg>.tar.bz2
       
       # Unpak
-      tar jxvf <package>.tar.bz2
+      tar jxvf <pkg>.tar.bz2
    ]],
    -- Build command
    command = [[
@@ -27,7 +27,7 @@ build = {
       # Build gcc
       mkdir build
       cd build
-      ../configure --enable-lto --disable-multilib --enable-bootstrap --enable-shared --enable-threads=posix --prefix=/comm/core/gcc/<version> --with-local-prefix=/comm/core/gcc/<version>
+      ../configure --enable-lto --disable-multilib --enable-bootstrap --enable-shared --enable-threads=posix --prefix=/comm/core/gcc/<pkgversion> --with-local-prefix=/comm/core/gcc/<pkgversion>
       
       make -j<nprocesses>
       make check

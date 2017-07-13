@@ -24,6 +24,7 @@ config = {
    current_directory = lfs.currentdir(),  
    gpk_directory = lfs.currentdir() .. "/gpk",
    base_build_directory = "/tmp/",
+   nprocesses = 20,
 }
 
 -------------------------------------
@@ -73,10 +74,10 @@ end
 --
 -- @return{Dictionary} Returns definition og build.
 -------------------------------------
-function bootstrap_definition(args)
-   definition = {}
+function bootstrap_package(args)
+   package = {}
    
-   -- Read package file
+   -- Load package file
    if args.gpk then
       filename = args.gpk .. ".gpk"
       filepath = path.join(config.gpk_directory, filename)
@@ -86,11 +87,22 @@ function bootstrap_definition(args)
       error("Must provide either -gpk or -gpkf option.")
    end
    
-   print(filepath)
-   loadfile(filepath)()
+   local f, msg = loadfile(filepath)
+   if f then
+      f()
+      package.definition = definition
+      package.prequisites = prerequisites
+      package.build = build
+      package.lmod = lmod
+   else
+      error("Error loading package. Reason : '" .. msg .. "'.")
+   end
 
-   --definition.
-   --definition.build = build
+   package.definition.pkgversion = args.pkv
+   package.definition.pkg = package.definition.pkgname .. "-" .. package.definition.pkgversion
+   package.definition.nprocesses = config.nprocesses
+
+   return package
 end
 
 -------------------------------------
@@ -128,26 +140,26 @@ end
 --
 -- @return{Boolean}
 -------------------------------------
-function build_package(definition, download, build)
+function build_package(package)
    exception.try(function()
          -- try block
-         build_directory = path.join(config.base_build_directory, "build-" .. definition.package)
-         package_directory = path.join(build_directory, definition.package)
+         build_directory = path.join(config.base_build_directory, "build-" .. package.definition.pkg)
+         package_directory = path.join(build_directory, package.definition.pkg)
 
          lfs.rmdir(build_directory)
          lfs.mkdir(build_directory)
 
          -- Download package
          lfs.chdir(build_directory)
-         for line in string.gmatch(download, ".*$") do
-            line = substitute_placeholders(definition, line)
+         for line in string.gmatch(package.build.source, ".*$") do
+            line = substitute_placeholders(package.definition, line)
             execute_command(line)
          end
          
          -- Build package
          lfs.chdir(package_directory)
-         for line in string.gmatch(build, ".*$") do
-            line = substitute_placeholders(definition, line)
+         for line in string.gmatch(package.build.command, ".*$") do
+            line = substitute_placeholders(package.definition, line)
             execute_command(line)
          end
       end, function(e)
@@ -187,41 +199,14 @@ function main()
    -- Bootstrap build
    exception.try(function() 
       config = bootstrap_config(args, config)
-      definition = bootstrap_definition(args)
+      package = bootstrap_package(args)
    end, function(e)
       exception.message(e)
       print("\n" .. parser:get_usage())
    end)
-
-   definition = {
-      name = "gcc",
-      version = "7.1.0",
-      package = "gcc-7.1.0",
-   }
-
-   download = [[
-      # Download gcc
-      wget ftp://gcc.gnu.org/pub/gcc/releases/<package>/<package>.tar.bz2
-      
-      # Unpak
-      tar jxvf <package>.tar.bz2
-   ]]
-
-   build = [[
-      # Download and install prerequisites
-      contrib/download_prerequisites
-      
-      # Build gcc
-      mkdir build
-      cd build
-      ../configure --enable-lto --disable-multilib --enable-bootstrap --enable-shared --enable-threads=posix --prefix=/comm/core/gcc/<version> --with-local-prefix=/comm/core/gcc/<version>
-      
-      make -j20
-      make check
-      make install
-   ]]
-
-   --build_package(definition, download, build)
+   
+   -- Do the build
+   build_package(package)
 end
 
 -- Run main driver.
