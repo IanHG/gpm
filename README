@@ -14,3 +14,7 @@ Grendel Package Manager (GPM)
       <pkgminor>    : Minor version number.
       <pkgrevison>  : Revision version number.
       <pkginstall>  : Install directory for package, should be passed as prefix.
+
+   Contact information:
+      Ian H. Godtliebsen
+      ian@chem.au.dk

@@ -23,7 +23,6 @@ config = {
    heirarchical = {},
 }
 
-
 -------------------------------------
 -- Is pkgtype a hierarchical one?
 --
