@@ -74,6 +74,22 @@ function dump_args(args)
    end
 end
 
+
+-------------------------------------
+-- Make a directory recursively
+-------------------------------------
+function mkdir_recursively(dir)
+   function find_last(haystack, needle)
+      local i=haystack:match(".*"..needle.."()")
+      if i==nil then return nil else return i-1 end
+   end
+   p = dir:sub(1, find_last(dir, "/") - 1)
+   if not lfs.attributes(p) then
+      mkdir_recursively(p)
+   end
+   lfs.mkdir(dir)
+end
+
 -------------------------------------
 -- Copy a file
 -------------------------------------
@@ -87,6 +103,9 @@ function copy_file(src, dest)
    outfile:close()
 end
 
+-------------------------------------
+-- Split a string
+-------------------------------------
 function split(inputstr, sep)
    if sep == nil then
       sep = "%s"
@@ -140,10 +159,10 @@ function bootstrap_package(args)
    
    package.description = description
    package.definition = definition
-   package.prequisites = prerequisites
    package.build = build
    package.lmod = lmod
    
+   -- Setup some version numbers and other needed variables
    package.definition.pkgversion = args.pkv
    version_array = split(args.pkv, ".")
    if version_array[1] then
@@ -156,21 +175,62 @@ function bootstrap_package(args)
       package.definition.pkgrevision = version_array[3]
    end
    package.definition.pkg = package.definition.pkgname .. "-" .. package.definition.pkgversion
-   
-   pkginstall = path.join(config.install_directory, package.definition.pkggroup)
-   --[[
-   if is_heirarchical(package.definition.pkggroup) then
-      for key,prereq in pairs(package.prerequisite) do
-         pkginstall = path.join(pkginstall, args.prerequisite[prereq])
+
+   -- Bootstrap prerequisite
+   package.prerequisite = {}
+   prereq_array = split(args.prereq, ",")
+   for key, value in pairs(prerequisite) do
+      found = false
+      for count = 1, #prereq_array do
+         p = split(prereq_array[count], "=")
+         if value == p[1] then
+            package.prerequisite[value] = p[2]
+            found = true
+            break
+         end
+      end
+      if not found then
+         error("Prequisite '" .. value .. "' not set.")
       end
    end
-   --]]
+   
+   -- Setup build, install and modulefile directories
+   package.build_directory = path.join(config.base_build_directory, "build-" .. package.definition.pkg)
+   
+   pkginstall = path.join(config.install_directory, package.definition.pkggroup)
+   if is_heirarchical(package.definition.pkggroup) then
+      for key,prereq in pairs(package.prerequisite) do
+         pkginstall = path.join(pkginstall, string.gsub(prereq, "/", "-"))
+      end
+   end
    pkginstall = path.join(path.join(pkginstall, package.definition.pkgname), package.definition.pkgversion)
    package.definition.pkginstall = pkginstall
-   
-   package.definition.nprocesses = config.nprocesses
 
-   package.build_directory = path.join(config.base_build_directory, "build-" .. package.definition.pkg)
+   lmod_base = package.definition.pkggroup
+   if is_heirarchical(package.definition.pkggroup) then
+      nprereq = 0
+      for _ in pairs(package.prerequisite) do
+         nprereq = nprereq + 1
+      end
+
+      if nprereq ~= 0 then
+         lmod_base = prerequisite[nprereq]
+      end
+   end
+
+   package.lmod.base = lmod_base
+   package.lmod.modulefile_directory = path.join(config.lmod_directory, lmod_base)
+   
+   if is_heirarchical(package.definition.pkggroup) then
+      for key,prereq in pairs(package.prerequisite) do
+         package.lmod.modulefile_directory = path.join(package.lmod.modulefile_directory, prereq)
+      end
+   end
+   
+   package.lmod.modulefile_directory = path.join(package.lmod.modulefile_directory, package.definition.pkgname)
+   
+   -- Miscellaneous (spellcheck? :) )
+   package.definition.nprocesses = config.nprocesses
 
    return package
 end
@@ -208,6 +268,11 @@ end
 -- @param package
 -------------------------------------
 function build_package(package)
+   -- Load needed modules
+   for key,value in pairs(package.prerequisite) do
+      execute_command("ml " .. value)
+   end
+
    -- Download package
    for line in string.gmatch(package.build.source, ".*$") do
       line = substitute_placeholders(package.definition, line)
@@ -237,14 +302,14 @@ function build_lmod_modulefile(package)
    lmod_file:write("-- -*- lua -*-\n")
    lmod_file:write("help(\n")
    lmod_file:write("[[\n")
-   lmod_file:write(substitute_placeholders(package.lmod.help, package.definition) .. "\n")
+   lmod_file:write(substitute_placeholders(package.definition, package.lmod.help) .. "\n")
    lmod_file:write("]])\n")
    lmod_file:write("------------------------------------------------------------------------\n")
    lmod_file:write("-- This file was generated automagically by Grendel Package Manager (GPM)\n")
    lmod_file:write("------------------------------------------------------------------------\n")
    lmod_file:write("-- Description\n")
    lmod_file:write("whatis([[\n")
-   lmod_file:write(substitute_placeholders(package.description, package.definition))
+   lmod_file:write(substitute_placeholders(package.definition, package.description))
    lmod_file:write("]])\n")
    lmod_file:write("\n")
    lmod_file:write("-- Set family\n")
@@ -256,7 +321,15 @@ function build_lmod_modulefile(package)
    lmod_file:write("local name        = myModuleName()\n")
    lmod_file:write("local fileName    = myFileName()\n")
    lmod_file:write("local nameVersion = pathJoin(name, version)\n")
-   lmod_file:write("local installDir  = pathJoin(os.getenv(\"GRENDEL_COMM_CORE_PATH\"), nameVersion)\n")
+   
+   if is_heirarchical(package.definition.pkggroup) then
+      lmod_file:write("local prereq = string.match(fileName,\"/" .. package.lmod.base .. "/(.+/.+)/\" .. nameVersion):gsub(\"/\", \"-\")\n")
+      lmod_file:write("local packageName = pathJoin(prereq, nameVersion)\n")
+   else
+      lmod_file:write("local packageName = nameVersion\n")
+   end
+   lmod_file:write("local installDir  = pathJoin(\"" .. path.join(config.install_directory, package.definition.pkggroup) .. "\", packageName)\n")
+   
    lmod_file:write("\n")
    lmod_file:write("-- Compiler optional modules setup\n")
    lmod_file:write("local dir = pathJoin(fam, nameVersion)\n")
@@ -283,12 +356,11 @@ function build_lmod_modulefile(package)
    lmod_file:close()
 
    -- Put the file in the correct place
-   if false then
-   else
-      modulefile_directory = path.join(path.join(config.lmod_directory, package.definition.pkggroup), package.definition.pkgname)
-      lmod_filename_new = path.join(modulefile_directory, package.definition.pkgversion .. ".lua")
-      copy_file(lmod_filename, lmod_filename_new)
-   end
+   modulefile_directory = package.lmod.modulefile_directory
+   mkdir_recursively(modulefile_directory)
+   lmod_filename_new = path.join(modulefile_directory, package.definition.pkgversion .. ".lua")
+   print(lmod_filename_new)
+   copy_file(lmod_filename, lmod_filename_new)
 end
 
 
@@ -304,16 +376,21 @@ function main()
       parser:option("--gpkf", "GPM Package (GPK) file to install."):overwrite(false)
    )
    parser:option("--pkv", "Set Package Version (PKV) of the package to install."):overwrite(false)
+   parser:option("--prereq", "Set pre-requisites. Example --prereq='compiler=gcc/7.1.0,mpi=openmpi/2.1.1'."):overwrite(false)
    parser:option("-c --config", "Provide config file."):overwrite(false)
-   parser:flag("--nobuild", "Do not build package, only create Lmod script.")
+   parser:flag("--no-build", "Do not build package.")
+   parser:flag("--no-lmod", "Do not create Lmod script.")
    parser:flag("--cleanup", "Cleanup by removing build directory after build is complete.")
+   parser:flag("--debug", "Print debug information (mostly for developers).")
    parser:flag("-v --version", "Print '" .. get_version() .. "' and exit."):action(function()
       print(get_version())
       os.exit(0)
    end)
 
    args = parser:parse()
-   dump_args(args)
+   if args.debug then
+      dump_args(args)
+   end
    
    -- Try the build
    exception.try(function() 
@@ -321,18 +398,27 @@ function main()
       config = bootstrap_config(args, config)
       package = bootstrap_package(args)
 
+      if args.debug then
+         dump_args(package)
+         dump_args(package.definition)
+         dump_args(package.prerequisite)
+         dump_args(package.lmod)
+      end
+
       -- Create build dir
       lfs.rmdir(package.build_directory)
       lfs.mkdir(package.build_directory)
       lfs.chdir(package.build_directory)
       
       -- Do the build
-      if not args.nobuild then
+      if not args.no_build then
          build_package(package)
       end
 
       -- Create Lmod file
-      build_lmod_modulefile(package)
+      if not args.no_lmod then
+         build_lmod_modulefile(package)
+      end
       
       -- Change back to calling dir
       lfs.chdir(config.current_directory)
