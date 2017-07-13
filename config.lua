@@ -12,5 +12,6 @@ config = {
 
    -- Modulefiles setup
    lmod_directory = "/comm/modulefiles",
+   groups = {"core", "apps", "tools"},
    heirarchical = {"core"},
 }
