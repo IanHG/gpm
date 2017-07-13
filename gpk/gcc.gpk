@@ -1,13 +1,19 @@
--- GCC builder script
+-- GCC gpk script
+
+-- Description of the gpk
+description = [[
+GCC - Gnu compiler suite, that is newer than the system default.
+]]
 
 -- Definition section
 definition = {
    pkgname = "gcc",
-   pkgtype = "compiler",
+   pkggroup = "core",
+   pkgfamily = "compiler",
 }
 
 -- Required types
-prerequisite = {""}
+prerequisite = { }
 
 -- Build section
 build = {
@@ -27,7 +33,7 @@ build = {
       # Build gcc
       mkdir build
       cd build
-      ../configure --enable-lto --disable-multilib --enable-bootstrap --enable-shared --enable-threads=posix --prefix=/comm/core/gcc/<pkgversion> --with-local-prefix=/comm/core/gcc/<pkgversion>
+      ../configure --enable-lto --disable-multilib --enable-bootstrap --enable-shared --enable-threads=posix --prefix=<pkginstall> --with-local-prefix=<pkginstall>
       
       make -j<nprocesses>
       make check
@@ -37,6 +43,15 @@ build = {
 
 -- Lmod section
 lmod = {
+   help = [[This module loads a newer version of gcc than the system default.]],
+   prepend_path = {
+      {'PATH', 'bin'},
+      {'MANPATH', 'share/man'},
+      {'INFOPATH', 'share/info'},
+      {'LD_LIBRARY_PATH', 'lib64'},
+      {'LD_RUN_PATH', 'lib64'},
+      {'PKG_CONFIG_PATH', 'lib/pkgconfig'},
+   },
 }
 
 --[[
