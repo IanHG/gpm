@@ -15,6 +15,6 @@ Grendel Package Manager (GPM)
       <pkgrevison>  : Revision version number.
       <pkginstall>  : Install directory for package, should be passed as prefix.
 
-   Contact information:
+   Maintainer:
       Ian H. Godtliebsen
       ian@chem.au.dk
