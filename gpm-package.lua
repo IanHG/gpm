@@ -5,10 +5,11 @@ local exception = require "exception"
 local path = require "path"
 local argparse = require "argparse"
 local version = require "version"
+local stack = require "stack"
 
 -- Description of this script
 description = {
-   script_name = "build-package.lua",
+   script_name = "gpm-package.lua",
    name = "Grendel Package Manager 2000 (GPM2K), or just GPM for short :)",
    desc = "Grendels own easybuilder, yay!",
 }
@@ -17,6 +18,7 @@ description = {
 config = {  
    current_directory = lfs.currentdir(),  
    gpk_directory = lfs.currentdir() .. "/gpk",
+   gps_directory = lfs.currentdir(),
    base_build_directory = "/tmp/",
    nprocesses = 20,
    lmod_directory = "/comm/modulefiles",
@@ -355,74 +357,111 @@ end
 function main()
    -- Arg parser
    local parser = argparse(description.script_name, description.name .. ":\n" .. description.desc)
-   --parser:argument("input", "Input file.")
-   parser:mutex(
-      parser:option("--gpk" , "GPM Package (GPK) to install (will look for .gpk file)."):overwrite(false),
-      parser:option("--gpkf", "GPM Package (GPK) file to install."):overwrite(false)
-   )
-   parser:option("--pkv", "Set Package Version (PKV) of the package to install."):overwrite(false)
-   parser:option("--prereq", "Set pre-requisites. Example --prereq='compiler=gcc/7.1.0,mpi=openmpi/2.1.1'."):overwrite(false)
+   
+   -- Commands
+   local parser_install = parser:command("initialize") -- Initialize a Lmod setup
+   local parser_install = parser:command("install")
+   local parser_remove = parser:command("remove")
+   local parser_stack = parser:command("stack")
+   
+   -- Some general arguments
    parser:option("-c --config", "Provide config file."):overwrite(false)
-   parser:flag("--no-build", "Do not build package.")
-   parser:flag("--no-lmod", "Do not create Lmod script.")
-   parser:flag("--cleanup", "Cleanup by removing build directory after build is complete.")
    parser:flag("--debug", "Print debug information (mostly for developers).")
    parser:flag("-v --version", "Print '" .. version.get_version() .. "' and exit."):action(function()
       print(version.get_version())
       os.exit(0)
    end)
 
+   -- Initialize specific
+   
+   -- Install specific
+   parser_install:mutex(
+      parser_install:option("--gpk" , "GPM Package (GPK) to install/remove (will look for .gpk file)."):overwrite(false),
+      parser_install:option("--gpkf", "GPM Package (GPK) file to install/remove."):overwrite(false)
+   )
+   parser_install:option("--pkv", "Set Package Version (PKV) of the package to install/remove."):overwrite(false)
+   parser_install:option("--prereq", "Set pre-requisites. Example --prereq='compiler=gcc/7.1.0,mpi=openmpi/2.1.1'."):overwrite(false)
+   parser_install:flag("--no-build", "Do not build package.")
+   parser_install:flag("--no-lmod", "Do not create Lmod script.")
+   parser_install:flag("--cleanup", "Cleanup by removing build directory after build is complete.")
+
+   -- Remove specific
+   
+   -- Stack specific
+   parser_stack:mutex(
+      parser_stack:option("--gps" , "GPM Stack (GPS) to install (will look for .gps file)."):overwrite(false),
+      parser_stack:option("--gpsf", "GPM Stack (GPS) file to install."):overwrite(false)
+   )
+   parser_stack:flag("--cleanup", "Cleanup by removing build directory after build is complete.")
+   
+   -- Parse arguments
    args = parser:parse()
    if args.debug then
       dump_args(args)
    end
    
-   -- Try the build
-   exception.try(function() 
-      -- Bootstrap build
+   exception.try(function()
+      -- Bootstrap config
       config = bootstrap_config(args, config)
-      package = bootstrap_package(args)
+      if args.initialize then
+         error("INITIALIZE NOT IMPLEMENTED")
+      elseif args.install then
+         -- Install command
+         exception.try(function() 
+            -- Bootstrap build
+            package = bootstrap_package(args)
 
-      if args.debug then
-         dump_args(package)
-         dump_args(package.definition)
-         dump_args(package.prerequisite)
-         dump_args(package.lmod)
-      end
+            if args.debug then
+               dump_args(package)
+               dump_args(package.definition)
+               dump_args(package.prerequisite)
+               dump_args(package.lmod)
+            end
 
-      -- Create build dir
-      lfs.rmdir(package.build_directory)
-      lfs.mkdir(package.build_directory)
-      lfs.chdir(package.build_directory)
-      
-      -- Do the build
-      if not args.no_build then
-         build_package(package)
-      end
+            -- Create build dir
+            lfs.rmdir(package.build_directory)
+            lfs.mkdir(package.build_directory)
+            lfs.chdir(package.build_directory)
+            
+            -- Do the build
+            if not args.no_build then
+               build_package(package)
+            end
 
-      -- Create Lmod file
-      if not args.no_lmod then
-         build_lmod_modulefile(package)
-      end
-      
-      -- Change back to calling dir
-      lfs.chdir(config.current_directory)
-      
-      -- Remove build dir
-      if args.cleanup then
-         status, msg = lfs.rmdir(build_directory)
-         print("Did not remove build directory. Reason : '" .. msg .. "'.") 
+            -- Create Lmod file
+            if not args.no_lmod then
+               build_lmod_modulefile(package)
+            end
+            
+            -- Change back to calling dir
+            lfs.chdir(config.current_directory)
+            
+            -- Remove build dir
+            if args.cleanup then
+               status, msg = lfs.rmdir(build_directory)
+               print("Did not remove build directory. Reason : '" .. msg .. "'.") 
+            end
+         end, function(e)
+            --[[
+            status, msg = lfs.rmdir(build_directory)
+            if not status then
+               print("did not rm dir :C")
+            end
+            --]]
+            error(e)
+         end)
+      elseif args.remove then
+         -- Remove Command
+         error("REMOVE NOT IMPLEMENTED YET :C")
+      elseif args.stack then
+         -- Stack command
+         stack.stack(args)
       end
    end, function(e)
       exception.message(e)
-      --[[
-      status, msg = lfs.rmdir(build_directory)
-      if not status then
-         print("did not rm dir :C")
-      end
-      --]]
       print("\n" .. parser:get_usage())
    end)
+   
    
 end
 
