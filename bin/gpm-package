@@ -421,8 +421,14 @@ function main()
    end
    
    exception.try(function()
+      -- Check for config file
+      if not args.config then
+         args.config = folder_of_this .. "../config.lua"
+      end
       -- Bootstrap config
       config = bootstrap_config(args, config)
+      
+      -- Switch on command
       if args.initialize then
          error("INITIALIZE NOT IMPLEMENTED")
       elseif args.install then
