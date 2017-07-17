@@ -1,5 +1,7 @@
 #!/usr/bin/lua
 
+local util = require "util"
+
 local M = {}
 
 -------------------------------------
@@ -27,21 +29,6 @@ local function bootstrap_stack(args)
 end
 
 -------------------------------------
--- Run command in shell.
---
--- @param command
---
--- @return{Boolean}
--------------------------------------
-local function execute_command(command)
-   bool, flag, status = os.execute(command)
-
-   if not bool then
-      error("Command '" .. command .. "' exited with errors.")
-   end
-end
-
--------------------------------------
 -- Main driver.
 -------------------------------------
 local function stack(args)
@@ -53,7 +40,7 @@ local function stack(args)
       -- Build the stack
       command = arg[0] .. " --config " .. args.config .. " install "
       for key, value in pairs(stack) do
-         execute_command(command .. value)
+         util.execute_command(command .. value)
       end
    end, function (e)
       exception.message(e)

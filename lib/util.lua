@@ -57,8 +57,77 @@ local function mkdir_recursively(dir)
    lfs.mkdir(dir)
 end
 
+-------------------------------------
+-- Run command in shell.
+--
+-- @param command
+--
+-- @return{Boolean}
+-------------------------------------
+local function execute_command(command)
+   bool, flag, status = os.execute(command)
+
+   if not bool then
+      error("Command '" .. command .. "' exited with errors.")
+   end
+end
+
+-------------------------------------
+-- Get name and version of program.
+--
+-- @return{String} Name and version.
+-------------------------------------
+local function substitute_placeholders(definition, line)
+   for key,value in pairs(definition) do
+      line = string.gsub(line, "<" .. key .. ">", value)
+   end
+   return line
+end
+
+-------------------------------------
+-- Copy a file
+-------------------------------------
+local function copy_file(src, dest)
+   infile = io.open(src, "r")
+   instr = infile:read("*a")
+   infile:close()
+
+   outfile = io.open(dest, "w")
+   outfile:write(instr)
+   outfile:close()
+end
+
+-------------------------------------
+-- Split a string
+-------------------------------------
+local function split(inputstr, sep)
+   if sep == nil then
+      sep = "%s"
+   end
+   local t={} ; i=1
+   for str in string.gmatch(inputstr, "([^"..sep.."]+)") do
+      t[i] = str
+      i = i + 1
+   end
+   return t
+end
+
+-------------------------------------
+-- Trim a string
+-------------------------------------
+function trim(s)
+    local n = s:find"%S"
+     return n and s:match(".*%S", n) or ""
+end
+
+-- Load module functions
 M.print = table_print
 M.merge = merge
 M.mkdir_recursively = mkdir_recursively
+M.execute_command = execute_command
+M.substitute_placeholders = substitute_placeholders
+M.copy_file = copy_file
+M.split = split
+M.trim = trim
 
 return M

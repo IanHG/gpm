@@ -1,15 +1,15 @@
--- Singularity gpk script
+-- Valgrind gpk script
 
 -- Description of the gpk
 description = [[
-Singularity container.
+Valgrind debugger.
 ]]
 
 -- Definition section
 definition = {
-   pkgname = "singularity",
+   pkgname = "valgrind",
    pkggroup = "tools",
-   pkgfamily = "singularity",
+   pkgfamily = "valgrind",
 }
 
 -- Required types
@@ -19,13 +19,12 @@ prerequisite = {}
 build = {
    -- Source of package
    source = [[
-      wget https://github.com/singularityware/singularity/releases/download/<pkgversion>/singularity-<pkgversion>.tar.gz
-      tar xvf singularity-<pkgversion>.tar.gz
+      wget ftp://sourceware.org/pub/valgrind/valgrind-<pkgversion>.tar.bz2
+      tar jxvf valgrind-<pkgversion>.tar.bz2
    ]],
    -- Build command
    command = [[
-      ./autogen.sh     # actually create configure script
-      ./configure --prefix=<pkginstall>
+      ./configure --prefix=<pkginstall> --disable-dependency-tracking --enable-ubsan --enable-tls
       make -j<nprocesses>
       make install
    ]],
@@ -33,7 +32,7 @@ build = {
 
 -- Lmod section
 lmod = {
-   help = [[This module loads Singularity v. <pkgversion>.]],
+   help = [[This module loads <pkgname> v. <pkgversion>.]],
    prepend_path = {
       {'PATH', 'bin'},
       {'MANPATH', 'share/man'},

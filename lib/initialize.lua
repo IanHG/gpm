@@ -1,8 +1,8 @@
-local install = require "install"
 local lfs = require "lfs"
 
 local util = require "util"
 local paht = require "path"
+local install = require "install"
 
 M = {}
 

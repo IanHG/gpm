@@ -1,7 +1,7 @@
 stack = {
    -- Gcc
    "--gpk gcc --pkv 6.3.0",
-   -- "--gpk gcc --pkv 7.1.0",
+   "--gpk gcc --pkv 7.1.0",
 
    -- Openmpi
    "--gpk openmpi --pkv 2.1.1 --prereq='compiler=gcc/6.3.0'",
@@ -14,6 +14,9 @@ stack = {
 
    -- Neovim
    "--gpk nvim --pkv 0.2.0",
+
+   -- Valgrind
+   "--gpk valgrind --pkv 3.13.0",
 }
 
 --[[
