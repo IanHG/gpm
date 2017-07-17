@@ -115,7 +115,7 @@ function bootstrap_config(args, default_config)
    if args.config then
       assert(loadfile(args.config))()
    else
-      error("No config file given")
+      error("No config file found.")
    end
 
    for key,value in pairs(config) do
@@ -158,7 +158,9 @@ function bootstrap_package(args)
    package.description = description
    package.definition = definition
    package.build = build
-   package.lmod = lmod
+   if lmod then
+      package.lmod = lmod
+   end
    
    -- Setup some version numbers and other needed variables
    package.definition.pkgversion = args.pkv
@@ -202,38 +204,45 @@ function bootstrap_package(args)
    build_directory = build_directory .. package.definition.pkg
    package.build_directory = path.join(config.base_build_directory, build_directory)
    
-   pkginstall = path.join(config.install_directory, package.definition.pkggroup)
-   if is_heirarchical(package.definition.pkggroup) then
-      for key,prereq in pairs(package.prerequisite) do
-         pkginstall = path.join(pkginstall, string.gsub(prereq, "/", "-"))
+   if package.definition.pkggroup then
+      pkginstall = path.join(config.install_directory, package.definition.pkggroup)
+      if is_heirarchical(package.definition.pkggroup) then
+         for key,prereq in pairs(package.prerequisite) do
+            pkginstall = path.join(pkginstall, string.gsub(prereq, "/", "-"))
+         end
       end
+      pkginstall = path.join(path.join(pkginstall, package.definition.pkgname), package.definition.pkgversion)
+   else
+      pkginstall = config.install_directory
    end
-   pkginstall = path.join(path.join(pkginstall, package.definition.pkgname), package.definition.pkgversion)
    package.definition.pkginstall = pkginstall
-
-   lmod_base = package.definition.pkggroup
-   if is_heirarchical(package.definition.pkggroup) then
-      nprereq = 0
-      for _ in pairs(package.prerequisite) do
-         nprereq = nprereq + 1
-      end
-
-      if nprereq ~= 0 then
-         lmod_base = prerequisite[nprereq]
-      end
-   end
-
-   package.lmod.base = lmod_base
-   package.nprerequisite = nprereq
-   package.lmod.modulefile_directory = path.join(config.lmod_directory, lmod_base)
    
-   if is_heirarchical(package.definition.pkggroup) then
-      for key,prereq in pairs(package.prerequisite) do
-         package.lmod.modulefile_directory = path.join(package.lmod.modulefile_directory, prereq)
+   -- Lmod stuff
+   if package.lmod then
+      lmod_base = package.definition.pkggroup
+      if is_heirarchical(package.definition.pkggroup) then
+         nprereq = 0
+         for _ in pairs(package.prerequisite) do
+            nprereq = nprereq + 1
+         end
+
+         if nprereq ~= 0 then
+            lmod_base = prerequisite[nprereq]
+         end
       end
+
+      package.lmod.base = lmod_base
+      package.nprerequisite = nprereq
+      package.lmod.modulefile_directory = path.join(config.lmod_directory, lmod_base)
+      
+      if is_heirarchical(package.definition.pkggroup) then
+         for key,prereq in pairs(package.prerequisite) do
+            package.lmod.modulefile_directory = path.join(package.lmod.modulefile_directory, prereq)
+         end
+      end
+      
+      package.lmod.modulefile_directory = path.join(package.lmod.modulefile_directory, package.definition.pkgname)
    end
-   
-   package.lmod.modulefile_directory = path.join(package.lmod.modulefile_directory, package.definition.pkgname)
    
    -- Miscellaneous (spellcheck? :) )
    package.definition.nprocesses = config.nprocesses
@@ -455,7 +464,7 @@ function main()
             end
 
             -- Create Lmod file
-            if not args.no_lmod then
+            if package.lmod and not args.no_lmod then
                build_lmod_modulefile(package)
             end
             

@@ -1,0 +1,48 @@
+-- Singularity gpk script
+
+-- Description of the gpk
+description = [[
+Singularity container.
+]]
+
+-- Definition section
+definition = {
+   pkgname = "lmod",
+   pkgfamily = "lmod",
+}
+
+-- Required types
+prerequisite = {}
+
+-- Build section
+build = {
+   -- Source of package
+   source = [[
+      git clone https://github.com/TACC/Lmod lmod-<pkgversion>
+   ]],
+   -- Build command
+   command = [[
+      git checkout <pkgversion>
+      ./configure --prefix=<pkginstall>
+      make
+      make install
+   ]],
+}
+
+-- Lmod section
+--[[
+lmod = {
+   prepend_path = {
+      {'PATH', 'bin'},
+      {'MANPATH', 'share/man'},
+      {'INFOPATH', 'share/info'},
+      {'LD_LIBRARY_PATH', 'lib'},
+      {'LD_RUN_PATH', 'lib'},
+      {'PKG_CONFIG_PATH', 'lib/pkgconfig'},
+   },
+}
+--]]
+
+--[[
+# vi:syntax=lua
+--]]
