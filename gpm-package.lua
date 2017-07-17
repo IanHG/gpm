@@ -103,10 +103,21 @@ end
 -- @return{Dictionary} Returns definition og build.
 -------------------------------------
 function bootstrap_config(args, default_config)
-   assert(loadfile(args.config))()
+   if args.debug then
+      print("Bootstrapping config.")
+   end
+
+   if args.config then
+      assert(loadfile(args.config))()
+   else
+      error("No config file given")
+   end
+
    for key,value in pairs(config) do
+      print(value, key)
       default_config[key] = value
    end
+
    return default_config
 end
 
@@ -116,6 +127,10 @@ end
 -- @return{Dictionary} Returns definition og build.
 -------------------------------------
 function bootstrap_package(args)
+   if args.debug then
+      print("Bootstrapping package")
+   end
+
    package = {}
    
    -- Load package file

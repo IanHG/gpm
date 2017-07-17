@@ -1,5 +1,7 @@
 -- GPM config file
 config = {
+   nprocesses = 10,
+
    -- Path to search for gpk files
    gpk_directory = "/comm/build/gpk",
    

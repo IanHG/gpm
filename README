@@ -9,7 +9,7 @@ Grendel Package Manager (GPM)
    Special macros for .gpk files:
       <pkgname>     : Name of package, e.g. 'gcc'.
       <pkgversion>  : Version of package, e.g. '7.1.0'.
-      <pkg>         : Name and version of package, e.g. 'gcc/7.1.0'.
+      <pkg>         : Name and version of package, e.g. 'gcc-7.1.0'.
       <pkgmajor>    : Major version number.
       <pkgminor>    : Minor version number.
       <pkgrevison>  : Revision version number.
