@@ -1,11 +1,12 @@
-ml = {}
+local ml = {}
 
 -- Define version number
-version = {  
+local version = {  
    major = 1,
    minor = 1,
    patch = 0,
 }
+
 -------------------------------------
 -- Get version number.
 --
