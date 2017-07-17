@@ -35,7 +35,9 @@ local function bootstrap_package(args)
    
    package.description = description
    package.definition = definition
-   package.build = build
+   if build then
+      package.build = build
+   end
    if lmod then
       package.lmod = lmod
    end
@@ -135,26 +137,28 @@ end
 -- @param package
 -------------------------------------
 local function build_package(package)
-   -- Load needed modules
-   ml = ". " .. config.install_directory .. "/bin/modules.sh && "
-   for key,value in pairs(package.prerequisite) do
-      ml = ml .. "ml " .. value .. " && "
-   end
+   if package.build then
+      -- Load needed modules
+      ml = ". " .. config.install_directory .. "/bin/modules.sh && "
+      for key,value in pairs(package.prerequisite) do
+         ml = ml .. "ml " .. value .. " && "
+      end
 
-   -- Download package
-   for line in string.gmatch(package.build.source, ".*$") do
-      line = util.substitute_placeholders(package.definition, util.trim(line))
-      util.execute_command(line)
-   end
-   
-   -- Build package
-   package_directory = path.join(package.build_directory, package.definition.pkg)
-   lfs.chdir(package_directory)
-   for line in string.gmatch(package.build.command, ".*$") do
-      line = util.substitute_placeholders(package.definition, util.trim(line))
-      print("LINE : " .. line)
-      if not (line == ""  or line == "\n") then
-         util.execute_command(ml .. line)
+      -- Download package
+      for line in string.gmatch(package.build.source, ".*$") do
+         line = util.substitute_placeholders(package.definition, util.trim(line))
+         util.execute_command(line)
+      end
+      
+      -- Build package
+      package_directory = path.join(package.build_directory, package.definition.pkg)
+      lfs.chdir(package_directory)
+      for line in string.gmatch(package.build.command, ".*$") do
+         line = util.substitute_placeholders(package.definition, util.trim(line))
+         print("LINE : " .. line)
+         if not (line == ""  or line == "\n") then
+            util.execute_command(ml .. line)
+         end
       end
    end
 end
@@ -199,7 +203,12 @@ local function build_lmod_modulefile(package)
    else
       lmod_file:write("local packageName = nameVersion\n")
    end
-   lmod_file:write("local installDir  = pathJoin(\"" .. path.join(config.install_directory, package.definition.pkggroup) .. "\", packageName)\n")
+
+   if package.lmod.install_path then
+      lmod_file:write("local installDir  = \"" .. package.lmod.install_path .. "\"\n")
+   else
+      lmod_file:write("local installDir  = pathJoin(\"" .. path.join(config.install_directory, package.definition.pkggroup) .. "\", packageName)\n")
+   end
    
    lmod_file:write("\n")
    lmod_file:write("-- Compiler optional modules setup\n")
@@ -234,6 +243,11 @@ local function build_lmod_modulefile(package)
    util.copy_file(lmod_filename, lmod_filename_new)
 end
 
+-------------------------------------
+-- Wrapper for installing a package.
+--
+-- @param args
+-------------------------------------
 local function install(args)
    exception.try(function() 
       -- Bootstrap build

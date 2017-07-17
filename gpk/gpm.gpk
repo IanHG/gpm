@@ -1,0 +1,29 @@
+-- GPM gpk script
+
+-- Description of the gpk
+description = [[
+GPM
+]]
+
+-- Definition section
+definition = {
+   pkgname = "gpm",
+   pkggroup = "tools",
+   pkgfamily = "gpm",
+}
+
+-- Required types
+prerequisite = {}
+
+-- Lmod section
+lmod = {
+   install_path = "/opt/gpm",
+   help = [[ GPM helptext ]],
+   prepend_path = {
+      {'PATH', 'bin'},
+   },
+}
+
+--[[
+# vi:syntax=lua
+--]]
