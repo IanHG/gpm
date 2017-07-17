@@ -1,6 +1,13 @@
 Grendel Package Manager (GPM)
 
-   Not much to tell yet.
+   Packages needed for installation:
+      lua
+      luarocks (optional)
+      
+   Lua Packages (can be install with luarocks):
+      luafilesystem
+      argparse
+      luaposix  (needed for lmod)
 
    Special file extensions:
       .gpk : GPM PacKage file

@@ -1,13 +1,19 @@
 stack = {
    -- Gcc
-   "./build-package.lua --config config.lua --gpk gcc --pkv 6.3.0",
-   "./build-package.lua --config config.lua --gpk gcc --pkv 7.1.0",
+   "--gpk gcc --pkv 6.3.0",
+   -- "--gpk gcc --pkv 7.1.0",
 
    -- Openmpi
-   "./build-package.lua --config config.lua --gpk openmpi --pkv 2.1.1 --prereq='compiler=gcc/6.3.0'",
-   "./build-package.lua --config config.lua --gpk openmpi --pkv 2.1.0 --prereq='compiler=gcc/6.3.0'",
-   "./build-package.lua --config config.lua --gpk openmpi --pkv 2.1.1 --prereq='compiler=gcc/7.1.0'",
-   "./build-package.lua --config config.lua --gpk openmpi --pkv 2.1.0 --prereq='compiler=gcc/7.1.0'",
+   "--gpk openmpi --pkv 2.1.1 --prereq='compiler=gcc/6.3.0'",
+   "--gpk openmpi --pkv 2.1.0 --prereq='compiler=gcc/6.3.0'",
+   "--gpk openmpi --pkv 2.1.1 --prereq='compiler=gcc/7.1.0'",
+   "--gpk openmpi --pkv 2.1.0 --prereq='compiler=gcc/7.1.0'",
+
+   -- Singularity
+   "--gpk singularity --pkv 2.3.1",
+
+   -- Neovim
+   "--gpk nvim --pkv 0.2.0",
 }
 
 --[[

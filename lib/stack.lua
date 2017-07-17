@@ -1,5 +1,7 @@
 #!/usr/bin/lua
 
+local M = {}
+
 -------------------------------------
 -- 
 -------------------------------------
@@ -42,18 +44,23 @@ end
 -------------------------------------
 -- Main driver.
 -------------------------------------
-function stack(args)
+local function stack(args)
    -- Try
    exception.try(function() 
       -- Bootstrap stack
       stack = bootstrap_stack(args)
       
       -- Build the stack
+      command = arg[0] .. " --config " .. args.config .. " install "
       for key, value in pairs(stack) do
-         execute_command(value)
+         execute_command(command .. value)
       end
    end, function (e)
       exception.message(e)
       print("\n" .. parser:get_usage())
    end)
 end
+
+M.stack = stack
+
+return M
