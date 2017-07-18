@@ -57,7 +57,7 @@ local function bootstrap_package(args)
    package.definition.pkg = package.definition.pkgname .. "-" .. package.definition.pkgversion
 
    -- Bootstrap prerequisite
-   package.prerequisite = {}
+   package.prerequisite = util.ordered_table({})
    if #prerequisite ~= 0 then
       prereq_array = util.split(args.prereq, ",")
       for key, value in pairs(prerequisite) do
@@ -66,6 +66,7 @@ local function bootstrap_package(args)
             p = util.split(prereq_array[count], "=")
             if value == p[1] then
                package.prerequisite[value] = p[2]
+               print("VALUE SET : " .. value .. " = " .. p[2]) 
                found = true
                break
             end
@@ -78,7 +79,7 @@ local function bootstrap_package(args)
    
    -- Setup build, install and modulefile directories
    build_directory = "build-"
-   for key,prereq in pairs(package.prerequisite) do
+   for key,prereq in util.ordered(package.prerequisite) do
       build_directory = build_directory .. string.gsub(prereq, "/", "-") .. "-"
    end
    build_directory = build_directory .. package.definition.pkg
@@ -87,7 +88,7 @@ local function bootstrap_package(args)
    if package.definition.pkggroup then
       pkginstall = path.join(config.install_directory, package.definition.pkggroup)
       if is_heirarchical(package.definition.pkggroup) then
-         for key,prereq in pairs(package.prerequisite) do
+         for key,prereq in util.ordered(package.prerequisite) do
             pkginstall = path.join(pkginstall, string.gsub(prereq, "/", "-"))
          end
       end
@@ -101,10 +102,14 @@ local function bootstrap_package(args)
    if package.lmod then
       lmod_base = package.definition.pkggroup
       if is_heirarchical(package.definition.pkggroup) then
-         nprereq = 0
-         for _ in pairs(package.prerequisite) do
-            nprereq = nprereq + 1
+         if prerequisite then
+            nprereq = #prerequisite
+         else
+            nprereq = 0
          end
+         --for _ in pairs(package.prerequisite) do
+         --   nprereq = nprereq + 1
+         --end
 
          if nprereq ~= 0 then
             lmod_base = prerequisite[nprereq]
@@ -116,7 +121,7 @@ local function bootstrap_package(args)
       package.lmod.modulefile_directory = path.join(config.lmod_directory, lmod_base)
       
       if is_heirarchical(package.definition.pkggroup) then
-         for key,prereq in pairs(package.prerequisite) do
+         for key,prereq in util.ordered(package.prerequisite) do
             package.lmod.modulefile_directory = path.join(package.lmod.modulefile_directory, prereq)
          end
       end
@@ -140,9 +145,11 @@ local function build_package(package)
    if package.build then
       -- Load needed modules
       ml = ". " .. config.install_directory .. "/bin/modules.sh && "
-      for key,value in pairs(package.prerequisite) do
+      --for key,value in pairs(package.prerequisite) do
+      for key,value in util.ordered(package.prerequisite) do
          ml = ml .. "ml " .. value .. " && "
       end
+      print("ML LINE " .. ml)
 
       -- Download package
       for line in string.gmatch(package.build.source, ".*$") do
@@ -198,8 +205,9 @@ local function build_lmod_modulefile(package)
    lmod_file:write("local nameVersion = pathJoin(name, version)\n")
    
    if is_heirarchical(package.definition.pkggroup) and package.nprerequisite ~= 0 then
-      lmod_file:write("local prereq = string.match(fileName,\"/" .. package.lmod.base .. "/(.+/.+)/\" .. nameVersion):gsub(\"/\", \"-\")\n")
-      lmod_file:write("local packageName = pathJoin(prereq, nameVersion)\n")
+      lmod_file:write("local prereq = string.match(fileName,\"/" .. package.lmod.base .. "/(.-)/\" .. nameVersion:gsub(\"-\", \"?-\"))\n")
+      lmod_file:write("local packagePrereq = pathJoin(prereq, nameVersion)\n")
+      lmod_file:write("local packageName = pathJoin(prereq:gsub(\"[^/]+/[^/]+\", function (str) return str:gsub(\"/\", \"-\") end), nameVersion)\n")
    else
       lmod_file:write("local packageName = nameVersion\n")
    end
@@ -212,7 +220,7 @@ local function build_lmod_modulefile(package)
    
    lmod_file:write("\n")
    lmod_file:write("-- Compiler optional modules setup\n")
-   lmod_file:write("local dir = pathJoin(fam, nameVersion)\n")
+   lmod_file:write("local dir = pathJoin(fam, packagePrereq)\n")
    lmod_file:write("prepend_path('MODULEPATH', pathJoin(os.getenv(\"MODULEPATH_ROOT\"), dir))\n")
    lmod_file:write("\n")
    

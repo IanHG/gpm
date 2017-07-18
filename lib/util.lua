@@ -101,6 +101,9 @@ end
 -- Split a string
 -------------------------------------
 local function split(inputstr, sep)
+   if inputstr == nil then
+      return {}
+   end
    if sep == nil then
       sep = "%s"
    end
@@ -115,9 +118,31 @@ end
 -------------------------------------
 -- Trim a string
 -------------------------------------
-function trim(s)
-    local n = s:find"%S"
-     return n and s:match(".*%S", n) or ""
+local function trim(s)
+   local n = s:find"%S"
+   return n and s:match(".*%S", n) or ""
+end
+
+local function ordered_table(t)
+   local currentIndex = 1
+   local metaTable = {}
+           
+   function metaTable:__newindex(key,value)
+      rawset(self, key, value)
+      rawset(self, currentIndex, key)
+      currentIndex = currentIndex + 1
+   end
+   return setmetatable(t or {}, metaTable)
+end
+                         
+local function ordered(t)
+   local currentIndex = 0
+   local function iter(t)
+      currentIndex = currentIndex + 1
+      local key = t[currentIndex]
+      if key then return key, t[key] end
+   end
+   return iter, t
 end
 
 -- Load module functions
@@ -129,5 +154,7 @@ M.substitute_placeholders = substitute_placeholders
 M.copy_file = copy_file
 M.split = split
 M.trim = trim
+M.ordered_table = ordered_table
+M.ordered = ordered
 
 return M

@@ -1,0 +1,55 @@
+-- Openmpi gpk script
+
+-- Description of the gpk
+description = [[
+GSL - Gnu Scientific Library.
+]]
+
+-- Definition section
+definition = {
+   pkgname = "gsl",
+   pkggroup = "core",
+   pkgfamily = "gsl",
+}
+
+-- Required types
+prerequisite = {"compiler"}
+
+-- Build section
+build = {
+   -- Source of package
+   source = [[
+      # Download openmpi
+      wget ftp://ftp.gnu.org/gnu/gsl/<pkg>.tar.gz
+      
+      # Unpak
+      tar xvf <pkg>.tar.gz
+   ]],
+   -- Build command
+   command = [[
+      # Build GSL
+      ./configure --prefix=<pkginstall> --disable-dependency-tracking
+      
+      make -j<nprocesses>
+      make check
+      make install
+   ]]
+}
+
+-- Lmod section
+lmod = {
+   help = [[This module loads GSL v. <pkgversion>.]],
+   prepend_path = {
+      {'INCLUDE', 'include'},
+      {'PATH', 'bin'},
+      {'MANPATH', 'share/man'},
+      {'INFOPATH', 'share/info'},
+      {'LD_LIBRARY_PATH', 'lib'},
+      {'LD_RUN_PATH', 'lib'},
+      {'PKG_CONFIG_PATH', 'lib/pkgconfig'},
+   },
+}
+
+--[[
+# vi:syntax=lua
+--]]

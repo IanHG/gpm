@@ -1,0 +1,55 @@
+-- Openmpi gpk script
+
+-- Description of the gpk
+description = [[
+FFTW - Fast Fourier Transform in the West.
+]]
+
+-- Definition section
+definition = {
+   pkgname = "fftw",
+   pkggroup = "core",
+   pkgfamily = "fft",
+}
+
+-- Required types
+prerequisite = {"compiler", "mpi"}
+
+-- Build section
+build = {
+   -- Source of package
+   source = [[
+      # Download openmpi
+      wget ftp://ftp.fftw.org/pub/fftw/<pkg>.tar.gz
+      
+      # Unpak
+      tar xvf <pkg>.tar.gz
+   ]],
+   -- Build command
+   command = [[
+      # Build FFTW
+      ./configure --prefix=<pkginstall> --enable-mpi --enable-openmp --enable-threads --enable-avx2 --enable-fma
+      
+      make -j<nprocesses>
+      make check
+      make install
+   ]]
+}
+
+-- Lmod section
+lmod = {
+   help = [[This module loads FFTW v. <pkgversion>.]],
+   prepend_path = {
+      {'INCLUDE', 'include'},
+      {'PATH', 'bin'},
+      {'MANPATH', 'share/man'},
+      {'INFOPATH', 'share/info'},
+      {'LD_LIBRARY_PATH', 'lib'},
+      {'LD_RUN_PATH', 'lib'},
+      {'PKG_CONFIG_PATH', 'lib/pkgconfig'},
+   },
+}
+
+--[[
+# vi:syntax=lua
+--]]
