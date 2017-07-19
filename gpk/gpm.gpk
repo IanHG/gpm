@@ -17,7 +17,7 @@ prerequisite = {}
 
 -- Lmod section
 lmod = {
-   install_path = "/opt/gpm",
+   install_path = folder_of_this:gsub("/bin",""),
    help = [[ GPM helptext ]],
    prepend_path = {
       {'PATH', 'bin'},

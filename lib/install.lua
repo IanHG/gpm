@@ -131,6 +131,9 @@ local function bootstrap_package(args)
    
    -- Miscellaneous (spellcheck? :) )
    package.definition.nprocesses = config.nprocesses
+   if args.nomodulesource then
+      package.nomodulesource = args.nomodulesource
+   end
 
    return package
 end
@@ -144,12 +147,14 @@ end
 local function build_package(package)
    if package.build then
       -- Load needed modules
-      ml = ". " .. config.install_directory .. "/bin/modules.sh && "
-      --for key,value in pairs(package.prerequisite) do
-      for key,value in util.ordered(package.prerequisite) do
-         ml = ml .. "ml " .. value .. " && "
+      if not package.nomodulesource then
+         ml = ". " .. config.install_directory .. "/bin/modules.sh && "
+         --for key,value in pairs(package.prerequisite) do
+         for key,value in util.ordered(package.prerequisite) do
+            ml = ml .. "ml " .. value .. " && "
+         end
+         print("ML LINE " .. ml)
       end
-      print("ML LINE " .. ml)
 
       -- Download package
       for line in string.gmatch(package.build.source, ".*$") do
@@ -164,7 +169,11 @@ local function build_package(package)
          line = util.substitute_placeholders(package.definition, util.trim(line))
          print("LINE : " .. line)
          if not (line == ""  or line == "\n") then
-            util.execute_command(ml .. line)
+            if ml then
+               util.execute_command(ml .. line)
+            else
+               util.execute_command(line)
+            end
          end
       end
    end

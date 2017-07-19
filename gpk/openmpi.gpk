@@ -28,8 +28,8 @@ build = {
    -- Build command
    command = [[
       # Build openmpi
-      #./configure --prefix=<pkginstall> --enable-mpirun-prefix-by-default --enable-static --with-pmi --with-pmi-libdir=/usr --without-psm
-      ./configure --prefix=<pkginstall> --enable-mpirun-prefix-by-default --enable-static --without-psm
+      ./configure --prefix=<pkginstall> --enable-mpirun-prefix-by-default --enable-static --with-pmi --with-pmi-libdir=/usr --without-psm
+      #./configure --prefix=<pkginstall> --enable-mpirun-prefix-by-default --enable-static --without-psm
       
       make -j<nprocesses>
       make check

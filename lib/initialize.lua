@@ -1,7 +1,8 @@
 local lfs = require "lfs"
 
 local util = require "util"
-local paht = require "path"
+local path = require "path"
+local version = require "version"
 local install = require "install"
 
 M = {}
@@ -55,8 +56,12 @@ local function initialize(args)
       
       args.gpk = "lmod"
       args.pkv = "7.5.11"
+      args.nomodulesource = true
       
       install.install(args)
+      
+      -- Create shell file to source new software tree
+      create_shell_environment(args)
 
       -- Create directories
       if not lfs.attributes(config.lmod_directory) then
@@ -67,9 +72,14 @@ local function initialize(args)
          lfs.mkdir(path.join(config.install_directory, v))
          lfs.mkdir(path.join(config.lmod_directory, v))
       end
-      
-      -- Create shell file to source new software tree
-      create_shell_environment(args)
+
+      -- Create module file for gpm
+      args.gpk = "gpm"
+      args.pkv = version.get_version_number()
+      args.no_build = true
+      args.nomodulesource = false
+
+      install.install(args)
       
    end, function (e)
       exception.message(e)
