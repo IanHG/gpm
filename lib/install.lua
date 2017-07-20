@@ -218,6 +218,7 @@ local function build_lmod_modulefile(package)
       lmod_file:write("local packagePrereq = pathJoin(prereq, nameVersion)\n")
       lmod_file:write("local packageName = pathJoin(prereq:gsub(\"[^/]+/[^/]+\", function (str) return str:gsub(\"/\", \"-\") end), nameVersion)\n")
    else
+      lmod_file:write("local packagePrereq = nameVersion\n")
       lmod_file:write("local packageName = nameVersion\n")
    end
 
