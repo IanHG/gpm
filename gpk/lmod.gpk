@@ -2,7 +2,7 @@
 
 -- Description of the gpk
 description = [[
-Singularity container.
+Lmod itself :D
 ]]
 
 -- Definition section
@@ -17,9 +17,8 @@ prerequisite = {}
 -- Build section
 build = {
    -- Source of package
-   source = [[
-      git clone https://github.com/TACC/Lmod lmod-<pkgversion>
-   ]],
+   source = "https://github.com/TACC/Lmod",
+   source_type = "git",
    -- Build command
    command = [[
       git checkout <pkgversion>
