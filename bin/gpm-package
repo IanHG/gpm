@@ -60,11 +60,11 @@ local function bootstrap_config(args, default_config)
       print("Bootstrapping config.")
    end
 
-   if args.config then
-      assert(loadfile(args.config))()
-   else
-      error("No config file found.")
+   if not args.config then
+      args.config = path.join(config.current_directory, "config.lua")
    end
+
+   assert(loadfile(args.config))()
 
    default_config = util.merge(default_config, config)
 
@@ -126,10 +126,6 @@ function main()
    end
    
    exception.try(function()
-      -- Check for config file
-      if not args.config then
-         args.config = folder_of_this .. "../config.lua"
-      end
       -- Bootstrap config
       config = bootstrap_config(args, config)
       
