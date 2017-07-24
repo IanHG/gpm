@@ -140,6 +140,42 @@ end
 
 
 -------------------------------------
+--
+-- 
+-------------------------------------
+local function make_package_ready_for_install(package)
+   -- Get/download the package
+   source = util.substitute_placeholders(package.definition, package.build.source)
+   source_extension = path.extension(source)
+   destination = package.definition.pkg .. source_extension
+   
+   if package.build.source_type == "git" then
+      line = "git clone " .. source .. " " .. package.definition.pkg
+      util.execute_command(line)
+   else
+      -- if ftp or http download with wget
+      is_http_or_ftp = string.gmatch(source, "http://") or string.gmatch(source, "https://") or string.gmatch(source, "ftp://")
+      if is_http_or_ftp then
+         line = "wget -O " .. destination .. " " .. source
+         util.execute_command(line)
+      end
+      
+      -- Unpak package
+      -- If tar file untar
+      is_tar_gz = string.gmatch(extension, "tar.gz") or string.gmatch(source, "tgz")
+      if is_tar_gz then
+         line = "tar -xvf " .. destination
+         util.execute_command(line)
+      end
+   end
+
+   --for line in string.gmatch(package.build.source, ".*$") do
+   --   line = util.substitute_placeholders(package.definition, util.trim(line))
+   --   util.execute_command(line)
+   --end
+end
+
+-------------------------------------
 -- Build the package.
 --
 -- @param package
@@ -157,10 +193,7 @@ local function build_package(package)
       end
 
       -- Download package
-      for line in string.gmatch(package.build.source, ".*$") do
-         line = util.substitute_placeholders(package.definition, util.trim(line))
-         util.execute_command(line)
-      end
+      make_package_ready_for_install(package)
       
       -- Build package
       package_directory = path.join(package.build_directory, package.definition.pkg)
@@ -218,6 +251,7 @@ local function build_lmod_modulefile(package)
       lmod_file:write("local packagePrereq = pathJoin(prereq, nameVersion)\n")
       lmod_file:write("local packageName = pathJoin(prereq:gsub(\"[^/]+/[^/]+\", function (str) return str:gsub(\"/\", \"-\") end), nameVersion)\n")
    else
+      lmod_file:write("local packagePrereq = nameVersion\n")
       lmod_file:write("local packageName = nameVersion\n")
    end
 

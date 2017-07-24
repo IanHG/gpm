@@ -1,4 +1,5 @@
 stack = {
+   -- Core
    -- Gcc
    "--gpk gcc --pkv 6.3.0",
    "--gpk gcc --pkv 7.1.0",
@@ -23,6 +24,7 @@ stack = {
    "--gpk fftw --pkv 3.3.6-pl2 --prereq='compiler=gcc/7.1.0,mpi=openmpi/2.1.0'",
    "--gpk fftw --pkv 3.3.6-pl2 --prereq='compiler=gcc/7.1.0,mpi=openmpi/2.1.1'",
    
+   -- Tools
    -- Singularity
    "--gpk singularity --pkv 2.3.1",
 
