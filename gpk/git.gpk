@@ -18,8 +18,8 @@ prerequisite = {}
 -- Build section
 build = {
    -- Source of package
-   source = "https://github.com/git/git git-<pkgversion>",
-   source_type = "git"
+   source = "https://github.com/git/git",
+   source_type = "git",
    -- Build command
    command = [[
       git checkout v<pkgversion>

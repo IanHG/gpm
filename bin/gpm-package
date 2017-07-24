@@ -97,6 +97,7 @@ function main()
    end)
 
    -- Initialize specific
+   parser_initialize:option("--parentstack", "Paths to source as GPM parent stacks. Give as comma-separated list."):overwrite(false)
    
    -- Install specific
    parser_install:mutex(
