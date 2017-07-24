@@ -23,7 +23,7 @@ build = {
       wget http://www.netlib.org/lapack/lapack-<pkgversion>.tgz
       
       # Unpak
-      tar xvf <pkg>.tar.gz
+      tar xvf <pkg>.tgz
    ]],
    -- Build command
    command = [[
