@@ -18,10 +18,7 @@ prerequisite = {}
 -- Build section
 build = {
    -- Source of package
-   source = [[
-      wget https://github.com/singularityware/singularity/releases/download/<pkgversion>/singularity-<pkgversion>.tar.gz
-      tar xvf singularity-<pkgversion>.tar.gz
-   ]],
+   source = "https://github.com/singularityware/singularity/releases/download/<pkgversion>/singularity-<pkgversion>.tar.gz",
    -- Build command
    command = [[
       ./autogen.sh     # actually create configure script
@@ -34,14 +31,6 @@ build = {
 -- Lmod section
 lmod = {
    help = [[This module loads Singularity v. <pkgversion>.]],
-   prepend_path = {
-      {'PATH', 'bin'},
-      {'MANPATH', 'share/man'},
-      {'INFOPATH', 'share/info'},
-      {'LD_LIBRARY_PATH', 'lib'},
-      {'LD_RUN_PATH', 'lib'},
-      {'PKG_CONFIG_PATH', 'lib/pkgconfig'},
-   },
 }
 
 --[[

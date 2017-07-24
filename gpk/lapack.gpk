@@ -18,13 +18,7 @@ prerequisite = {"compiler"}
 -- Build section
 build = {
    -- Source of package
-   source = [[
-      # Download openmpi
-      wget http://www.netlib.org/lapack/lapack-<pkgversion>.tgz
-      
-      # Unpak
-      tar xvf <pkg>.tgz
-   ]],
+   source = "http://www.netlib.org/lapack/lapack-<pkgversion>.tgz",
    -- Build command
    command = [[
       mkdir build
@@ -40,11 +34,6 @@ build = {
 -- Lmod section
 lmod = {
    help = [[This module loads LAPACK v. <pkgversion>.]],
-   prepend_path = {
-      {'LD_LIBRARY_PATH', 'lib'},
-      {'LD_RUN_PATH', 'lib'},
-      {'PKG_CONFIG_PATH', 'lib/pkgconfig'},
-   },
 }
 
 --[[

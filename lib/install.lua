@@ -218,6 +218,84 @@ local function build_package(package)
 end
 
 -------------------------------------
+--
+--
+--
+-------------------------------------
+local function generate_prepend_path_lib(lib, prepend_path, install_directory)
+   -- Insert in paths
+   table.insert(prepend_path, {"LD_LIBRARY_PATH", lib})
+   table.insert(prepend_path, {"LD_RUN_PATH", lib})
+   
+   -- Check for pgkconfig
+   for file in lfs.dir(path.join(install_directory, lib)) do
+      if file:match("pgkconfig") then
+         table.insert(prepend_path, {"PKG_CONFIG_PATH", path.join(lib, "pgkconfig")})
+      end
+   end
+end
+
+-------------------------------------
+--
+--
+--
+-------------------------------------
+local function generate_prepend_path_share(share, prepend_path, install_directory)
+   for f in lfs.dir(path.join(install_directory, "share")) do
+      if f:match("info") then
+         table.insert(prepend_path, {"INFOPATH", "share/info"})
+      elseif f:match("man") then
+         table.insert(prepend_path, {"MANPATH", "share/man"})
+      end
+   end
+end
+
+-------------------------------------
+--
+--
+--
+-------------------------------------
+local function generate_prepend_path(package)
+   -- If .gpk provides one we just use that
+   if package.lmod.prepend_path then
+      return package.lmod.prepend_path
+   end
+
+   -- Else we try to generate one auto-magically
+   prepend_path = {}
+   install_directory = package.definition.pkginstall
+   for directory in lfs.dir(install_directory) do
+      if directory:match("bin") then
+         table.insert(prepend_path, {"PATH", "bin"})
+      elseif directory:match("include") then
+         table.insert(prepend_path, {"INCLUDE", "include"})
+      elseif directory:match("lib64") then
+         generate_prepend_path_lib("lib64", prepend_path, install_directory)
+      elseif directory:match("lib$") then
+         generate_prepend_path_lib("lib", prepend_path, install_directory)
+      elseif directory:match("share") then
+         generate_prepend_path_share("share", prepend_path, install_directory)
+      elseif directory:match("libexec") then
+         print("WTF TO DO WITH LIBEXEC??")
+      elseif directory:match("etc") then
+         print("WTF TO DO WITH ETC??")
+      elseif directory:match("var") then
+         print("WTF TO DO WITH VAR??")
+      end
+   end
+
+   -- Add any additions from .gpk
+   if package.lmod.preped_path_add then
+      for _,v in pairs(package.lmod.preped_path_add) do 
+         table.insert(prepend_path, v)
+      end
+   end
+   
+   -- At last we return the constructed prepend_path table
+   return prepend_path
+end
+
+-------------------------------------
 -- Generate Lmod script.
 --
 -- @param package
@@ -282,10 +360,9 @@ local function build_lmod_modulefile(package)
    end
    
    -- Do all prepend_path
-   if package.lmod.prepend_path then
-      for key,value in pairs(package.lmod.prepend_path) do
-         lmod_file:write("prepend_path('" .. value[1] .. "', pathJoin(installDir, '" .. value[2] .. "'))\n")
-      end
+   prepend_path = generate_prepend_path(package)
+   for key,value in pairs(prepend_path) do
+      lmod_file:write("prepend_path('" .. value[1] .. "', pathJoin(installDir, '" .. value[2] .. "'))\n")
    end
 
    -- Close file after wirting it

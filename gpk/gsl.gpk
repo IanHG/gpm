@@ -18,13 +18,7 @@ prerequisite = {"compiler"}
 -- Build section
 build = {
    -- Source of package
-   source = [[
-      # Download openmpi
-      wget ftp://ftp.gnu.org/gnu/gsl/<pkg>.tar.gz
-      
-      # Unpak
-      tar xvf <pkg>.tar.gz
-   ]],
+   source = "ftp://ftp.gnu.org/gnu/gsl/<pkg>.tar.gz",
    -- Build command
    command = [[
       # Build GSL
@@ -39,15 +33,6 @@ build = {
 -- Lmod section
 lmod = {
    help = [[This module loads GSL v. <pkgversion>.]],
-   prepend_path = {
-      {'INCLUDE', 'include'},
-      {'PATH', 'bin'},
-      {'MANPATH', 'share/man'},
-      {'INFOPATH', 'share/info'},
-      {'LD_LIBRARY_PATH', 'lib'},
-      {'LD_RUN_PATH', 'lib'},
-      {'PKG_CONFIG_PATH', 'lib/pkgconfig'},
-   },
 }
 
 --[[
