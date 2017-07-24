@@ -9,7 +9,6 @@ folder_of_this = arg[0]:match("(.-)[^\\/]+$") -- Get folder of executeable
 if folder_of_this:sub(1,1) ~= "/" then
    folder_of_this = lfs.currentdir() .. "/" .. folder_of_this
 end
-print(folder_of_this)
 package.path = folder_of_this .. '../lib/?.lua;' .. package.path -- Set package path
 local exception = require "exception"
 local path = require "path"

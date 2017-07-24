@@ -1,6 +1,7 @@
 local lfs = require "lfs"
 
 local util = require "util"
+local path = require "path"
 
 M = {}
 
@@ -146,8 +147,8 @@ end
 local function make_package_ready_for_install(package)
    -- Get/download the package
    source = util.substitute_placeholders(package.definition, package.build.source)
-   source_extension = path.extension(source)
-   destination = package.definition.pkg .. source_extension
+   source_path, source_file, source_ext = path.split_filename(source)
+   destination = package.definition.pkg .. "." .. source_ext
    
    if package.build.source_type == "git" then
       line = "git clone " .. source .. " " .. package.definition.pkg
@@ -162,9 +163,13 @@ local function make_package_ready_for_install(package)
       
       -- Unpak package
       -- If tar file untar
-      is_tar_gz = string.gmatch(extension, "tar.gz") or string.gmatch(source, "tgz")
+      is_tar_gz = string.gmatch(source_file, "tar.gz") or string.gmatch(source_file, "tgz")
+      is_tar_bz = string.gmatch(source_file, "tar.bz2")
       if is_tar_gz then
          line = "tar -xvf " .. destination
+         util.execute_command(line)
+      elseif is_tar_bz then
+         line = "tar -jxvf " .. destination
          util.execute_command(line)
       end
    end

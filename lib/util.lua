@@ -65,6 +65,7 @@ end
 -- @return{Boolean}
 -------------------------------------
 local function execute_command(command)
+   print("EXECUTING COMMAND : ", command)
    bool, flag, status = os.execute(command)
 
    if not bool then
