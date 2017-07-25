@@ -38,14 +38,6 @@ build = {
 -- Lmod section
 lmod = {
    help = [[This module loads a newer version of gcc than the system default.]],
-   --prepend_path = {
-   --   {'PATH', 'bin'},
-   --   {'MANPATH', 'share/man'},
-   --   {'INFOPATH', 'share/info'},
-   --   {'LD_LIBRARY_PATH', 'lib64'},
-   --   {'LD_RUN_PATH', 'lib64'},
-   --   {'PKG_CONFIG_PATH', 'lib/pkgconfig'},
-   --},
 }
 
 --[[

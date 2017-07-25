@@ -74,7 +74,7 @@ local function create_shell_environment(args)
       bin_file:write("export MODULEPATH=\"" .. modulepath .. "\"\n")
       bin_file:write("\n")
       bin_file:write("# Source lmod \n")
-      bin_file:write("source ".. path.join(config.install_directory, "lmod/lmod/init/profile") .. "\n")
+      bin_file:write(". ".. path.join(config.install_directory, "lmod/lmod/init/profile") .. "\n")
    end
 
    bin_file:close()
