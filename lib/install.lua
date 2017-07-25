@@ -229,8 +229,8 @@ local function generate_prepend_path_lib(lib, prepend_path, install_directory)
    
    -- Check for pgkconfig
    for file in lfs.dir(path.join(install_directory, lib)) do
-      if file:match("pgkconfig") then
-         table.insert(prepend_path, {"PKG_CONFIG_PATH", path.join(lib, "pgkconfig")})
+      if file:match("pkgconfig") then
+         table.insert(prepend_path, {"PKG_CONFIG_PATH", path.join(lib, "pkgconfig")})
       end
    end
 end
@@ -276,11 +276,11 @@ local function generate_prepend_path(package)
       elseif directory:match("share") then
          generate_prepend_path_share("share", prepend_path, install_directory)
       elseif directory:match("libexec") then
-         print("WTF TO DO WITH LIBEXEC??")
+         -- do nothing
       elseif directory:match("etc") then
-         print("WTF TO DO WITH ETC??")
+         -- do nothing
       elseif directory:match("var") then
-         print("WTF TO DO WITH VAR??")
+         -- do nothing
       end
    end
 
