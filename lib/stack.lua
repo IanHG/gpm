@@ -39,6 +39,15 @@ local function stack(args)
       
       -- Build the stack
       command = arg[0] .. " --config " .. args.config .. " install "
+      
+      if args.no_build then
+         command = command .. "--no-build "
+      end
+
+      if args.no_lmod then
+         command = command .. "--no-lmod "
+      end
+
       for key, value in pairs(stack) do
          util.execute_command(command .. value)
       end

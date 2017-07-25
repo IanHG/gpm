@@ -62,7 +62,7 @@ local function create_shell_environment(args)
       end
       bin_file:write("\n")
       bin_file:write("# Setup module paths\n")
-      -- bin_file:write("export MODULEPATH_ROOT=$MODULEPATH_ROOT:\"" .. modulepath_root .. "\"\n")
+      bin_file:write("export MODULEPATH_ROOT=$MODULEPATH_ROOT:\"" .. modulepath_root .. "\"\n")
       bin_file:write("export MODULEPATH=$MODULEPATH:\"" .. modulepath .. "\"\n")
    else
       bin_file:write("#\n")

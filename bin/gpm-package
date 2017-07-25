@@ -118,6 +118,8 @@ function main()
       parser_stack:option("--gpsf", "GPM Stack (GPS) file to install."):overwrite(false)
    )
    parser_stack:flag("--cleanup", "Cleanup by removing build directory after build is complete.")
+   parser_stack:flag("--no-build", "Do not build packages.")
+   parser_stack:flag("--no-lmod", "Do not create Lmod scripts.")
    
    -- Parse arguments
    args = parser:parse()
