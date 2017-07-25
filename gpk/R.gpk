@@ -1,0 +1,39 @@
+-- R gpk script
+
+-- Description of the gpk
+description = [[
+R statistical package.
+]]
+
+-- Definition section
+definition = {
+   pkgname = "R",
+   pkggroup = "tools",
+   pkgfamily = "R",
+}
+
+-- Required types
+prerequisite = { }
+
+-- Build section
+build = {
+   -- Source of package
+   source = "http://mirrors.dotsrc.org/cran/src/base/R-<pkgmajor>/<pkg>.tar.gz",
+   -- Build command
+   command = [[
+      # Build R
+      ./configure --prefix=<pkginstall> --with-x=no
+      
+      make -j<nprocesses>
+      make install
+   ]],
+}
+
+-- Lmod section
+lmod = {
+   help = [[This module loads R version <pkgversion>.]],
+}
+
+--[[
+# vi:syntax=lua
+--]]
