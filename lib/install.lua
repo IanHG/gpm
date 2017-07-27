@@ -8,7 +8,7 @@ M = {}
 -------------------------------------
 -- Read GPM package file (GPK).
 --
--- @return{Dictionary} Returns definition og build.
+-- @return{Table} Returns definition of build.
 -------------------------------------
 local function bootstrap_package(args)
    if args.debug then
@@ -141,8 +141,15 @@ end
 
 
 -------------------------------------
---
+-- Make the package files ready for installation.
+-- This includes getting the package, either downloaded from a remote location or 
+-- copied from a local file. 
+-- Also unpacks the source if it is zipped or tarball.
+-- When the function has run, there should be a directory with the package source
+-- with the name of the package, e.g. gcc-6.3.0.
+-- This directory is used to build the package.
 -- 
+-- @param{Table}  package   The package we are installing.
 -------------------------------------
 local function make_package_ready_for_install(package)
    -- Get/download the package
@@ -158,6 +165,9 @@ local function make_package_ready_for_install(package)
       is_http_or_ftp = string.gmatch(source, "http://") or string.gmatch(source, "https://") or string.gmatch(source, "ftp://")
       if is_http_or_ftp then
          line = "wget -O " .. destination .. " " .. source
+         util.execute_command(line)
+      else -- we assume local file
+         line = "cp " .. source .. " " .. destination
          util.execute_command(line)
       end
       
@@ -181,9 +191,11 @@ local function make_package_ready_for_install(package)
 end
 
 -------------------------------------
--- Build the package.
+-- Build the package. 
+-- This includes downloading the source, and making files ready for install,
+-- loading all needed modules and in the end building the current package.
 --
--- @param package
+-- @param{Table} package   The package to install.
 -------------------------------------
 local function build_package(package)
    if package.build then
@@ -218,9 +230,15 @@ local function build_package(package)
 end
 
 -------------------------------------
+-- Helper function to generate prepend_path for lmod.
+-- This function will handle exports for directories named "lib" or "lib64.
+-- It will export both to LD_LIBRARY_PATH and LD_RUN_PATH.
+-- It will look for a directory called pkgconfig, which it will add to
+-- PKG_CONFIG_PATH if found.
 --
---
---
+-- @param{String}  lib                 "lib" or "lib64".
+-- @param{Table}   prepend_path        Will be appended with new paths for lmod to prepend.
+-- @param{String}  install_directory   The directory.
 -------------------------------------
 local function generate_prepend_path_lib(lib, prepend_path, install_directory)
    -- Insert in paths
@@ -236,9 +254,14 @@ local function generate_prepend_path_lib(lib, prepend_path, install_directory)
 end
 
 -------------------------------------
+-- Helper function to generate prepend_path for lmod.
+-- This function will handle exports for "share" directory.
+-- Will look for "info" and "man", and if found will prepend to
+-- "INFOPATH" and "MANPATH" respectively.
 --
---
---
+-- @param{String}  share               Always "share" (for now).
+-- @param{Table}   prepend_path        Will be appended with new paths for lmod to prepend.
+-- @param{String}  install_directory   The directory.
 -------------------------------------
 local function generate_prepend_path_share(share, prepend_path, install_directory)
    for f in lfs.dir(path.join(install_directory, "share")) do
@@ -251,9 +274,10 @@ local function generate_prepend_path_share(share, prepend_path, install_director
 end
 
 -------------------------------------
+-- Will automatically generate a table of paths the lmod script should prepend.
+-- This is done based on the directories present in the install directory for the package.
 --
---
---
+-- @param{Table}  package  The package we are installing.
 -------------------------------------
 local function generate_prepend_path(package)
    -- If .gpk provides one we just use that
@@ -296,11 +320,9 @@ local function generate_prepend_path(package)
 end
 
 -------------------------------------
--- Generate Lmod script.
+-- Generate Lmod script for package, and place in the correct place.
 --
--- @param package
---
--- @return{Boolean}
+-- @param{Table} package  The package we are installing.
 -------------------------------------
 local function build_lmod_modulefile(package)
    lmod_filename = path.join(package.build_directory, package.definition.pkgversion .. ".lua")
@@ -345,7 +367,7 @@ local function build_lmod_modulefile(package)
    end
    
    lmod_file:write("\n")
-   lmod_file:write("-- Compiler optional modules setup\n")
+   lmod_file:write("-- Optional modules setup\n")
    lmod_file:write("local dir = pathJoin(fam, packagePrereq)\n")
    lmod_file:write("for str in os.getenv(\"MODULEPATH_ROOT\"):gmatch(\"([^:]+)\") do\n")
    lmod_file:write("   prepend_path('MODULEPATH', pathJoin(str, dir))\n")
