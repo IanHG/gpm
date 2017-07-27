@@ -1,11 +1,11 @@
-#!/usr/bin/lua
-
 local util = require "util"
 
 local M = {}
 
 -------------------------------------
--- 
+-- Bootstrap stack command.
+--
+-- @param{Table} args   The commandline arguments.
 -------------------------------------
 local function bootstrap_stack(args)
    -- Load package file
@@ -29,7 +29,9 @@ local function bootstrap_stack(args)
 end
 
 -------------------------------------
--- Main driver.
+-- Install a whole software stack.
+--
+-- @param{Table} args   The commandline arguments.
 -------------------------------------
 local function stack(args)
    -- Try
@@ -53,7 +55,7 @@ local function stack(args)
       end
    end, function (e)
       exception.message(e)
-      print("\n" .. parser:get_usage())
+      error(e)
    end)
 end
 

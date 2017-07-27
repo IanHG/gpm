@@ -448,6 +448,7 @@ local function install(args)
    end)
 end
 
+M.bootstrap_package = bootstrap_package
 M.install = install
 
 return M

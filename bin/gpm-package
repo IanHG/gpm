@@ -16,6 +16,7 @@ local version = require "version"
 local stack = require "stack"
 local install = require "install"
 local initializer = require "initialize"
+local remove = require "remove"
 local util = require "util"
 
 -- Description of this script
@@ -83,7 +84,7 @@ function main()
    local parser = argparse(description.script_name, description.name .. ":\n" .. description.desc)
    
    -- Commands
-   local parser_initialize = parser:command("initialize") -- Initialize a Lmod setup
+   local parser_initialize = parser:command("initialize") 
    local parser_install = parser:command("install")
    local parser_remove = parser:command("remove")
    local parser_stack = parser:command("stack")
@@ -111,6 +112,13 @@ function main()
    parser_install:flag("--cleanup", "Cleanup by removing build directory after build is complete.")
 
    -- Remove specific
+   parser_remove:mutex(
+      parser_remove:option("--gpk" , "GPM Package (GPK) to install/remove (will look for .gpk file)."):overwrite(false),
+      parser_remove:option("--gpkf", "GPM Package (GPK) file to install/remove."):overwrite(false)
+   )
+   parser_remove:option("--pkv", "Set Package Version (PKV) of the package to install/remove."):overwrite(false)
+   parser_remove:option("--purge", "Remove package binaries.")
+   parser_remove:option("--purgeall", "Remove package binaries and all package binaries hierarchically dependent on this package.")
    
    -- Stack specific
    parser_stack:mutex(
@@ -140,7 +148,7 @@ function main()
          install.install(args)
       elseif args.remove then
          -- Remove Command
-         error("REMOVE NOT IMPLEMENTED YET :C")
+         remove.remove(args)
       elseif args.stack then
          -- Stack command
          stack.stack(args)
