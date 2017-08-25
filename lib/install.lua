@@ -6,6 +6,25 @@ local path = require "path"
 M = {}
 
 -------------------------------------
+-- Check package validity.
+--
+-- @param{Table} 
+--
+-- @return{bool, String} Return true if package is valid, and false otherwise. 
+--                       If false a string describing the error is also returned.
+-------------------------------------
+local function check_package_is_valid(package)
+   if not package.nomodulesource then
+      if not package.build.source then
+         return false, "No source"
+      end
+   end
+   
+   -- If we reach here package is valid and ready for installation
+   return true, "Success"
+end
+
+-------------------------------------
 -- Read GPM package file (GPK).
 --
 -- @return{Table} Returns definition of build.
@@ -38,6 +57,9 @@ local function bootstrap_package(args)
    package.definition = definition
    if build then
       package.build = build
+      if args.source then
+         package.build.source = args.source
+      end
    end
    if lmod then
       package.lmod = lmod
@@ -85,6 +107,7 @@ local function bootstrap_package(args)
    end
    build_directory = build_directory .. package.definition.pkg
    package.build_directory = path.join(config.base_build_directory, build_directory)
+   package.definition.pkgbuild = package.build_directory
    
    if package.definition.pkggroup then
       pkginstall = path.join(config.install_directory, package.definition.pkggroup)
@@ -136,9 +159,31 @@ local function bootstrap_package(args)
       package.nomodulesource = args.nomodulesource
    end
 
+   -- check package validity
+   check, reason = check_package_is_valid(package)
+   if not check then
+      error("Package not valid: " .. reason)
+   end
+
+   -- return package
    return package
 end
 
+-------------------------------------
+-- Create file with name and content.
+--
+-- @param{String} name     The name of the file.
+-- @param{String} content  File content.
+-------------------------------------
+local function create_file(name, content, package)
+   name = util.substitute_placeholders(package.definition, name)
+   name = path.join(package.build_directory, name)
+   content = util.substitute_placeholders(package.definition, content)
+   
+   cfile = io.open(name, "w")
+   cfile:write(content)
+   cfile:close()
+end
 
 -------------------------------------
 -- Make the package files ready for installation.
@@ -152,17 +197,27 @@ end
 -- @param{Table}  package   The package we are installing.
 -------------------------------------
 local function make_package_ready_for_install(package)
+   -- Create files defined in .gpk
+   for _,f in pairs(package.build.files) do
+      create_file(f[1], f[2], package)
+   end
+   
    -- Get/download the package
    source = util.substitute_placeholders(package.definition, package.build.source)
    source_path, source_file, source_ext = path.split_filename(source)
+   source_file_strip = string.gsub(source_file, "%." .. source_ext, "")
    destination = package.definition.pkg .. "." .. source_ext
+   print(source_file_strip)
    
    if package.build.source_type == "git" then
       line = "git clone " .. source .. " " .. package.definition.pkg
       util.execute_command(line)
    else
       -- if ftp or http download with wget
-      is_http_or_ftp = string.gmatch(source, "http://") or string.gmatch(source, "https://") or string.gmatch(source, "ftp://")
+      print("source:")
+      print(source)
+      is_http_or_ftp = string.match(source, "http://") or string.match(source, "https://") or string.match(source, "ftp://")
+      print(is_http_or_ftp)
       if is_http_or_ftp then
          line = "wget -O " .. destination .. " " .. source
          util.execute_command(line)
@@ -173,10 +228,12 @@ local function make_package_ready_for_install(package)
       
       -- Unpak package
       -- If tar file untar
-      is_tar_gz = string.gmatch(source_file, "tar.gz") or string.gmatch(source_file, "tgz")
-      is_tar_bz = string.gmatch(source_file, "tar.bz2")
+      is_tar_gz = string.match(source_file, "tar.gz") or string.match(source_file, "tgz")
+      print("IS TGZ")
+      print(is_tar_gz)
+      is_tar_bz = string.match(source_file, "tar.bz2")
       if is_tar_gz then
-         line = "tar -xvf " .. destination
+         line = "tar -xvf " .. destination .. " --transform 's/" .. source_file_strip .. "/" .. package.definition.pkg .. "/'"
          util.execute_command(line)
       elseif is_tar_bz then
          line = "tar -jxvf " .. destination
