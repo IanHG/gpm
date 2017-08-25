@@ -327,6 +327,7 @@ end
 -------------------------------------
 local function generate_prepend_path_lib(lib, prepend_path, install_directory)
    -- Insert in paths
+   table.insert(prepend_path, {"LIBRARY_PATH", lib})
    table.insert(prepend_path, {"LD_LIBRARY_PATH", lib})
    table.insert(prepend_path, {"LD_RUN_PATH", lib})
    
