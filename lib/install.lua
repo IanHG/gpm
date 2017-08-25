@@ -186,6 +186,29 @@ local function create_file(name, content, package)
 end
 
 -------------------------------------
+-- Split filepath into path, filename, and file extension.
+-- Special care needs to be taken for "tar.gz" etc. as 
+-- path.split_filename only takes what comes after the last '.' as the extension.
+--
+-- @param{String} filepath    The path to split.
+-- 
+-- @return{String,String,String}  Returns path, filename, and extension.
+-------------------------------------
+local function split_filename(filepath)
+   source_path, source_file, source_ext = path.split_filename(source)
+   
+   is_tar_gz = string.match(source_file, "tar.gz")
+   is_tar_bz = string.match(source_file, "tar.bz2")
+   if is_tar_gz then
+      source_ext = "tar.gz"
+   elseif is_tar_bz then
+      source_ext = "tar.bz2"
+   end
+
+   return source_path, source_file, source_ext
+end
+
+-------------------------------------
 -- Make the package files ready for installation.
 -- This includes getting the package, either downloaded from a remote location or 
 -- copied from a local file. 
@@ -198,13 +221,15 @@ end
 -------------------------------------
 local function make_package_ready_for_install(package)
    -- Create files defined in .gpk
-   for _,f in pairs(package.build.files) do
-      create_file(f[1], f[2], package)
+   if package.build.files then
+      for _,f in pairs(package.build.files) do
+         create_file(f[1], f[2], package)
+      end
    end
    
    -- Get/download the package
    source = util.substitute_placeholders(package.definition, package.build.source)
-   source_path, source_file, source_ext = path.split_filename(source)
+   source_path, source_file, source_ext = split_filename(source)
    source_file_strip = string.gsub(source_file, "%." .. source_ext, "")
    destination = package.definition.pkg .. "." .. source_ext
    print(source_file_strip)
@@ -234,9 +259,12 @@ local function make_package_ready_for_install(package)
       is_tar_bz = string.match(source_file, "tar.bz2")
       if is_tar_gz then
          line = "tar -xvf " .. destination .. " --transform 's/" .. source_file_strip .. "/" .. package.definition.pkg .. "/'"
+         print(source_file_strip)
+         print(package.definition.pkg)
          util.execute_command(line)
       elseif is_tar_bz then
-         line = "tar -jxvf " .. destination
+         --line = "tar -jxvf " .. destination
+         line = "tar -jxvf " .. destination .. " --transform 's/" .. source_file_strip .. "/" .. package.definition.pkg .. "/'"
          util.execute_command(line)
       end
    end

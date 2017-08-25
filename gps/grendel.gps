@@ -11,8 +11,8 @@ stack = {
    "--gpk openmpi --pkv 2.1.0 --prereq='compiler=gcc/7.1.0'",
    
    -- GSL
-   "--gpk gsl --pkv 2.4 --prereq='compiler=gcc/6.3.0'",
-   "--gpk gsl --pkv 2.4 --prereq='compiler=gcc/7.1.0'",
+   -- "--gpk gsl --pkv 2.4 --prereq='compiler=gcc/6.3.0'",
+   -- "--gpk gsl --pkv 2.4 --prereq='compiler=gcc/7.1.0'",
    
    -- Lapack
    "--gpk lapack --pkv 3.7.1 --prereq='compiler=gcc/6.3.0'",
