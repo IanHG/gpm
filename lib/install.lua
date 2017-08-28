@@ -465,14 +465,16 @@ local function build_lmod_modulefile(package)
    -- Do all setenv
    if package.lmod.setenv then
       for key,value in pairs(package.lmod.setenv) do
-         lmod_file:write("setenv('" .. value[1] .. "', pathJoin(installDir, '" .. value[2] .. "'))\n")
+         dir = util.substitute_placeholders(package.definition, value[2])
+         lmod_file:write("setenv('" .. value[1] .. "', pathJoin(installDir, '" .. dir .. "'))\n")
       end
    end
    
    -- Do all prepend_path
    prepend_path = generate_prepend_path(package)
    for key,value in pairs(prepend_path) do
-      lmod_file:write("prepend_path('" .. value[1] .. "', pathJoin(installDir, '" .. value[2] .. "'))\n")
+      dir = util.substitute_placeholders(package.definition, value[2])
+      lmod_file:write("prepend_path('" .. value[1] .. "', pathJoin(installDir, '" .. dir .. "'))\n")
    end
 
    -- Close file after wirting it
