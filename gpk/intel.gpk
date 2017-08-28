@@ -91,6 +91,43 @@ ARCH_SELECTED=ALL
 -- Lmod section
 lmod = {
    help = [[This module loads the Intel compiler suite.]],
+   -- Set envs
+   setenv = {
+      {"INTEL_LICENCE_FILE", "licenses"},
+      {"MKLROOT", "mkl"},
+      {"DALLROOT", "daal"},
+      {"I_MPI_ROOT", "mpi"},
+      {"IPPROOT", "ipp"},
+      {"TBBROOT", "tbb"},
+      {"INCLUDE", "mkl/include"},
+   },
+   -- Prepend paths
+   prepend_path = {
+      -- CPATH
+      {"CPATH", "compilers_and_libraries_<pkgversion>/linux/ipp/include"},
+      {"CPATH", "compilers_and_libraries_<pkgversion>/linux/mkl/include"},
+      {"CPATH", "compilers_and_libraries_<pkgversion>/linux/tbb/include"},
+      {"CPATH", "compilers_and_libraries_<pkgversion>/linux/daal/include"},
+      -- LD_LIBRARY_PATH
+      {"LD_LIBRARY_PATH", "compilers_and_libraries_<pkgversion>/linux/compiler/lib/intel64"},
+      {"LD_LIBRARY_PATH", "compilers_and_libraries_<pkgversion>/linux/mpi/intel64/lib"},
+      {"LD_LIBRARY_PATH", "compilers_and_libraries_<pkgversion>/linux/mpi/mic/lib"},
+      {"LD_LIBRARY_PATH", "compilers_and_libraries_<pkgversion>/linux/ipp/lib/intel64"},
+      {"LD_LIBRARY_PATH", "compilers_and_libraries_<pkgversion>/linux/mkl/lib/intel64_lin"},
+      {"LD_LIBRARY_PATH", "compilers_and_libraries_<pkgversion>/linux/tbb/lib/intel64/gcc4.4"},
+      {"LD_LIBRARY_PATH", "compilers_and_libraries_<pkgversion>/linux/daal/lib/intel64_lin"},
+      {"LD_LIBRARY_PATH", "compilers_and_libraries_<pkgversion>/linux/daal/../tbb/lib/intel64_lin/gcc4.4"},
+      -- LIBRARY_PATH
+      {"LIBRARY_PATH", "compilers_and_libraries_<pkgversion>/linux/ipp/lib/intel64"},
+      {"LIBRARY_PATH", "compilers_and_libraries_<pkgversion>/linux/compiler/lib/intel64"},
+      {"LIBRARY_PATH", "compilers_and_libraries_<pkgversion>/linux/mkl/lib/intel64_lin"},
+      {"LIBRARY_PATH", "compilers_and_libraries_<pkgversion>/linux/tbb/lib/intel64/gcc4.4"},
+      {"LIBRARY_PATH", "compilers_and_libraries_<pkgversion>/linux/daal/lib/intel64_lin"},
+      {"LIBRARY_PATH", "compilers_and_libraries_<pkgversion>/linux/daal/../tbb/lib/intel64_lin/gcc4.4"},
+      -- PATH
+      {"PATH", "compilers_and_libraries_<pkgversion>/linux/bin/intel64"},
+      {"PATH", "compilers_and_libraries_<pkgversion>/linux/mpi/intel64/bin"},
+   },
 }
 
 --[[
