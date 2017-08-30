@@ -256,7 +256,7 @@ local function make_package_ready_for_install(package)
       is_tar_gz = string.match(source_file, "tar.gz") or string.match(source_file, "tgz")
       print("IS TGZ")
       print(is_tar_gz)
-      is_tar_bz = string.match(source_file, "tar.bz2")
+      is_tar_bz = string.match(source_file, "tar.bz2") or string.match(source_file, "tbz2")
       if is_tar_gz then
          line = "tar -xvf " .. destination .. " --transform 's/" .. source_file_strip .. "/" .. package.definition.pkg .. "/'"
          print(source_file_strip)

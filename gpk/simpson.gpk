@@ -1,0 +1,35 @@
+-- SIMPSON gpk script
+
+-- Description of the gpk
+description = [[
+SIMPSON NMR program.
+]]
+
+-- Definition section
+definition = {
+   pkgname = "simpson",
+   pkggroup = "tools",
+   pkgfamily = "simpson",
+}
+
+-- Required types
+prerequisite = { }
+
+-- Build section
+build = {
+   -- Source of package
+   source = "http://nmr.au.dk/fileadmin/user_upload/Simpson_Setup_Linux_<pkgversion>.tbz2",
+   -- Build command
+   command = [[
+      ./install.sh --noroot --bindir=<pkginstall>/bin --libdir=<pkginstall>/lib
+   ]]
+}
+
+-- Lmod section
+lmod = {
+   help = [[ This module loads SIMPSON NMR. ]]
+}
+
+--[[
+# vi:syntax=lua
+--]]
