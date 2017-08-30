@@ -59,9 +59,17 @@ local function bootstrap_config(args, default_config)
    if args.debug then
       print("Bootstrapping config.")
    end
-
+   
+   -- Make sure we have a config
    if not args.config then
-      args.config = path.join(config.current_directory, "config.lua")
+      -- If none was given we check for the environtment one.
+      config_path = os.getenv("GPM_CONFIG")
+      if config_path then
+         args.config = config_path
+      else
+         -- If enviroment config wasn't found, we check current directory
+         args.config = path.join(config.current_directory, "config.lua")
+      end
    end
 
    assert(loadfile(args.config))()

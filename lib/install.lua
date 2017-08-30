@@ -118,7 +118,12 @@ local function bootstrap_package(args)
       end
       pkginstall = path.join(path.join(pkginstall, package.definition.pkgname), package.definition.pkgversion)
    else
-      pkginstall = config.install_directory
+      -- Special care for lmod
+      if package.definition.pkgname == "lmod" then
+         pkginstall = config.install_directory
+      else
+         pkginstall = path.join(path.join(config.install_directory, package.definition.pkgname), package.definition.pkgversion)
+      end
    end
    package.definition.pkginstall = pkginstall
    

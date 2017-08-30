@@ -7,6 +7,45 @@ local install = require "install"
 
 M = {}
 
+-------------------------------------
+-- Install luarocks package manager
+-------------------------------------
+local function install_luarocks(args)
+   args.gpk = "luarocks"
+   args.pkv = "2.4.1"
+   args.nomodulesource = true
+
+   install.install(args)
+end
+
+-------------------------------------
+-- 
+-------------------------------------
+local function install_luapackages(args, packages_to_install)
+   install_luarocks(args)
+
+   for _,v in pairs(packages_to_install) do
+      print(v)
+   end
+end
+
+-------------------------------------
+-- 
+-------------------------------------
+local function check_luapackages(args)
+   packages_to_install = {}
+   -- Try posix (needed for Lmod)
+   exception.try(function()
+      local posix = require "posix"
+   end, function(e)
+      packages_to_install[#packages_to_install + 1] = "luaposix"
+   end)
+   
+   -- Install needed packages
+   if #packages_to_install then
+      install_luapackages(args, packages_to_install)
+   end
+end
 
 -------------------------------------
 -- Install lmod
@@ -53,7 +92,7 @@ local function create_shell_environment(args)
    if modulepath[-1] == ":" then
       modulepath = modulepath.sub(1, -2)
    end
-
+   
    if args.parentstack then
       parentstack_split = util.split(args.parentstack, ",")
       bin_file:write("# Source parent stacks\n")
@@ -77,6 +116,10 @@ local function create_shell_environment(args)
       bin_file:write(". ".. path.join(config.install_directory, "lmod/lmod/init/profile") .. "\n")
    end
 
+   bin_file:write("\n")
+   bin_file:write("#Export config path\n")
+   bin_file:write("export GPM_CONFIG=\"" .. path.join(config.install_directory, args.config) .. "\"\n")
+
    bin_file:close()
 end
 
@@ -95,6 +138,9 @@ local function initialize(args)
       if not lfs.attributes(config.base_build_directory) then
          lfs.mkdir(config.base_build_directory)
       end
+
+      -- Check that required luapackages exist
+      --check_luapackages(args)
       
       -- Install lmod if needed
       install_lmod(args)
