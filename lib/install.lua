@@ -246,31 +246,35 @@ local function make_package_ready_for_install(package)
       -- if ftp or http download with wget
       print("source:")
       print(source)
-      is_http_or_ftp = string.match(source, "http://") or string.match(source, "https://") or string.match(source, "ftp://")
-      print(is_http_or_ftp)
-      if is_http_or_ftp then
-         line = "wget -O " .. destination .. " " .. source
-         util.execute_command(line)
-      else -- we assume local file
-         line = "cp " .. source .. " " .. destination
-         util.execute_command(line)
+      if not lfs.attributes(path.join(package.build_directory, destination), 'mode') then
+         is_http_or_ftp = string.match(source, "http://") or string.match(source, "https://") or string.match(source, "ftp://")
+         print(is_http_or_ftp)
+         if is_http_or_ftp then
+            line = "wget -O " .. destination .. " " .. source
+            util.execute_command(line)
+         else -- we assume local file
+            line = "cp " .. source .. " " .. destination
+            util.execute_command(line)
+         end
       end
       
       -- Unpak package
       -- If tar file untar
-      is_tar_gz = string.match(source_file, "tar.gz") or string.match(source_file, "tgz")
-      print("IS TGZ")
-      print(is_tar_gz)
-      is_tar_bz = string.match(source_file, "tar.bz2") or string.match(source_file, "tbz2")
-      if is_tar_gz then
-         line = "tar -xvf " .. destination .. " --transform 's/" .. source_file_strip .. "/" .. package.definition.pkg .. "/'"
-         print(source_file_strip)
-         print(package.definition.pkg)
-         util.execute_command(line)
-      elseif is_tar_bz then
-         --line = "tar -jxvf " .. destination
-         line = "tar -jxvf " .. destination .. " --transform 's/" .. source_file_strip .. "/" .. package.definition.pkg .. "/'"
-         util.execute_command(line)
+      if not lfs.attributes(path.join(package.build_directory, package.definition.pkg), 'mode') then
+         is_tar_gz = string.match(source_file, "tar.gz") or string.match(source_file, "tgz")
+         print("IS TGZ")
+         print(is_tar_gz)
+         is_tar_bz = string.match(source_file, "tar.bz2") or string.match(source_file, "tbz2")
+         if is_tar_gz then
+            line = "tar -xvf " .. destination .. " --transform 's/" .. source_file_strip .. "/" .. package.definition.pkg .. "/'"
+            print(source_file_strip)
+            print(package.definition.pkg)
+            util.execute_command(line)
+         elseif is_tar_bz then
+            --line = "tar -jxvf " .. destination
+            line = "tar -jxvf " .. destination .. " --transform 's/" .. source_file_strip .. "/" .. package.definition.pkg .. "/'"
+            util.execute_command(line)
+         end
       end
    end
 
