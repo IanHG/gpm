@@ -1,0 +1,42 @@
+-- Singularity gpk script
+
+-- Description of the gpk
+description = [[
+ABINIT is a package whose main program allows one to find the total energy, charge density and electronic structure of systems made of electrons and nuclei (molecules and periodic solids) within Density Functional Theory (DFT), 
+using pseudopotentials (or PAW atomic data) and a planewave basis. ABINIT also optimize the geometry according to the DFT forces and stresses, or perform molecular dynamics simulations using these forces, or generate phonons, Born effective charges, 
+and dielectric tensors, based on Density-Functional Perturbation Theory, 
+and many more properties. Excited states and spectra can be computed within the Many-Body Perturbation Theory (the GW approximation and the Bethe-Salpeter equation). 
+DFT+U and Dynamical mean-field theory are available for strongly correlated materials. 
+In addition to the main ABINIT code, different utility programs are provided.
+]]
+
+-- Definition section
+definition = {
+   pkgname = "abinit",
+   pkggroup = "apps",
+   pkgfamily = "abinit",
+}
+
+-- Required types
+prerequisite = {}
+
+-- Build section
+build = {
+   -- Source of package
+   source = "https://www.abinit.org/sites/default/files/packages/abinit-<pkgversion>.tar.gz",
+   -- Build command
+   command = [[
+      ./configure --prefix=<pkginstall> --disable-dependency-tracking
+      make -j<nprocesses>
+      make install
+   ]],
+}
+
+-- Lmod section
+lmod = {
+   help = [[This module loads ABINIT v. <pkgversion>.]],
+}
+
+--[[
+# vi:syntax=lua
+--]]

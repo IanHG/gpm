@@ -146,6 +146,11 @@ local function ordered(t)
    return iter, t
 end
 
+local function conditional(condition, if_true, if_false)
+   if condition then return if_true else return if_false end
+end
+
+
 -- Load module functions
 M.print = table_print
 M.merge = merge
@@ -157,5 +162,6 @@ M.split = split
 M.trim = trim
 M.ordered_table = ordered_table
 M.ordered = ordered
+M.conditional = conditional
 
 return M

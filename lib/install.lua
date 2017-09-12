@@ -2,6 +2,7 @@ local lfs = require "lfs"
 
 local util = require "util"
 local path = require "path"
+local filesystem = require "filesystem"
 
 M = {}
 
@@ -160,9 +161,12 @@ local function bootstrap_package(args)
    
    -- Miscellaneous (spellcheck? :) )
    package.definition.nprocesses = config.nprocesses
-   if args.nomodulesource then
-      package.nomodulesource = args.nomodulesource
-   end
+   --if args.nomodulesource then
+   --   package.nomodulesource = args.nomodulesource
+   --end
+   package.nomodulesource = util.conditional(args.nomodulesource, args.nomodulesource, false)
+   package.forcedownload  = util.conditional(args.force_download, args.force_download, false)
+   package.forceunpack    = util.conditional(args.force_unpack  , args.force_unpack  , false)
 
    -- check package validity
    check, reason = check_package_is_valid(package)
@@ -246,6 +250,9 @@ local function make_package_ready_for_install(package)
       -- if ftp or http download with wget
       print("source:")
       print(source)
+      if package.forcedownload then
+         filesystem.remove(path.join(package.build_directory, destination))
+      end
       if not lfs.attributes(path.join(package.build_directory, destination), 'mode') then
          is_http_or_ftp = string.match(source, "http://") or string.match(source, "https://") or string.match(source, "ftp://")
          print(is_http_or_ftp)
@@ -260,6 +267,9 @@ local function make_package_ready_for_install(package)
       
       -- Unpak package
       -- If tar file untar
+      if package.forceunpack then
+         filesystem.rmdir(path.join(package.build_directory, package.definition.pkg), true)
+      end
       if not lfs.attributes(path.join(package.build_directory, package.definition.pkg), 'mode') then
          is_tar_gz = string.match(source_file, "tar.gz") or string.match(source_file, "tgz")
          print("IS TGZ")
@@ -530,9 +540,9 @@ local function install(args)
       lfs.chdir(config.current_directory)
       
       -- Remove build dir
-      if args.cleanup then
-         status, msg = lfs.rmdir(build_directory)
-         print("Did not remove build directory. Reason : '" .. msg .. "'.") 
+      if args.purgebuild then
+         filesystem.rmdir(build_directory, true)
+         -- print("Did not remove build directory. Reason : '" .. msg .. "'.") 
       end
    end, function(e)
       --[[
