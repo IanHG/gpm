@@ -7,8 +7,11 @@ local path  = require "path"
 --- Remove a file.
 --
 -- @param path   The path of the file.
+--
+-- @return    Returns status and message if remove failed.
 local function remove(path)
-   os.remove(path)
+   local status, msg = os.remove(path)
+   return status, msg
 end
 
 --- Create a symbolic link.
@@ -38,16 +41,14 @@ end
 -- @param path          The path of the directory.
 -- @param recursively   Do the remove recursively, i.e. if the directory is not empty remove the contents.
 --
--- @return   Returns whether the removal was succesful or not.
+-- @return   Returns whether the removal was succesful or not, and a message if it failed.
 local function rmdir(path, recursively)
-   --print("HERE " .. path .. "   " .. lfs.attributes(path, "mode"))
+   -- Check that directory actually exists
    if not (lfs.attributes(path, "mode") == "directory") then 
-      print("LOL " .. path)
       return true
    end
    
-   print("TRYING TO " .. path)
-
+   -- If required do recursive remove
    if recursively then
       for file in lfs.dir(path) do
          if (not (file == "..") and not (file == ".")) then
@@ -55,13 +56,22 @@ local function rmdir(path, recursively)
             
             if lfs.attributes(file, "mode") == "file" then
                -- Remove file
-               remove(file)
+               local status, msg = remove(file)
+               if not status then
+                  return status, msg
+               end
             elseif lfs.attributes(file, "mode") == "directory" then 
                -- Recursively remove files in sub-directory
-               local success = rmdir(file, recursively)
+               local status, msg = rmdir(file, recursively)
+               if not status then
+                  return status, msg
+               end
             elseif lfs.symlinkattributes (file , "mode") then
                -- Unlink symlinks
-               unlink(file)
+               local status, msg = unlink(file)
+               --if not status then
+               --   return status, msg
+               --end
             else
                print("UNKNOWN MODE :S")
             end

@@ -9,6 +9,10 @@ Grendel Package Manager (GPM)
       argparse
       luaposix  (needed for lmod)
 
+   GPM needs:
+      wget
+      tar
+
    Lmod needs:
       git
       tclsh

@@ -249,7 +249,8 @@ local function make_package_ready_for_install(package)
    else
       -- if ftp or http download with wget
       print("source:")
-      print(source)
+      print(source) 
+      local status = 0
       if package.forcedownload then
          filesystem.remove(path.join(package.build_directory, destination))
       end
@@ -258,11 +259,15 @@ local function make_package_ready_for_install(package)
          print(is_http_or_ftp)
          if is_http_or_ftp then
             line = "wget -O " .. destination .. " " .. source
-            util.execute_command(line)
+            status = util.execute_command(line)
          else -- we assume local file
             line = "cp " .. source .. " " .. destination
-            util.execute_command(line)
+            status = util.execute_command(line)
          end
+      end
+      if status ~= 0 then
+         filesystem.remove(path.join(package.build_directory, destination))
+         error("Could not retrive source...")
       end
       
       -- Unpak package
@@ -541,8 +546,10 @@ local function install(args)
       
       -- Remove build dir
       if args.purgebuild then
-         filesystem.rmdir(build_directory, true)
-         -- print("Did not remove build directory. Reason : '" .. msg .. "'.") 
+         local status, msg = filesystem.rmdir(package.build_directory, true)
+         if not status then
+            print("Could not purge build directory. Reason : '" .. msg .. "'.") 
+         end
       end
    end, function(e)
       --[[
