@@ -28,6 +28,14 @@ build = {
       
       make -j<nprocesses>
       make install
+
+      cd ..
+      mkdir build_dynamic
+      cd build_dynamic
+      cmake ../. -DCMAKE_INSTALL_PREFIX=<pkginstall> -DBUILD_SHARED_LIBS=ON -DCMAKE_BUILD_TYPE=RELEASE -DLAPACKE=ON
+      
+      make -j<nprocesses>
+      make install
    ]]
 }
 

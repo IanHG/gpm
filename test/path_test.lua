@@ -20,6 +20,13 @@ TestPath = {} -- class
       luaunit.assertEquals(file, "myfile.1.tar.gz")
       luaunit.assertEquals(ext, "gz")
    end
+   
+   function TestPath:testRemoveDirEnd()
+      abspath = "/home/lol"
+      path = path.remove_dir_end(abspath)
+
+      luaunit.assertEquals(path, "/home")
+   end
 
 -- TestPath class
 

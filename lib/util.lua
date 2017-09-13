@@ -66,11 +66,13 @@ end
 -------------------------------------
 local function execute_command(command)
    print("EXECUTING COMMAND : ", command)
-   bool, flag, status = os.execute(command)
+   status = os.execute(command)
 
-   if not bool then
+   if status ~= 0 then
       error("Command '" .. command .. "' exited with errors.")
    end
+
+   return status
 end
 
 -------------------------------------
@@ -146,6 +148,11 @@ local function ordered(t)
    return iter, t
 end
 
+local function conditional(condition, if_true, if_false)
+   if condition then return if_true else return if_false end
+end
+
+
 -- Load module functions
 M.print = table_print
 M.merge = merge
@@ -157,5 +164,6 @@ M.split = split
 M.trim = trim
 M.ordered_table = ordered_table
 M.ordered = ordered
+M.conditional = conditional
 
 return M

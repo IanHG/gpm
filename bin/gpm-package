@@ -59,9 +59,17 @@ local function bootstrap_config(args, default_config)
    if args.debug then
       print("Bootstrapping config.")
    end
-
+   
+   -- Make sure we have a config
    if not args.config then
-      args.config = path.join(config.current_directory, "config.lua")
+      -- If none was given we check for the environtment one.
+      config_path = os.getenv("GPM_CONFIG")
+      if config_path then
+         args.config = config_path
+      else
+         -- If enviroment config wasn't found, we check current directory
+         args.config = path.join(config.current_directory, "config.lua")
+      end
    end
 
    assert(loadfile(args.config))()
@@ -110,7 +118,11 @@ function main()
    parser_install:option("--source", "Set source. Will overwrite what is set in .gpk."):overwrite(false)
    parser_install:flag("--no-build", "Do not build package.")
    parser_install:flag("--no-lmod", "Do not create Lmod script.")
-   parser_install:flag("--cleanup", "Cleanup by removing build directory after build is complete.")
+   parser_install:flag("--force-download", "Force download or copying of source.")
+   parser_install:flag("--force-unpack", "Force unpacking of source.")
+   parser_install:flag("--delete-source", "Delete the source file after build.")
+   parser_install:flag("--keep-build-directory" , "Keep actual build directory.")
+   parser_install:flag("--purgebuild" , "Purge by completely removing main build directory after build is complete.")
 
    -- Remove specific
    parser_remove:mutex(

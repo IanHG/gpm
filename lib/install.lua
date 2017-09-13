@@ -2,6 +2,7 @@ local lfs = require "lfs"
 
 local util = require "util"
 local path = require "path"
+local filesystem = require "filesystem"
 
 M = {}
 
@@ -118,7 +119,12 @@ local function bootstrap_package(args)
       end
       pkginstall = path.join(path.join(pkginstall, package.definition.pkgname), package.definition.pkgversion)
    else
-      pkginstall = config.install_directory
+      -- Special care for lmod
+      if package.definition.pkgname == "lmod" then
+         pkginstall = config.install_directory
+      else
+         pkginstall = path.join(path.join(config.install_directory, package.definition.pkgname), package.definition.pkgversion)
+      end
    end
    package.definition.pkginstall = pkginstall
    
@@ -155,9 +161,12 @@ local function bootstrap_package(args)
    
    -- Miscellaneous (spellcheck? :) )
    package.definition.nprocesses = config.nprocesses
-   if args.nomodulesource then
-      package.nomodulesource = args.nomodulesource
-   end
+   --if args.nomodulesource then
+   --   package.nomodulesource = args.nomodulesource
+   --end
+   package.nomodulesource = util.conditional(args.nomodulesource, args.nomodulesource, false)
+   package.forcedownload  = util.conditional(args.force_download, args.force_download, false)
+   package.forceunpack    = util.conditional(args.force_unpack  , args.force_unpack  , false)
 
    -- check package validity
    check, reason = check_package_is_valid(package)
@@ -232,6 +241,7 @@ local function make_package_ready_for_install(package)
    source_path, source_file, source_ext = split_filename(source)
    source_file_strip = string.gsub(source_file, "%." .. source_ext, "")
    destination = package.definition.pkg .. "." .. source_ext
+   package.build.source_destination = destination
    print(source_file_strip)
    
    if package.build.source_type == "git" then
@@ -240,32 +250,47 @@ local function make_package_ready_for_install(package)
    else
       -- if ftp or http download with wget
       print("source:")
-      print(source)
-      is_http_or_ftp = string.match(source, "http://") or string.match(source, "https://") or string.match(source, "ftp://")
-      print(is_http_or_ftp)
-      if is_http_or_ftp then
-         line = "wget -O " .. destination .. " " .. source
-         util.execute_command(line)
-      else -- we assume local file
-         line = "cp " .. source .. " " .. destination
-         util.execute_command(line)
+      print(source) 
+      local status = 0
+      if package.forcedownload then
+         filesystem.remove(path.join(package.build_directory, destination))
+      end
+      if not lfs.attributes(path.join(package.build_directory, destination), 'mode') then
+         is_http_or_ftp = string.match(source, "http://") or string.match(source, "https://") or string.match(source, "ftp://")
+         print(is_http_or_ftp)
+         if is_http_or_ftp then
+            line = "wget -O " .. destination .. " " .. source
+            status = util.execute_command(line)
+         else -- we assume local file
+            line = "cp " .. source .. " " .. destination
+            status = util.execute_command(line)
+         end
+      end
+      if status ~= 0 then
+         filesystem.remove(path.join(package.build_directory, destination))
+         error("Could not retrive source...")
       end
       
       -- Unpak package
       -- If tar file untar
-      is_tar_gz = string.match(source_file, "tar.gz") or string.match(source_file, "tgz")
-      print("IS TGZ")
-      print(is_tar_gz)
-      is_tar_bz = string.match(source_file, "tar.bz2")
-      if is_tar_gz then
-         line = "tar -xvf " .. destination .. " --transform 's/" .. source_file_strip .. "/" .. package.definition.pkg .. "/'"
-         print(source_file_strip)
-         print(package.definition.pkg)
-         util.execute_command(line)
-      elseif is_tar_bz then
-         --line = "tar -jxvf " .. destination
-         line = "tar -jxvf " .. destination .. " --transform 's/" .. source_file_strip .. "/" .. package.definition.pkg .. "/'"
-         util.execute_command(line)
+      if package.forceunpack then
+         filesystem.rmdir(path.join(package.build_directory, package.definition.pkg), true)
+      end
+      if not lfs.attributes(path.join(package.build_directory, package.definition.pkg), 'mode') then
+         is_tar_gz = string.match(source_file, "tar.gz") or string.match(source_file, "tgz")
+         print("IS TGZ")
+         print(is_tar_gz)
+         is_tar_bz = string.match(source_file, "tar.bz2") or string.match(source_file, "tbz2")
+         if is_tar_gz then
+            line = "tar -xvf " .. destination .. " --transform 's/" .. source_file_strip .. "/" .. package.definition.pkg .. "/'"
+            print(source_file_strip)
+            print(package.definition.pkg)
+            util.execute_command(line)
+         elseif is_tar_bz then
+            --line = "tar -jxvf " .. destination
+            line = "tar -jxvf " .. destination .. " --transform 's/" .. source_file_strip .. "/" .. package.definition.pkg .. "/'"
+            util.execute_command(line)
+         end
       end
    end
 
@@ -465,14 +490,16 @@ local function build_lmod_modulefile(package)
    -- Do all setenv
    if package.lmod.setenv then
       for key,value in pairs(package.lmod.setenv) do
-         lmod_file:write("setenv('" .. value[1] .. "', pathJoin(installDir, '" .. value[2] .. "'))\n")
+         dir = util.substitute_placeholders(package.definition, value[2])
+         lmod_file:write("setenv('" .. value[1] .. "', pathJoin(installDir, '" .. dir .. "'))\n")
       end
    end
    
    -- Do all prepend_path
    prepend_path = generate_prepend_path(package)
    for key,value in pairs(prepend_path) do
-      lmod_file:write("prepend_path('" .. value[1] .. "', pathJoin(installDir, '" .. value[2] .. "'))\n")
+      dir = util.substitute_placeholders(package.definition, value[2])
+      lmod_file:write("prepend_path('" .. value[1] .. "', pathJoin(installDir, '" .. dir .. "'))\n")
    end
 
    -- Close file after wirting it
@@ -518,18 +545,28 @@ local function install(args)
       -- Change back to calling dir
       lfs.chdir(config.current_directory)
       
-      -- Remove build dir
-      if args.cleanup then
-         status, msg = lfs.rmdir(build_directory)
-         print("Did not remove build directory. Reason : '" .. msg .. "'.") 
+      -- Remove build dir if requested (and various other degress of removing source data)
+      if args.purgebuild then
+         local status, msg = filesystem.rmdir(package.build_directory, true)
+         if not status then
+            print("Could not purge build directory. Reason : '" .. msg .. "'.") 
+         end
+      else 
+         if args.delete_source then
+            local status, msg = filesystem.remove(path.join(package.build_directory, package.build.source_destination))
+         end
+         if (not args.keep_build_directory) then
+            local status, msg = filesystem.rmdir(path.join(package.build_directory, package.definition.pkg), true)
+            if not status then
+               print(msg)
+            end
+         end
       end
    end, function(e)
-      --[[
-      status, msg = lfs.rmdir(build_directory)
+      local status, msg = filesystem.rmdir(package.build_directory, true)
       if not status then
-         print("did not rm dir :C")
+         print("Could not purge build directory after ERROR. Reason : '" .. msg .. "'.") 
       end
-      --]]
       error(e)
    end)
 end

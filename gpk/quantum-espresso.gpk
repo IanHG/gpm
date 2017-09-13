@@ -1,0 +1,37 @@
+-- Singularity gpk script
+
+-- Description of the gpk
+description = [[
+QE.
+]]
+
+-- Definition section
+definition = {
+   pkgname = "quantum-espresso",
+   pkggroup = "apps",
+   pkgfamily = "quantumespresso",
+}
+
+-- Required types
+prerequisite = {}
+
+-- Build section
+build = {
+   -- Source of package
+   source = "http://www.qe-forge.org/gf/download/frsrelease/240/1075/qe-<pkgversion>.tar.gz",
+   -- Build command
+   command = [[
+      ./configure --prefix=<pkginstall>
+      make all
+      make install
+   ]],
+}
+
+-- Lmod section
+lmod = {
+   help = [[This module loads Quantum espresso v. <pkgversion>.]],
+}
+
+--[[
+# vi:syntax=lua
+--]]
