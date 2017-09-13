@@ -1,14 +1,14 @@
 local M = { }
 
---- Join paths.
--- Join two paths using correct separator.
+M.sep = "/"
+
+--- Check if a path has dir end.
+-- 
+-- @param {string} path   The path to check.
 --
--- @param {string} pathl   Left path.
--- @param {string} pathr   Right path.
---
--- @return {string}   Return joined path.
-local function join(pathl, pathr)   
-   return pathl .. "/" .. pathr
+-- @return {boolean}   Return true if dir-end, false otherwise
+local function has_dir_end(path)
+   return (string.find("[\\/]$", path)) and true
 end
 
 --- Remove last dir in path.
@@ -18,6 +18,21 @@ end
 -- @return {string}    Returns the updated path.
 local function remove_dir_end(path)
    return (string.gsub(path, '[\\/]+$', ''))
+end
+
+--- Join paths.
+-- Join two paths using correct separator.
+--
+-- @param {string} pathl   Left path.
+-- @param {string} pathr   Right path.
+--
+-- @return {string}   Return joined path.
+local function join(pathl, pathr)   
+   if has_dir_end(pathl) then
+      return pathl .. pathr
+   else
+      return pathl .. M.sep .. pathr
+   end
 end
 
 ---
