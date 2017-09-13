@@ -507,7 +507,8 @@ local function build_lmod_modulefile(package)
 
    -- Put the file in the correct place
    modulefile_directory = package.lmod.modulefile_directory
-   util.mkdir_recursively(modulefile_directory)
+   --util.mkdir_recursively(modulefile_directory)
+   filesystem.mkdir(modulefile_directory, "", true)
    lmod_filename_new = path.join(modulefile_directory, package.definition.pkgversion .. ".lua")
    print(lmod_filename_new)
    util.copy_file(lmod_filename, lmod_filename_new)

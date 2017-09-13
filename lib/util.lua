@@ -42,20 +42,20 @@ local function table_print(a, name)
    recursive_table_print(a, 0)
 end
 
--------------------------------------
--- Make a directory recursively
--------------------------------------
-local function mkdir_recursively(dir)
-   function find_last(haystack, needle)
-      local i=haystack:match(".*"..needle.."()")
-      if i==nil then return nil else return i-1 end
-   end
-   p = dir:sub(1, find_last(dir, "/") - 1)
-   if not lfs.attributes(p) then
-      mkdir_recursively(p)
-   end
-   lfs.mkdir(dir)
-end
+---------------------------------------
+---- Make a directory recursively
+---------------------------------------
+--local function mkdir_recursively(dir)
+--   function find_last(haystack, needle)
+--      local i=haystack:match(".*"..needle.."()")
+--      if i==nil then return nil else return i-1 end
+--   end
+--   p = dir:sub(1, find_last(dir, "/") - 1)
+--   if not lfs.attributes(p) then
+--      mkdir_recursively(p)
+--   end
+--   lfs.mkdir(dir)
+--end
 
 -------------------------------------
 -- Run command in shell.
@@ -156,7 +156,7 @@ end
 -- Load module functions
 M.print = table_print
 M.merge = merge
-M.mkdir_recursively = mkdir_recursively
+--M.mkdir_recursively = mkdir_recursively
 M.execute_command = execute_command
 M.substitute_placeholders = substitute_placeholders
 M.copy_file = copy_file

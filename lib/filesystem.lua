@@ -1,8 +1,44 @@
 M = {}
 
-local posix = require "posix"
-local lfs   = require "lfs"
-local path  = require "path"
+local _posix = require "posix"
+local _lfs   = require "lfs"
+local _path  = require "path"
+
+--- Check existance of file object.
+--
+-- @param path   The file path.
+--
+-- @return   Returns true if file exists otherwise false.
+local function exists(path)
+   return _lfs.attributes(path, "mode") ~= nil
+end
+
+--- Check if path points to a file.
+--
+-- @param path  The path to check.
+--
+-- @return   Returns true if file exists and is a file otherwise false.
+local function isfile(path)
+   return _lfs.attributes(path, "mode") == "file"
+end
+
+--- Check if path points to a directory.
+--
+-- @param path  The path to check.
+--
+-- @return   Returns true if path exists and is a directory otherwise false.
+local function isdir(path)
+   return _lfs.attributes(path, "mode") == "directory"
+end
+
+--- Check if path points to a symlink.
+--
+-- @param path  The path to check.
+--
+-- @return   Returns true if path exists and is a symlink otherwise false.
+local function issymlink(path)
+   return _lfs.symlinkattributes(path, "mode") ~= nil
+end
 
 --- Remove a file.
 --
@@ -22,7 +58,7 @@ end
 --
 -- @return 
 local function symlink(path, linkpath) 
-   return posix.symlink(path, linkpath)
+   return _posix.symlink(path, linkpath)
 end
 
 --- Unlink a hard- or symbolic-link.
@@ -33,17 +69,32 @@ end
 --
 -- @return 
 local function unlink(path)
-   return posix.unlink(path)
+   return _posix.unlink(path)
 end
 
 --- Make a directory.
 --
 -- Make a directory with modes.
 --
--- @param path
--- @param mode
+-- @param path          The path to create.
+-- @param mode          Create directory in mode.
+-- @param recursively   Create directory recursively.
 --
--- @return
+-- @return     Return whether succesful or not, and a message if not.
+local function mkdir(path, mode, recursively)
+   if exists(path) and not isdir(path) then
+      return nil, "Cannot create directory: File exists."
+   end
+
+   if recursively then
+      base_path = string.gsub(_path.remove_dir_end(path), "/[^/]*$", "")
+      if not exists(base_path) then
+         mkdir(base_path, mode, recursively)
+      end
+   end
+
+   return _lfs.mkdir(path)
+end
 
 --- Remove a directory.
 --
@@ -53,29 +104,29 @@ end
 -- @return   Returns whether the removal was succesful or not, and a message if it failed.
 local function rmdir(path, recursively)
    -- Check that directory actually exists
-   if not (lfs.attributes(path, "mode") == "directory") then 
+   if not (_lfs.attributes(path, "mode") == "directory") then 
       return true
    end
    
    -- If required do recursive remove
    if recursively then
-      for file in lfs.dir(path) do
+      for file in _lfs.dir(path) do
          if (not (file == "..") and not (file == ".")) then
             file = path .. "/" .. file
             
-            if lfs.attributes(file, "mode") == "file" then
+            if _lfs.attributes(file, "mode") == "file" then
                -- Remove file
                local status, msg = remove(file)
                if not status then
                   return status, msg
                end
-            elseif lfs.attributes(file, "mode") == "directory" then 
+            elseif _lfs.attributes(file, "mode") == "directory" then 
                -- Recursively remove files in sub-directory
                local status, msg = rmdir(file, recursively)
                if not status then
                   return status, msg
                end
-            elseif lfs.symlinkattributes (file , "mode") then
+            elseif _lfs.symlinkattributes (file , "mode") then
                -- Unlink symlinks
                local status, msg = unlink(file)
                --if not status then
@@ -89,14 +140,19 @@ local function rmdir(path, recursively)
    end
 
    -- Remove directory
-   return lfs.rmdir(path)
+   return _lfs.rmdir(path)
 end
 
 
 --- Load module
-M.remove = remove
-M.link   = link
-M.unlink = unlink
-M.rmdir  = rmdir
+M.exists    = exists
+M.isfile    = isfile
+M.isdir     = isdir
+M.issymlink = issymlink
+M.remove    = remove
+M.link      = link
+M.unlink    = unlink
+M.mkdir     = mkdir
+M.rmdir     = rmdir
 
 return M
