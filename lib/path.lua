@@ -2,13 +2,22 @@ local M = { }
 
 M.sep = "/"
 
+--- Check if path is absolute
+--
+-- @param {string} path   The path to check
+--
+-- @return {boolean}   Returns true if path is absolute, false otherwise.
+local function is_abs_path(path)
+   return (string.find(path, "^[/]")) and true
+end
+
 --- Check if a path has dir end.
 -- 
 -- @param {string} path   The path to check.
 --
 -- @return {boolean}   Return true if dir-end, false otherwise
 local function has_dir_end(path)
-   return (string.find("[\\/]$", path)) and true
+   return (string.find(path, "[\\/]$")) and true
 end
 
 --- Remove last dir in path.
@@ -67,10 +76,12 @@ local function get_file_extension(url)
 end
 
 -- Load functions for module
-M.join = join
+M.is_abs_path    = is_abs_path
+M.has_dir_end    = has_dir_end
 M.remove_dir_end = remove_dir_end
-M.filename = get_filename
-M.extension = get_file_extension
+M.join           = join
+M.filename       = get_filename
+M.extension      = get_file_extension
 M.split_filename = split_filename
 
 return M
