@@ -241,6 +241,7 @@ local function make_package_ready_for_install(package)
    source_path, source_file, source_ext = split_filename(source)
    source_file_strip = string.gsub(source_file, "%." .. source_ext, "")
    destination = package.definition.pkg .. "." .. source_ext
+   package.build.source_destination = destination
    print(source_file_strip)
    
    if package.build.source_type == "git" then
@@ -544,20 +545,28 @@ local function install(args)
       -- Change back to calling dir
       lfs.chdir(config.current_directory)
       
-      -- Remove build dir
+      -- Remove build dir if requested (and various other degress of removing source data)
       if args.purgebuild then
          local status, msg = filesystem.rmdir(package.build_directory, true)
          if not status then
             print("Could not purge build directory. Reason : '" .. msg .. "'.") 
          end
+      else 
+         if args.delete_source then
+            local status, msg = filesystem.remove(path.join(package.build_directory, package.build.source_destination))
+         end
+         if (not args.keep_build_directory) then
+            local status, msg = filesystem.rmdir(path.join(package.build_directory, package.definition.pkg), true)
+            if not status then
+               print(msg)
+            end
+         end
       end
    end, function(e)
-      --[[
-      status, msg = lfs.rmdir(build_directory)
+      local status, msg = filesystem.rmdir(package.build_directory, true)
       if not status then
-         print("did not rm dir :C")
+         print("Could not purge build directory after ERROR. Reason : '" .. msg .. "'.") 
       end
-      --]]
       error(e)
    end)
 end

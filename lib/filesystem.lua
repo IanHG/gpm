@@ -36,6 +36,15 @@ local function unlink(path)
    return posix.unlink(path)
 end
 
+--- Make a directory.
+--
+-- Make a directory with modes.
+--
+-- @param path
+-- @param mode
+--
+-- @return
+
 --- Remove a directory.
 --
 -- @param path          The path of the directory.

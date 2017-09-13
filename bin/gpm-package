@@ -120,9 +120,9 @@ function main()
    parser_install:flag("--no-lmod", "Do not create Lmod script.")
    parser_install:flag("--force-download", "Force download or copying of source.")
    parser_install:flag("--force-unpack", "Force unpacking of source.")
-   parser_install:flag("--keep-source", "Keep source file.")
-   parser_install:flag("--keep-source-directory" , "Keep source directory.")
-   parser_install:flag("--purgebuild" , "Purge by completely removing build directory after build is complete.")
+   parser_install:flag("--delete-source", "Delete the source file after build.")
+   parser_install:flag("--keep-build-directory" , "Keep actual build directory.")
+   parser_install:flag("--purgebuild" , "Purge by completely removing main build directory after build is complete.")
 
    -- Remove specific
    parser_remove:mutex(
