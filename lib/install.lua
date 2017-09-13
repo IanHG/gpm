@@ -317,7 +317,7 @@ end
 -------------------------------------
 -- Helper function to generate prepend_path for lmod.
 -- This function will handle exports for directories named "lib" or "lib64.
--- It will export both to LD_LIBRARY_PATH and LD_RUN_PATH.
+-- It will export both to LIBRARY_PATH, LD_LIBRARY_PATH, and LD_RUN_PATH.
 -- It will look for a directory called pkgconfig, which it will add to
 -- PKG_CONFIG_PATH if found.
 --

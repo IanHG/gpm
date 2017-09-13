@@ -1,0 +1,51 @@
+-- Openmpi gpk script
+
+-- Description of the gpk
+description = [[
+OpenMPI - Open Message Passing Interface.
+]]
+
+-- Definition section
+definition = {
+   pkgname = "openmpi-i8",
+   pkggroup = "core",
+   pkgfamily = "mpi",
+}
+
+-- Required types
+prerequisite = {"compiler"}
+
+-- Build section
+build = {
+   -- Source of package
+   source = "https://www.open-mpi.org/software/ompi/v<pkgmajor>.<pkgminor>/downloads/openmpi-<pkgversion>.tar.gz",
+   -- Build command
+   command = [[
+      # Setup 64 bit
+      export F77=gfortran
+      export FC=gfortran
+      export CC=gcc
+      export CXX=g++
+      export FFLAGS="-m64 -fdefault-integer-8"
+      export FCFLAGS="-m64 -fdefault-integer-8"
+      export CFLAGS=-m64
+      export CXXFLAGS=-m64
+
+      # Build openmpi
+      #./configure --prefix=<pkginstall> --enable-mpirun-prefix-by-default --enable-static --with-pmi --with-pmi-libdir=/usr --without-psm
+      ./configure --prefix=<pkginstall> --enable-mpirun-prefix-by-default --enable-static --without-psm
+      
+      make -j<nprocesses>
+      make check
+      make install
+   ]]
+}
+
+-- Lmod section
+lmod = {
+   help = [[This module loads OpenMPI v. <pkgversion>.]],
+}
+
+--[[
+# vi:syntax=lua
+--]]
