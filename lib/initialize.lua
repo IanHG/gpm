@@ -92,6 +92,16 @@ local function create_shell_environment(args)
    if modulepath[-1] == ":" then
       modulepath = modulepath.sub(1, -2)
    end
+
+   -- Do some setup
+   local this_path = path.join(bin_dir, "modules.sh")
+   bin_file:write("# Check if this file should be sourced\n")
+   bin_file:write("SOURCEME=1\n")
+   bin_file:write("for path in ${GPMSTACKPATH//:/ }; do\n")
+   bin_file:write("    if [ \"$path\" = \"" .. this_path .. "\" ]; then\n")
+   bin_file:write("      SOURCEME=0\n")
+   bin_file:write("    fi\n")
+   bin_file:write("done\n\n")
    
    if args.parentstack then
       parentstack_split = util.split(args.parentstack, ",")
@@ -99,26 +109,46 @@ local function create_shell_environment(args)
       for k,v in pairs(parentstack_split) do
          bin_file:write(". " .. v .. "\n")
       end
+   end
+   bin_file:write("\n")
+
+   -- Setup sourcing code
+   bin_file:write("if [ \"$SOURCEME\" = \"1\" ]; then\n")
+   bin_file:write("  echo \"Sourcing " .. this_path .. "\"\n\n")
+   
+   if args.parentstack then
       bin_file:write("\n")
-      bin_file:write("# Setup module paths\n")
-      bin_file:write("export MODULEPATH_ROOT=$MODULEPATH_ROOT:\"" .. modulepath_root .. "\"\n")
-      bin_file:write("export MODULEPATH=$MODULEPATH:\"" .. modulepath .. "\"\n")
+      bin_file:write("  # Setup module paths\n")
+      bin_file:write("  export MODULEPATH_ROOT=$MODULEPATH_ROOT:\"" .. modulepath_root .. "\"\n")
+      bin_file:write("  export MODULEPATH=$MODULEPATH:\"" .. modulepath .. "\"\n")
+      bin_file:write("\n")
+      bin_file:write("  # Export stack path\n")
+      bin_file:write("  export GPMSTACKPATH=\"$GPMSTACKPATH:" .. this_path .. "\"\n")
+      bin_file:write("\n")
    else
-      bin_file:write("#\n")
-      bin_file:write("unset MODULEPATH_ROOT\n")
-      bin_file:write("unset MODULEPATH\n")
+      bin_file:write("  # Unset paths\n")
+      bin_file:write("  unset MODULEPATH_ROOT\n")
+      bin_file:write("  unset MODULEPATH\n")
+      bin_file:write("  unset GPMSTACKPATH\n")
       bin_file:write("\n")
-      bin_file:write("# Setup module paths\n")
-      bin_file:write("export MODULEPATH_ROOT=\"" .. modulepath_root .. "\"\n")
-      bin_file:write("export MODULEPATH=\"" .. modulepath .. "\"\n")
+      bin_file:write("  # Setup module paths\n")
+      bin_file:write("  export MODULEPATH_ROOT=\"" .. modulepath_root .. "\"\n")
+      bin_file:write("  export MODULEPATH=\"" .. modulepath .. "\"\n")
       bin_file:write("\n")
-      bin_file:write("# Source lmod \n")
-      bin_file:write(". ".. path.join(config.install_directory, "lmod/lmod/init/profile") .. "\n")
+      bin_file:write("  # Source lmod \n")
+      bin_file:write("  . ".. path.join(config.install_directory, "lmod/lmod/init/profile") .. "\n")
+      bin_file:write("\n")
+      bin_file:write("  # Export stack path\n")
+      bin_file:write("  export GPMSTACKPATH=\"" .. this_path .. "\"\n")
+      bin_file:write("\n")
    end
 
-   bin_file:write("\n")
-   bin_file:write("#Export config path\n")
-   bin_file:write("export GPM_CONFIG=\"" .. path.join(config.install_directory, args.config) .. "\"\n")
+   bin_file:write("  # Export config path\n")
+   bin_file:write("  export GPM_CONFIG=\"" .. path.join(config.install_directory, args.config) .. "\"\n")
+   
+   bin_file:write("else\n")
+   bin_file:write("  echo \"NOT sourcing " .. this_path .. "\"\n")
+   bin_file:write("fi\n")
 
    bin_file:close()
 end
