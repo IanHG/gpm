@@ -92,17 +92,8 @@ local function create_shell_environment(args)
    if modulepath[-1] == ":" then
       modulepath = modulepath.sub(1, -2)
    end
-
-   -- Do some setup
-   local this_path = path.join(bin_dir, "modules.sh")
-   bin_file:write("# Check if this file should be sourced\n")
-   bin_file:write("SOURCEME=1\n")
-   bin_file:write("for path in ${GPMSTACKPATH//:/ }; do\n")
-   bin_file:write("    if [ \"$path\" = \"" .. this_path .. "\" ]; then\n")
-   bin_file:write("      SOURCEME=0\n")
-   bin_file:write("    fi\n")
-   bin_file:write("done\n\n")
    
+   -- Source parent stacks
    if args.parentstack then
       parentstack_split = util.split(args.parentstack, ",")
       bin_file:write("# Source parent stacks\n")
@@ -110,6 +101,26 @@ local function create_shell_environment(args)
          bin_file:write(". " .. v .. "\n")
       end
    end
+   bin_file:write("\n")
+
+   -- Do some setup
+   local this_path = path.join(bin_dir, "modules.sh")
+   bin_file:write("# Check if this file should be sourced\n")
+   --bin_file:write("for path in ${GPMSTACKPATH//:/ }; do\n")
+   --bin_file:write("    if [ \"$path\" = \"" .. this_path .. "\" ]; then\n")
+   --bin_file:write("      SOURCEME=0\n")
+   --bin_file:write("    fi\n")
+   --bin_file:write("done\n\n")
+   bin_file:write("SOURCEME=$(\n")
+   bin_file:write("SOURCEME=1\n")
+   bin_file:write("IFS=:\n")
+   bin_file:write("for path in $GPMSTACKPATH; do\n")
+   bin_file:write("   if [ \"$path\" = \"" .. this_path .. "\" ]; then\n")
+   bin_file:write("      SOURCEME=0\n")
+   bin_file:write("   fi\n")
+   bin_file:write("done\n")
+   bin_file:write("echo $SOURCEME\n")
+   bin_file:write(")\n")
    bin_file:write("\n")
 
    -- Setup sourcing code
