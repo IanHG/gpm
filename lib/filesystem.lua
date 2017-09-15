@@ -143,6 +143,15 @@ local function rmdir(path, recursively)
    return _lfs.rmdir(path)
 end
 
+--- Change working directory.
+--
+-- @param path   The path to change to.
+--
+-- @return 
+local function chdir(path)
+   return lfs.chdir(path)
+end
+
 
 --- Load module
 M.exists    = exists
@@ -154,5 +163,6 @@ M.link      = link
 M.unlink    = unlink
 M.mkdir     = mkdir
 M.rmdir     = rmdir
+M.chdir     = chdir
 
 return M

@@ -99,6 +99,12 @@ local function bootstrap_package(args)
             error("Prequisite '" .. value .. "' not set.")
          end
       end
+   elseif args.prereq then
+      prereq_array = util.split(args.prereq, ",")
+      for count = 1, #prereq_array do
+         p = util.split(prereq_array[count], "=")
+         package.prerequisite[p[1]] = p[2]
+      end
    end
    
    -- Setup build, install and modulefile directories
@@ -324,7 +330,7 @@ local function build_package(package)
       
       -- Build package
       package_directory = path.join(package.build_directory, package.definition.pkg)
-      lfs.chdir(package_directory)
+      filesystem.chdir(package_directory)
       for line in string.gmatch(package.build.command, ".*$") do
          line = util.substitute_placeholders(package.definition, util.trim(line))
          print("LINE : " .. line)
@@ -476,6 +482,15 @@ local function build_lmod_modulefile(package)
    else
       lmod_file:write("local installDir  = pathJoin(\"" .. path.join(config.install_directory, package.definition.pkggroup) .. "\", packageName)\n")
    end
+   lmod_file:write("\n")
+
+   if (not is_heirarchical(package.definition.pkggroup)) and package.prerequisite then
+      for key, prereq in pairs(package.prerequisite) do
+         if tonumber(key) == nil then
+            lmod_file:write("depends_on(\"" .. prereq .. "\")\n")
+         end
+      end
+   end
    
    lmod_file:write("\n")
    lmod_file:write("-- Optional modules setup\n")
@@ -529,9 +544,9 @@ local function install(args)
       end
 
       -- Create build dir
-      lfs.rmdir(package.build_directory)
-      lfs.mkdir(package.build_directory)
-      lfs.chdir(package.build_directory)
+      filesystem.rmdir(package.build_directory, false)
+      filesystem.mkdir(package.build_directory, {}, true)
+      filesystem.chdir(package.build_directory)
       
       -- Do the build
       if not args.no_build then
@@ -544,7 +559,7 @@ local function install(args)
       end
       
       -- Change back to calling dir
-      lfs.chdir(config.current_directory)
+      filesystem.chdir(config.current_directory)
       
       -- Remove build dir if requested (and various other degress of removing source data)
       if args.purgebuild then

@@ -54,7 +54,7 @@ local function install_lmod(args)
    do_install_lmod = not args.parentstack
    if do_install_lmod then
       args.gpk = "lmod"
-      args.pkv = "7.5.11"
+      args.pkv = "7.6.14"
       args.nomodulesource = true
       
       install.install(args)
