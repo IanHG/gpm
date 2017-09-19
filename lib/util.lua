@@ -66,8 +66,12 @@ end
 -------------------------------------
 local function execute_command(command)
    print("EXECUTING COMMAND : ", command)
-   status = os.execute(command)
-
+   bool, msg, status = os.execute(command)
+   
+   print("STATUS")
+   print(bool)
+   print(msg)
+   print(status)
    if status ~= 0 then
       error("Command '" .. command .. "' exited with errors.")
    end

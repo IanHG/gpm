@@ -82,6 +82,10 @@ end
 --
 -- @return     Return whether succesful or not, and a message if not.
 local function mkdir(path, mode, recursively)
+   if (not path) then
+      return false
+   end
+
    if exists(path) and not isdir(path) then
       return nil, "Cannot create directory: File exists."
    end
@@ -103,6 +107,11 @@ end
 --
 -- @return   Returns whether the removal was succesful or not, and a message if it failed.
 local function rmdir(path, recursively)
+   -- Check input validity
+   if (not path) then
+      return false
+   end
+
    -- Check that directory actually exists
    if not (_lfs.attributes(path, "mode") == "directory") then 
       return true

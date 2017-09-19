@@ -251,8 +251,10 @@ local function make_package_ready_for_install(package)
    print(source_file_strip)
    
    if package.build.source_type == "git" then
-      line = "git clone " .. source .. " " .. package.definition.pkg
-      util.execute_command(line)
+      if (not filesystem.exists(path.join(package.build_directory, package.definition.pkg))) then
+         line = "git clone " .. source .. " " .. package.definition.pkg
+         util.execute_command(line)
+      end
    else
       -- if ftp or http download with wget
       print("source:")
@@ -284,17 +286,17 @@ local function make_package_ready_for_install(package)
       end
       if not lfs.attributes(path.join(package.build_directory, package.definition.pkg), 'mode') then
          is_tar_gz = string.match(source_file, "tar.gz") or string.match(source_file, "tgz")
-         print("IS TGZ")
-         print(is_tar_gz)
          is_tar_bz = string.match(source_file, "tar.bz2") or string.match(source_file, "tbz2")
+         is_zip = string.match(source_file, "zip")
          if is_tar_gz then
             line = "tar -xvf " .. destination .. " --transform 's/" .. source_file_strip .. "/" .. package.definition.pkg .. "/'"
-            print(source_file_strip)
-            print(package.definition.pkg)
             util.execute_command(line)
          elseif is_tar_bz then
             --line = "tar -jxvf " .. destination
             line = "tar -jxvf " .. destination .. " --transform 's/" .. source_file_strip .. "/" .. package.definition.pkg .. "/'"
+            util.execute_command(line)
+         elseif is_zip then
+            line = "unzip " .. destination
             util.execute_command(line)
          end
       end
@@ -537,6 +539,7 @@ end
 local function install(args)
    exception.try(function() 
       -- Bootstrap build
+      print("BOOTSTRAP PACKAGE")
       package = bootstrap_package(args)
 
       if args.debug then
@@ -544,6 +547,8 @@ local function install(args)
       end
 
       -- Create build dir
+      print("BUILD DIR")
+      print(package.build_directory)
       filesystem.rmdir(package.build_directory, false)
       filesystem.mkdir(package.build_directory, {}, true)
       filesystem.chdir(package.build_directory)
@@ -579,10 +584,10 @@ local function install(args)
          end
       end
    end, function(e)
-      local status, msg = filesystem.rmdir(package.build_directory, true)
-      if not status then
-         print("Could not purge build directory after ERROR. Reason : '" .. msg .. "'.") 
-      end
+      --local status, msg = filesystem.rmdir(package.build_directory, true)
+      --if not status then
+      --   print("Could not purge build directory after ERROR. Reason : '" .. msg .. "'.") 
+      --end
       error(e)
    end)
 end
