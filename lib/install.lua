@@ -103,7 +103,11 @@ local function bootstrap_package(args)
       prereq_array = util.split(args.prereq, ",")
       for count = 1, #prereq_array do
          p = util.split(prereq_array[count], "=")
-         package.prerequisite[p[1]] = p[2]
+         if not p[2] then
+            package.prerequisite["prereq" .. count] = p[1]
+         else
+            package.prerequisite[p[1]] = p[2]
+         end
       end
    end
    
@@ -301,6 +305,8 @@ local function make_package_ready_for_install(package)
          end
       end
    end
+   
+   status, msg = filesystem.mkdir(package.definition.pkginstall, {}, true)
 
    --for line in string.gmatch(package.build.source, ".*$") do
    --   line = util.substitute_placeholders(package.definition, util.trim(line))
