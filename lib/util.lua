@@ -72,8 +72,15 @@ local function execute_command(command)
    print(bool)
    print(msg)
    print(status)
-   if status ~= 0 then
-      error("Command '" .. command .. "' exited with errors.")
+
+   if status ~= 0  then
+      -- Differences in what os.execute returns depending on system
+      if bool == 0 then
+         status = bool
+         print(status)
+      else
+         error("Command '" .. command .. "' exited with errors.")
+      end
    end
 
    return status

@@ -47,6 +47,9 @@ end
 local function remove(args)
    -- Try
    exception.try(function()
+      -- Hack, we dont need source to uninstall
+      args.source = ""
+      
       -- Bootstrap the package we are removing
       package = install.bootstrap_package(args)
 

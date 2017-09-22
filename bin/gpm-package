@@ -132,6 +132,7 @@ function main()
    parser_remove:option("--pkv", "Set Package Version (PKV) of the package to install/remove."):overwrite(false)
    parser_remove:option("--purge", "Remove package binaries.")
    parser_remove:option("--purgeall", "Remove package binaries and all package binaries hierarchically dependent on this package.")
+   parser_remove:option("--prereq", "If the package to removed has any prereqs.")
    
    -- Stack specific
    parser_stack:mutex(

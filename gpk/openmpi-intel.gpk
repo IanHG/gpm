@@ -21,6 +21,10 @@ build = {
    source = "https://www.open-mpi.org/software/ompi/v<pkgmajor>.<pkgminor>/downloads/<pkg>.tar.bz2",
    -- Build command
    command = [[
+      export CC=icc
+      export FC=ifort
+      export CXX=icpc
+
       # Build openmpi
       ./configure --prefix=<pkginstall> --enable-mpirun-prefix-by-default --enable-static --with-pmi --with-pmi-libdir=/usr --without-psm
       #./configure --prefix=<pkginstall> --enable-mpirun-prefix-by-default --enable-static --without-psm
