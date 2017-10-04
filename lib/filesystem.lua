@@ -82,14 +82,23 @@ end
 --
 -- @return     Return whether succesful or not, and a message if not.
 local function mkdir(path, mode, recursively)
-   if exists(path) and not isdir(path) then
-      return nil, "Cannot create directory: File exists."
+   print("PATH " .. path)
+   if (not path) then
+      return false
    end
 
-   if recursively then
-      base_path = string.gsub(_path.remove_dir_end(path), "/[^/]*$", "")
-      if not exists(base_path) then
-         mkdir(base_path, mode, recursively)
+   does_exist = exists(path)
+
+   if does_exist then
+      if not isdir(path) then
+         return nil, "Cannot create directory: File exists."
+      end
+   else
+      if recursively then
+         base_path = string.gsub(_path.remove_dir_end(path), "/[^/]*$", "")
+         if not exists(base_path) then
+            mkdir(base_path, mode, recursively)
+         end
       end
    end
 
@@ -103,6 +112,11 @@ end
 --
 -- @return   Returns whether the removal was succesful or not, and a message if it failed.
 local function rmdir(path, recursively)
+   -- Check input validity
+   if (not path) then
+      return false
+   end
+
    -- Check that directory actually exists
    if not (_lfs.attributes(path, "mode") == "directory") then 
       return true

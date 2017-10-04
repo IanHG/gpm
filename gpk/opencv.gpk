@@ -1,0 +1,41 @@
+-- OpenCV gpk script
+
+-- Description of the gpk
+description = [[
+OpenCv
+]]
+
+-- Definition section
+definition = {
+   pkgname = "opencv",
+   pkggroup = "tools",
+   pkgfamily = "opencv",
+}
+
+-- Required types
+prerequisite = { }
+
+-- Build section
+build = {
+   -- Source of package
+   source = "https://github.com/opencv/opencv/archive/<pkgversion>.zip",
+   -- Build command
+   command = [[
+      mkdir build
+      cd build
+
+      cmake ../. -DCMAKE_INSTALL_PREFIX=<pkginstall>
+      
+      make -j<nprocesses>
+      make install
+   ]]
+}
+
+-- Lmod section
+lmod = {
+   help = [[This module loads OpenCV v. <pkgversion>.]],
+}
+
+--[[
+# vi:syntax=lua
+--]]
