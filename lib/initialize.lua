@@ -93,6 +93,10 @@ local function create_shell_environment(args)
       modulepath = modulepath.sub(1, -2)
    end
    
+   -- Set shebang
+   bin_file:write("#!/bin/sh\n")
+   bin_file:write("\n")
+   
    -- Source parent stacks
    if args.parentstack then
       parentstack_split = util.split(args.parentstack, ",")
@@ -100,10 +104,10 @@ local function create_shell_environment(args)
       for k,v in pairs(parentstack_split) do
          bin_file:write(". " .. v .. " \"$@\"\n")
       end
+      bin_file:write("\n")
    end
 
    -- Setup input reader
-   bin_file:write("\n")
    bin_file:write("# Usage function\n")
    bin_file:write("usage() {\n")
    bin_file:write("   echo \"Use me correctly please :)\"\n")
