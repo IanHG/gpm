@@ -514,7 +514,13 @@ local function build_lmod_modulefile(package)
    prepend_path = generate_prepend_path(package)
    for key,value in pairs(prepend_path) do
       dir = util.substitute_placeholders(package.definition, value[2])
-      lmod_file:write("prepend_path('" .. value[1] .. "', pathJoin(installDir, '" .. dir .. "'))\n")
+      if value[1] == "LD_RUN_PATH" then
+         lmod_file:write("if os.getenv(\"GPM_USE_LD_RUN_PATH\") == \"1\" then\n")
+         lmod_file:write("   prepend_path('" .. value[1] .. "', pathJoin(installDir, '" .. dir .. "'))\n")
+         lmod_file:write("end\n")
+      else
+         lmod_file:write("prepend_path('" .. value[1] .. "', pathJoin(installDir, '" .. dir .. "'))\n")
+      end
    end
 
    -- Close file after wirting it
