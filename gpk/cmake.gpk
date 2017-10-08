@@ -1,0 +1,37 @@
+-- CMake gpk script
+
+-- Description of the gpk
+description = [[
+CMake - CMake is an open-source, cross-platform family of tools designed to build, test and package software. CMake is used to control the software compilation process using simple platform and compiler independent configuration files, and generate native makefiles and workspaces that can be used in the compiler environment of your choice.
+]]
+
+-- Definition section
+definition = {
+   pkgname = "cmake",
+   pkggroup = "tools",
+   pkgfamily = "cmake",
+}
+
+-- Required types
+prerequisite = {}
+
+-- Build section
+build = {
+   -- Source of package
+   source = "https://cmake.org/files/v<pkgmajor>.<pkgminor>/<pkg>.tar.gz",
+   -- Build command
+   command = [[
+      ./configure --prefix=<pkginstall> 
+      make -j<nprocesses>
+      make install
+   ]]
+}
+
+-- Lmod section
+lmod = {
+   help = [[This module loads CMake v. <pkgversion>.]],
+}
+
+--[[
+# vi:syntax=lua
+--]]

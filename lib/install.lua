@@ -110,10 +110,26 @@ local function bootstrap_package(args)
          end
       end
    end
+
+   package.moduleload = util.ordered_table({})
+   if args.moduleload then
+      ml_array = util.split(args.prereq, ",")
+      for count = 1, #ml_array do
+         m = util.split(ml_array[count], "=")
+         if not p[2] then
+            package.moduleload["moduleload" .. count] = p[1]
+         else
+            package.moduleload[p[1]] = p[2]
+         end
+      end
+   end
    
    -- Setup build, install and modulefile directories
    build_directory = "build-"
    for key,prereq in util.ordered(package.prerequisite) do
+      build_directory = build_directory .. string.gsub(prereq, "/", "-") .. "-"
+   end
+   for key,prereq in util.ordered(package.moduleload) do
       build_directory = build_directory .. string.gsub(prereq, "/", "-") .. "-"
    end
    build_directory = build_directory .. package.definition.pkg
@@ -218,10 +234,13 @@ local function split_filename(filepath)
    
    is_tar_gz = string.match(source_file, "tar.gz")
    is_tar_bz = string.match(source_file, "tar.bz2")
+   is_tar_xz = string.match(source_file, "tar.xz")
    if is_tar_gz then
       source_ext = "tar.gz"
    elseif is_tar_bz then
       source_ext = "tar.bz2"
+   elseif is_tar_xz then
+      source_ext = "tar.xz"
    end
 
    return source_path, source_file, source_ext
@@ -291,8 +310,9 @@ local function make_package_ready_for_install(package)
       if not lfs.attributes(path.join(package.build_directory, package.definition.pkg), 'mode') then
          is_tar_gz = string.match(source_file, "tar.gz") or string.match(source_file, "tgz")
          is_tar_bz = string.match(source_file, "tar.bz2") or string.match(source_file, "tbz2")
+         is_tar_xz = string.match(source_file, "tar.xz")
          is_zip = string.match(source_file, "zip")
-         if is_tar_gz then
+         if is_tar_gz or is_tar_xz then
             line = "tar -xvf " .. destination .. " --transform 's/" .. source_file_strip .. "/" .. package.definition.pkg .. "/'"
             util.execute_command(line)
          elseif is_tar_bz then
@@ -325,9 +345,12 @@ local function build_package(package)
    if package.build then
       -- Load needed modules
       if not package.nomodulesource then
-         ml = ". " .. config.install_directory .. "/bin/modules.sh && "
+         ml = ". " .. config.install_directory .. "/bin/modules.sh --link-relative && "
          --for key,value in pairs(package.prerequisite) do
          for key,value in util.ordered(package.prerequisite) do
+            ml = ml .. "ml " .. value .. " && "
+         end
+         for key,value in util.ordered(package.moduleload) do
             ml = ml .. "ml " .. value .. " && "
          end
          print("ML LINE " .. ml)
@@ -351,6 +374,22 @@ local function build_package(package)
          end
       end
    end
+end
+
+-------------------------------------
+-- Helper function to generate prepend_path for lmod.
+-- This function will handle exports for directories named "include".
+-- It will export both to INCLUDE, C_INCLUDE_PATH, CPLUS_INCLUDE_PATH.
+--
+-- @param{String}  include             "include".
+-- @param{Table}   prepend_path        Will be appended with new paths for lmod to prepend.
+-- @param{String}  install_directory   The directory.
+-------------------------------------
+local function generate_prepend_path_include(include, prepend_path, install_directory)
+   -- Insert in paths
+   table.insert(prepend_path, {"INCLUDE", include})
+   table.insert(prepend_path, {"C_INCLUDE_PATH", include})
+   table.insert(prepend_path, {"CPLUS_INCLUDE_PATH", include})
 end
 
 -------------------------------------
@@ -417,7 +456,7 @@ local function generate_prepend_path(package)
       if directory:match("bin") then
          table.insert(prepend_path, {"PATH", "bin"})
       elseif directory:match("include") then
-         table.insert(prepend_path, {"INCLUDE", "include"})
+         generate_prepend_path_include("include", prepend_path, install_directory)
       elseif directory:match("lib64") then
          generate_prepend_path_lib("lib64", prepend_path, install_directory)
       elseif directory:match("lib$") then
