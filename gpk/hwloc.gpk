@@ -1,0 +1,39 @@
+-- CMake gpk script
+
+-- Description of the gpk
+description = [[
+The Portable Hardware Locality (hwloc) software package provides a portable abstraction (across OS, versions, architectures, ...) of the hierarchical topology of modern architectures, including NUMA memory nodes, sockets, shared caches, cores and simultaneous multithreading. It also gathers various system attributes such as cache and memory information as well as the locality of I/O devices such as network interfaces, InfiniBand HCAs or GPUs. 
+
+https://www.open-mpi.org/projects/hwloc/
+]]
+
+-- Definition section
+definition = {
+   pkgname = "hwloc",
+   pkggroup = "tools",
+   pkgfamily = "hwloc",
+}
+
+-- Required types
+prerequisite = {}
+
+-- Build section
+build = {
+   -- Source of package
+   source = "https://www.open-mpi.org/software/hwloc/v<pkgmajor>.<pkgminor>/downloads/hwloc-<pkgversion>.tar.bz2",
+   -- Build command
+   command = [[
+      ./configure --prefix=<pkginstall> --disable-dependency-tracking
+      make -j<nprocesses>
+      make install
+   ]]
+}
+
+-- Lmod section
+lmod = {
+   help = [[This module loads hwloc v. <pkgversion>.]],
+}
+
+--[[
+# vi:syntax=lua
+--]]

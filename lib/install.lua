@@ -110,16 +110,29 @@ local function bootstrap_package(args)
          end
       end
    end
+   
+   package.dependson = util.ordered_table({})
+   if args.depends_on then
+      do_array = util.split(args.depends_on, ",")
+      for count = 1, #do_array do
+         d = util.split(do_array[count], "=")
+         if not d[2] then
+            package.dependson["dependson" .. count] = d[1]
+         else
+            package.dependson[d[1]] = d[2]
+         end
+      end
+   end
 
    package.moduleload = util.ordered_table({})
    if args.moduleload then
-      ml_array = util.split(args.prereq, ",")
+      ml_array = util.split(args.moduleload, ",")
       for count = 1, #ml_array do
          m = util.split(ml_array[count], "=")
-         if not p[2] then
-            package.moduleload["moduleload" .. count] = p[1]
+         if not m[2] then
+            package.moduleload["moduleload" .. count] = m[1]
          else
-            package.moduleload[p[1]] = p[2]
+            package.moduleload[m[1]] = m[2]
          end
       end
    end
@@ -127,6 +140,9 @@ local function bootstrap_package(args)
    -- Setup build, install and modulefile directories
    build_directory = "build-"
    for key,prereq in util.ordered(package.prerequisite) do
+      build_directory = build_directory .. string.gsub(prereq, "/", "-") .. "-"
+   end
+   for key,prereq in util.ordered(package.dependson) do
       build_directory = build_directory .. string.gsub(prereq, "/", "-") .. "-"
    end
    for key,prereq in util.ordered(package.moduleload) do
@@ -350,6 +366,9 @@ local function build_package(package)
          for key,value in util.ordered(package.prerequisite) do
             ml = ml .. "ml " .. value .. " && "
          end
+         for key,value in util.ordered(package.dependson) do
+            ml = ml .. "ml " .. value .. " && "
+         end
          for key,value in util.ordered(package.moduleload) do
             ml = ml .. "ml " .. value .. " && "
          end
@@ -533,6 +552,14 @@ local function build_lmod_modulefile(package)
 
    if (not is_heirarchical(package.definition.pkggroup)) and package.prerequisite then
       for key, prereq in pairs(package.prerequisite) do
+         if tonumber(key) == nil then
+            lmod_file:write("depends_on(\"" .. prereq .. "\")\n")
+         end
+      end
+   end
+   
+   if package.dependson then
+      for key, prereq in pairs(package.dependson) do
          if tonumber(key) == nil then
             lmod_file:write("depends_on(\"" .. prereq .. "\")\n")
          end
