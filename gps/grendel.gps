@@ -1,41 +1,49 @@
-stack = {
+stack = {}
+
+stack[1] = {
    -- Core
    -- Gcc
-   "--gpk gcc --pkv 6.3.0",
+   --"--gpk gcc --pkv 6.3.0",
    "--gpk gcc --pkv 7.1.0",
+}
 
+stack[2] = {
    -- Openmpi
-   "--gpk openmpi --pkv 2.1.1 --prereq='compiler=gcc/6.3.0'",
-   "--gpk openmpi --pkv 2.1.0 --prereq='compiler=gcc/6.3.0'",
-   "--gpk openmpi --pkv 1.10.5 --prereq='compiler=gcc/6.3.0'",
+   --"--gpk openmpi --pkv 2.1.1 --prereq='compiler=gcc/6.3.0'",
+   --"--gpk openmpi --pkv 2.1.0 --prereq='compiler=gcc/6.3.0'",
+   --"--gpk openmpi --pkv 1.10.5 --prereq='compiler=gcc/6.3.0'",
    "--gpk openmpi --pkv 2.1.1 --prereq='compiler=gcc/7.1.0'",
    "--gpk openmpi --pkv 2.1.0 --prereq='compiler=gcc/7.1.0'",
-   "--gpk openmpi --pkv 1.10.5 --prereq='compiler=gcc/7.1.0'",
+   -- "--gpk openmpi --pkv 1.10.5 --prereq='compiler=gcc/7.1.0'",
    
    -- GSL
    -- "--gpk gsl --pkv 2.4 --prereq='compiler=gcc/6.3.0'",
    -- "--gpk gsl --pkv 2.4 --prereq='compiler=gcc/7.1.0'",
    
    -- Lapack
-   "--gpk lapack --pkv 3.7.1 --prereq='compiler=gcc/6.3.0'",
-   "--gpk lapack --pkv 3.7.1 --prereq='compiler=gcc/7.1.0'",
-   
-   -- FFTW
-   "--gpk fftw --pkv 3.3.6-pl2 --prereq='compiler=gcc/6.3.0,mpi=openmpi/2.1.0'",
-   "--gpk fftw --pkv 3.3.6-pl2 --prereq='compiler=gcc/6.3.0,mpi=openmpi/2.1.1'",
-   "--gpk fftw --pkv 3.3.6-pl2 --prereq='compiler=gcc/7.1.0,mpi=openmpi/2.1.0'",
-   "--gpk fftw --pkv 3.3.6-pl2 --prereq='compiler=gcc/7.1.0,mpi=openmpi/2.1.1'",
-   
-   -- Tools
-   -- Singularity
-   "--gpk singularity --pkv 2.3.1",
+   --"--gpk lapack --pkv 3.7.1 --prereq='compiler=gcc/6.3.0'",
+   --"--gpk lapack --pkv 3.7.1 --prereq='compiler=gcc/7.1.0'",
+}   
 
-   -- Neovim
-   "--gpk nvim --pkv 0.2.0",
-
-   -- Valgrind
-   "--gpk valgrind --pkv 3.13.0",
-}
+--stack[2] = {
+--   -- FFTW
+--   "--gpk fftw --pkv 3.3.6-pl2 --prereq='compiler=gcc/6.3.0,mpi=openmpi/2.1.0'",
+--   "--gpk fftw --pkv 3.3.6-pl2 --prereq='compiler=gcc/6.3.0,mpi=openmpi/2.1.1'",
+--   "--gpk fftw --pkv 3.3.6-pl2 --prereq='compiler=gcc/7.1.0,mpi=openmpi/2.1.0'",
+--   "--gpk fftw --pkv 3.3.6-pl2 --prereq='compiler=gcc/7.1.0,mpi=openmpi/2.1.1'",
+--}
+--
+--stack[3] = {
+--   -- Tools
+--   -- Singularity
+--   "--gpk singularity --pkv 2.3.1",
+--
+--   -- Neovim
+--   "--gpk nvim --pkv 0.2.0",
+--
+--   -- Valgrind
+--   "--gpk valgrind --pkv 3.13.0",
+--}
 
 --[[
 # vi:syntax=lua

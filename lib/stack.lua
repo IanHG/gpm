@@ -49,9 +49,11 @@ local function stack(args)
       if args.no_lmod then
          command = command .. "--no-lmod "
       end
-
-      for key, value in pairs(stack) do
-         util.execute_command(command .. value)
+      
+      for level = 1, #stack do
+         for key, value in pairs(stack[level]) do
+            util.execute_command(command .. value)
+         end
       end
    end, function (e)
       exception.message(e)
