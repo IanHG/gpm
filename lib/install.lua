@@ -3,6 +3,7 @@ local lfs = require "lfs"
 local util = require "util"
 local path = require "path"
 local filesystem = require "filesystem"
+local logging = require "logging"
 
 M = {}
 
@@ -637,7 +638,7 @@ end
 local function install(args)
    exception.try(function() 
       -- Bootstrap build
-      util.message_to_log("BOOTSTRAP PACKAGE", io.stdout)
+      logging.message("BOOTSTRAP PACKAGE", io.stdout)
       package = bootstrap_package(args)
 
       if args.debug then
@@ -645,8 +646,8 @@ local function install(args)
       end
 
       -- Create build dir
-      util.message_to_log("BUILD DIR", io.stdout)
-      util.message_to_log(package.build_directory, io.stdout)
+      logging.message("BUILD DIR", io.stdout)
+      logging.message(package.build_directory, io.stdout)
       filesystem.rmdir(package.build_directory, false)
       filesystem.mkdir(package.build_directory, {}, true)
       filesystem.chdir(package.build_directory)

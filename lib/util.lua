@@ -1,28 +1,7 @@
 local M = {}
 
 local _execcmd = require "execcmd"
-
-local function message_to_log(msg, log, raw)
-   if log then
-      -- Create message
-      if not msg then
-         msg = ""
-      end
-      if not raw then
-         msg = msg .. "\n"
-      end
-      msg = " --> " .. msg
-
-      -- Print  message to logs
-      if type(log) == "table" then
-         for key, value in pairs(log) do
-            value:write(msg)
-         end
-      else
-         log:write(msg)
-      end
-   end
-end
+local _logging = require "logging"
 
 local function merge(a, b)
    if type(a) == 'table' and type(b) == 'table' then
@@ -66,22 +45,6 @@ local function table_print(a, name)
    recursive_table_print(a, 0)
 end
 
-
----------------------------------------
----- Make a directory recursively
----------------------------------------
---local function mkdir_recursively(dir)
---   function find_last(haystack, needle)
---      local i=haystack:match(".*"..needle.."()")
---      if i==nil then return nil else return i-1 end
---   end
---   p = dir:sub(1, find_last(dir, "/") - 1)
---   if not lfs.attributes(p) then
---      mkdir_recursively(p)
---   end
---   lfs.mkdir(dir)
---end
-
 -------------------------------------
 -- Run command in shell.
 --
@@ -90,13 +53,13 @@ end
 -- @return{Boolean}
 -------------------------------------
 local function execute_command(command, log)
-   message_to_log("EXECUTING COMMAND : " .. command, log)
+   _logging.message("EXECUTING COMMAND : " .. command, log)
    bool, msg, status = _execcmd.execcmd_shexec(command, log)
    
-   message_to_log("STATUS", log)
-   message_to_log(bool, log)
-   message_to_log(msg, log)
-   message_to_log(status, log)
+   _logging.message("STATUS", log)
+   _logging.message(bool, log)
+   _logging.message(msg, log)
+   _logging.message(status, log)
 
    if status ~= 0  then
       -- Differences in what os.execute returns depending on system
@@ -121,19 +84,6 @@ local function substitute_placeholders(definition, line)
    end
    return line
 end
-
----------------------------------------
----- Copy a file
----------------------------------------
---local function copy_file(src, dest)
---   infile = io.open(src, "r")
---   instr = infile:read("*a")
---   infile:close()
---
---   outfile = io.open(dest, "w")
---   outfile:write(instr)
---   outfile:close()
---end
 
 -------------------------------------
 -- Split a string
@@ -192,15 +142,12 @@ end
 -- Load module functions
 M.print = table_print
 M.merge = merge
---M.mkdir_recursively = mkdir_recursively
 M.execute_command = execute_command
 M.substitute_placeholders = substitute_placeholders
---M.copy_file = copy_file
 M.split = split
 M.trim = trim
 M.ordered_table = ordered_table
 M.ordered = ordered
 M.conditional = conditional
-M.message_to_log = message_to_log
 
 return M
