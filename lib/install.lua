@@ -221,6 +221,28 @@ local function bootstrap_package(args)
 end
 
 -------------------------------------
+-- Open log file. This will log all steps taken
+-- when installing the package.
+--
+-- @param package   The package we are installing.
+-------------------------------------
+local function open_log_file(package)
+   logpath = path.join(package.build_directory, package.definition.pkg .. ".log")
+   package.logfile = io.open(logpath, "w")
+   package.log = {package.logfile, io.stdout}
+end
+
+-------------------------------------
+-- Close log file after package has been
+-- installed succesfully.
+--
+-- @param package   The package we are installing.
+-------------------------------------
+local function close_log_file(package)
+   package.logfile:close()
+end
+
+-------------------------------------
 -- Create file with name and content.
 --
 -- @param{String} name     The name of the file.
@@ -292,7 +314,7 @@ local function make_package_ready_for_install(package)
    if package.build.source_type == "git" then
       if (not filesystem.exists(path.join(package.build_directory, package.definition.pkg))) then
          line = "git clone " .. source .. " " .. package.definition.pkg
-         util.execute_command(line)
+         util.execute_command(line, package.log)
       end
    else
       -- if ftp or http download with wget
@@ -307,10 +329,10 @@ local function make_package_ready_for_install(package)
          print(is_http_or_ftp)
          if is_http_or_ftp then
             line = "wget -O " .. destination .. " " .. source
-            status = util.execute_command(line)
+            status = util.execute_command(line, package.log)
          else -- we assume local file
             line = "cp " .. source .. " " .. destination
-            status = util.execute_command(line)
+            status = util.execute_command(line, package.log)
          end
       end
       if status ~= 0 then
@@ -330,14 +352,14 @@ local function make_package_ready_for_install(package)
          is_zip = string.match(source_file, "zip")
          if is_tar_gz or is_tar_xz then
             line = "tar -xvf " .. destination .. " --transform 's/" .. source_file_strip .. "/" .. package.definition.pkg .. "/'"
-            util.execute_command(line)
+            util.execute_command(line, package.log)
          elseif is_tar_bz then
             --line = "tar -jxvf " .. destination
             line = "tar -jxvf " .. destination .. " --transform 's/" .. source_file_strip .. "/" .. package.definition.pkg .. "/'"
-            util.execute_command(line)
+            util.execute_command(line, package.log)
          elseif is_zip then
             line = "unzip " .. destination
-            util.execute_command(line)
+            util.execute_command(line, package.log)
          end
       end
    end
@@ -346,7 +368,7 @@ local function make_package_ready_for_install(package)
 
    --for line in string.gmatch(package.build.source, ".*$") do
    --   line = util.substitute_placeholders(package.definition, util.trim(line))
-   --   util.execute_command(line)
+   --   util.execute_command(line, package.log)
    --end
 end
 
@@ -386,9 +408,9 @@ local function build_package(package)
          print("LINE : " .. line)
          if not (line == ""  or line == "\n") then
             if ml then
-               util.execute_command(ml .. line)
+               util.execute_command(ml .. line, package.log)
             else
-               util.execute_command(line)
+               util.execute_command(line, package.log)
             end
          end
       end
@@ -620,6 +642,7 @@ local function install(args)
       print("BOOTSTRAP PACKAGE")
       package = bootstrap_package(args)
 
+
       if args.debug then
          util.print(package, "package")
       end
@@ -630,6 +653,9 @@ local function install(args)
       filesystem.rmdir(package.build_directory, false)
       filesystem.mkdir(package.build_directory, {}, true)
       filesystem.chdir(package.build_directory)
+      
+      -- Open a log file
+      open_log_file(package)
       
       -- Do the build
       if not args.no_build then
@@ -661,6 +687,9 @@ local function install(args)
             end
          end
       end
+
+      -- Close log file
+      close_log_file(package)
    end, function(e)
       --local status, msg = filesystem.rmdir(package.build_directory, true)
       --if not status then

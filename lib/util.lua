@@ -1,5 +1,7 @@
 local M = {}
 
+local _execcmd = require "execcmd"
+
 local function merge(a, b)
    if type(a) == 'table' and type(b) == 'table' then
       for k,v in pairs(b) do 
@@ -64,9 +66,9 @@ end
 --
 -- @return{Boolean}
 -------------------------------------
-local function execute_command(command)
+local function execute_command(command, log)
    print("EXECUTING COMMAND : ", command)
-   bool, msg, status = os.execute(command)
+   bool, msg, status = _execcmd.execcmd_shexec(command, log)
    
    print("STATUS")
    print(bool)
