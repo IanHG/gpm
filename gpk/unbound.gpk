@@ -1,0 +1,46 @@
+-- CMake gpk script
+
+-- Description of the gpk
+description = [[
+Unbound is a validating, recursive, and caching DNS resolver.
+
+The C implementation of Unbound is developed and maintained by NLnet Labs. It is based on ideas and algorithms taken from a java prototype developed by Verisign labs, Nominet, Kirei and ep.net.
+
+Unbound is designed as a set of modular components, so that also DNSSEC (secure DNS) validation and stub-resolvers (that do not run as a server, but are linked into an application) are easily possible.
+
+The source code is under a BSD License. 
+
+https://www.unbound.net/
+]]
+
+-- Definition section
+definition = {
+   pkgname = "libidn",
+   pkggroup = "tools",
+   pkgfamily = "libidn",
+}
+
+-- Required types
+prerequisite = {}
+
+-- Build section
+build = {
+   -- Source of package
+   source = "https://www.unbound.net/downloads/unbound-<pkgversion>.tar.gz",
+   -- Build command
+   command = [[
+      ./configure --prefix=<pkginstall> 
+      make -j<nprocesses>
+      make check
+      make install
+   ]]
+}
+
+-- Lmod section
+lmod = {
+   help = [[This module loads unbound v. <pkgversion>.]],
+}
+
+--[[
+# vi:syntax=lua
+--]]

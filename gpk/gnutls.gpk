@@ -1,0 +1,40 @@
+-- CMake gpk script
+
+-- Description of the gpk
+description = [[
+GnuTLS is a secure communications library implementing the SSL, TLS and DTLS protocols and technologies around them. It provides a simple C language application programming interface (API) to access the secure communications protocols as well as APIs to parse and write X.509, PKCS #12, and other required structures.
+
+http://www.gnutls.org/
+]]
+
+-- Definition section
+definition = {
+   pkgname = "gnutls",
+   pkggroup = "tools",
+   pkgfamily = "gnutls",
+}
+
+-- Required types
+prerequisite = {}
+
+-- Build section
+build = {
+   -- Source of package
+   source = "https://www.gnupg.org/ftp/gcrypt/gnutls/v<pkgmajor>.<pkgminor>/gnutls-<pkgversion>.tar.xz",
+   -- Build command
+   command = [[
+      ./configure --prefix=<pkginstall> --without-p11-kit --disable-doc
+      make -j<nprocesses>
+      make check
+      make install
+   ]]
+}
+
+-- Lmod section
+lmod = {
+   help = [[This module loads gnutls v. <pkgversion>.]],
+}
+
+--[[
+# vi:syntax=lua
+--]]

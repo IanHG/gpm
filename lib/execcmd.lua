@@ -2,6 +2,51 @@ M = {}
 
 require "posix"
 
+-- Setup posix binds, such that the module works with different versions of luaposix
+local posix_read = nil
+local posix_pipe = nil
+local posix_fork = nil
+local posix_execp = nil
+local posix_dup2 = nil
+local posix_close = nil
+
+local function setup_posix_binds()
+   if posix.unistd then
+      posix_read  = posix.unistd.read
+      posix_pipe  = posix.unistd.pipe
+      posix_fork  = posix.unistd.fork
+      posix_execp = posix.unistd.execp
+      posix_dup2  = posix.unistd.dup2
+      posix_close = posix.unistd.close
+   else
+      posix_read  = posix.read
+      posix_pipe  = posix.pipe
+      posix_fork  = posix.fork
+      posix_execp = posix.execp
+      posix_dup2  = posix.dup2
+      posix_close = posix.close
+   end
+
+   if posix.sys then
+      if posix.sys.wait then
+         posix_wait = posix.sys.wait.wait
+      else
+         posix_wait = posix.wait
+      end
+   else
+      posix_wait = posix.wait
+   end
+
+   if posix.stdio then
+      posix_fileno = posix.stdio.fileno
+   else
+      posix_fileno = posix.fileno
+   end
+end
+
+setup_posix_binds()
+
+
 --- Create a posix pipe
 --
 -- @return    If successful return read- and write- ends of pipe.
@@ -14,7 +59,7 @@ local function pipe()
    -- nil
    -- string  error message
    -- int     errnum
-   local rd, rw, errnum = posix.unistd.pipe()
+   local rd, rw, errnum = posix_pipe()
    if not rd then
       print("could not create pipe : " .. rw .. " " .. string(errnum))
    end
@@ -34,7 +79,9 @@ local function execwait(pid)
    -- nil
    -- string  error message
    -- int     errnum
-   local pid, msg, status = posix.sys.wait.wait(pid)
+   --
+   print("WAIT")
+   local pid, msg, status = posix_wait(pid)
    
    if not pid then
       print("Could not wait : " .. msg)
@@ -87,7 +134,7 @@ local function read_from_fd(fd, log, chunksize)
    
    -- Read the file descriptor
    while true do
-      local line = posix.unistd.read(fd, 1024)
+      local line = posix_read(fd, 1024)
       if (not line) or (line == "") then break end
 
       if log then
@@ -117,7 +164,7 @@ local function execcmd_impl(cmd, log)
    local stderr_rd, stderr_rw = pipe()
    
    -- Fork process
-   local pid, errmsg, errnum = posix.unistd.fork()
+   local pid, errmsg, errnum = posix_fork()
    
    if pid == nil then
       -- Error 
@@ -125,17 +172,18 @@ local function execcmd_impl(cmd, log)
    elseif pid == 0 then
       -- Child
       -- Duplicate write end of pipes to childs stdout and stderr
-      posix.unistd.dup2(stdout_rw, posix.stdio.fileno(io.stdout))
-      posix.unistd.dup2(stderr_rw, posix.stdio.fileno(io.stderr))
+      posix_dup2(stdout_rw, posix_fileno(io.stdout))
+      posix_dup2(stderr_rw, posix_fileno(io.stderr))
       
       -- Close fd's on child (the called process should not know of these, and they have already been duplicated)
-      posix.unistd.close(stdout_rd)
-      posix.unistd.close(stderr_rd)
-      posix.unistd.close(stdout_rw)
-      posix.unistd.close(stderr_rw)
+      posix_close(stdout_rd)
+      posix_close(stderr_rd)
+      posix_close(stdout_rw)
+      posix_close(stderr_rw)
       
       -- Do exec call
-      local bool, msg = posix.unistd.execp(cmd[0], cmd)
+      print("EXEC")
+      local bool, msg = posix_execp(cmd[0], cmd)
 
       -- If there is an error we report and exit child
       if not bool then
@@ -145,16 +193,16 @@ local function execcmd_impl(cmd, log)
    else
       -- Parent
       -- Close write end of pipe on parent
-      posix.unistd.close(stdout_rw)
-      posix.unistd.close(stderr_rw)
+      posix_close(stdout_rw)
+      posix_close(stderr_rw)
       
       -- Read output from child
       read_from_fd(stdout_rd, log)
       read_from_fd(stderr_rd, log)
       
       -- We are done reading, so close read end of pipe on parent
-      posix.unistd.close(stdout_rd)
-      posix.unistd.close(stderr_rd)
+      posix_close(stdout_rd)
+      posix_close(stderr_rd)
       
       -- Wait for child
       wpid, msg, status = execwait(pid)
