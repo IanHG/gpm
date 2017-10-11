@@ -164,8 +164,12 @@ local function execcmd_impl(cmd, log)
    return status
 end
 
---- 
+--- Execute command and log output to a set of output streams.
 --
+-- @param cmd  The command.
+-- @param log  An optional log.
+--
+-- @return   Returns status of cmd.
 local function execcmd(cmd, log)
    -- Fix input if needed
    cmd = cmd_ensure_vector(cmd)
@@ -174,8 +178,12 @@ local function execcmd(cmd, log)
    return execcmd_impl(cmd, log)
 end
 
---- 
+--- Execute command with 'sh -exec' and log output to a set of output streams.
 --
+-- @param cmd  The command.
+-- @param log  An optional log.
+--
+-- @return   Returns status of cmd.
 local function execcmd_shexec(cmd, log)
    -- Fix input if needed
    cmd = cmd_ensure_string(cmd)

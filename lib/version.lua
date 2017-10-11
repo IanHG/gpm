@@ -3,7 +3,7 @@ local M = {}
 -- Define version number
 local version = {  
    major = 1,
-   minor = 2,
+   minor = 3,
    patch = 0,
 }
 
@@ -25,6 +25,7 @@ local function get_version()
    return description.name .. " Vers. " .. get_version_number()
 end
 
+-- Load module
 M.get_version_number = get_version_number
 M.get_version = get_version
 
