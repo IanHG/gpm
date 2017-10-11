@@ -40,6 +40,24 @@ local function issymlink(path)
    return _lfs.symlinkattributes(path, "mode") ~= nil
 end
 
+--- Copy a file from one location to another.
+--
+-- @param src   Source file.
+-- @param dest  Destination
+--
+-- @return 
+local function copy(src, dest)
+   infile = io.open(src, "r")
+   instr = infile:read("*a")
+   infile:close()
+
+   outfile = io.open(dest, "w")
+   outfile:write(instr)
+   outfile:close()
+
+   return 0
+end
+
 --- Remove a file.
 --
 -- @param path   The path of the file.
@@ -172,6 +190,7 @@ M.exists    = exists
 M.isfile    = isfile
 M.isdir     = isdir
 M.issymlink = issymlink
+M.copy      = copy
 M.remove    = remove
 M.link      = link
 M.unlink    = unlink

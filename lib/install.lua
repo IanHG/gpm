@@ -626,7 +626,7 @@ local function build_lmod_modulefile(package)
    --util.mkdir_recursively(modulefile_directory)
    filesystem.mkdir(modulefile_directory, "", true)
    lmod_filename_new = path.join(modulefile_directory, package.definition.pkgversion .. ".lua")
-   util.copy_file(lmod_filename, lmod_filename_new)
+   filesystem.copy(lmod_filename, lmod_filename_new)
 end
 
 -------------------------------------

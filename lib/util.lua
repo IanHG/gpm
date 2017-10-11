@@ -122,18 +122,18 @@ local function substitute_placeholders(definition, line)
    return line
 end
 
--------------------------------------
--- Copy a file
--------------------------------------
-local function copy_file(src, dest)
-   infile = io.open(src, "r")
-   instr = infile:read("*a")
-   infile:close()
-
-   outfile = io.open(dest, "w")
-   outfile:write(instr)
-   outfile:close()
-end
+---------------------------------------
+---- Copy a file
+---------------------------------------
+--local function copy_file(src, dest)
+--   infile = io.open(src, "r")
+--   instr = infile:read("*a")
+--   infile:close()
+--
+--   outfile = io.open(dest, "w")
+--   outfile:write(instr)
+--   outfile:close()
+--end
 
 -------------------------------------
 -- Split a string
@@ -195,7 +195,7 @@ M.merge = merge
 --M.mkdir_recursively = mkdir_recursively
 M.execute_command = execute_command
 M.substitute_placeholders = substitute_placeholders
-M.copy_file = copy_file
+--M.copy_file = copy_file
 M.split = split
 M.trim = trim
 M.ordered_table = ordered_table
