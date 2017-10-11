@@ -405,7 +405,6 @@ local function build_package(package)
       filesystem.chdir(package_directory)
       for line in string.gmatch(package.build.command, ".*$") do
          line = util.substitute_placeholders(package.definition, util.trim(line))
-         print("LINE : " .. line)
          if not (line == ""  or line == "\n") then
             if ml then
                util.execute_command(ml .. line, package.log)
@@ -627,7 +626,6 @@ local function build_lmod_modulefile(package)
    --util.mkdir_recursively(modulefile_directory)
    filesystem.mkdir(modulefile_directory, "", true)
    lmod_filename_new = path.join(modulefile_directory, package.definition.pkgversion .. ".lua")
-   print(lmod_filename_new)
    util.copy_file(lmod_filename, lmod_filename_new)
 end
 
@@ -639,17 +637,16 @@ end
 local function install(args)
    exception.try(function() 
       -- Bootstrap build
-      print("BOOTSTRAP PACKAGE")
+      util.message_to_log("BOOTSTRAP PACKAGE", io.stdout)
       package = bootstrap_package(args)
-
 
       if args.debug then
          util.print(package, "package")
       end
 
       -- Create build dir
-      print("BUILD DIR")
-      print(package.build_directory)
+      util.message_to_log("BUILD DIR", io.stdout)
+      util.message_to_log(package.build_directory, io.stdout)
       filesystem.rmdir(package.build_directory, false)
       filesystem.mkdir(package.build_directory, {}, true)
       filesystem.chdir(package.build_directory)
