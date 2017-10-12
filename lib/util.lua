@@ -55,6 +55,7 @@ end
 local function execute_command(command, log)
    _logging.message("EXECUTING COMMAND : " .. command, log)
    bool, msg, status = _execcmd.execcmd_shexec(command, log)
+   --bool, msg, status = os.execute(command)
    
    _logging.message("STATUS", log)
    _logging.message(bool, log)

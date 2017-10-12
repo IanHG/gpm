@@ -1,6 +1,8 @@
 M = {}
 
-require "posix"
+local posix = assert(require "posix")
+local io    = assert(require "io")
+local os    = assert(require "os")
 
 -- Setup posix binds, such that the module works with different versions of luaposix
 local posix_read = nil
@@ -120,31 +122,75 @@ local function cmd_ensure_string(cmd)
    end
 end
 
+--- Make sure that fd' have correct format.
+--
+-- @param fd   A single fd or a set of fd's.
+--
+-- @return   Return a vector of fd,bool pairs.
+local function fd_boostrap(fd)
+   local vfd = {}
+   if type(fd) == "table" then
+      for k,v in pairs(fd) do
+         vfd[#vfd + 1] = {v, true}
+      end
+   else
+      vfd = { {fd, true} }
+   end
+   return vfd
+end
+
 --- Read a filedescriptor in chunks and log the output to a set of log files.
 --
 -- @param fd         The filedescriptor to read.
 -- @param log        A set of optional logfiles.
 -- @param chunksize  Optional chunksize (default 1024).
 --
-local function read_from_fd(fd, log, chunksize)
+local function read_from_fds(fd, log, chunksize)
    -- Set default chunksize
    if not chunksize then
-      chunksize = 1024
+      chunksize = 2048
    end
+   
+   -- Bootstrap fd's into correct format
+   fd = fd_boostrap(fd)
    
    -- Read the file descriptor
    while true do
-      local line = posix_read(fd, 1024)
-      if (not line) or (line == "") then break end
+      for ifd = 1, #fd do
+         if fd[ifd][2] then
+            local line, msg, errnum = posix_read(fd[ifd][1], chunksize)
 
-      if log then
-         if type(log) == "table" then
-            for key, value in pairs(log) do
-               value:write(line)
+            -- Check if we read something
+            if (not line) or (line == "") then 
+               -- If we didn't we check for EAGAIN
+               if errnum ~= posix.EAGAIN then
+                  fd[ifd][2] = false
+               end
+            else
+               -- If we did, we log it
+               if log then
+                  if type(log) == "table" then
+                     for key, value in pairs(log) do
+                        value:write(line)
+                     end
+                  else
+                     log:write(line)
+                  end
+               end
             end
-         else
-            log:write(line)
          end
+      end
+      
+      -- Check for break of while
+      local dobreak = true
+      for ifd = 1, #fd do
+         if fd[ifd][2] then
+            dobreak = false
+         end
+      end
+
+      if dobreak then
+         break
       end
    end
 end
@@ -162,6 +208,12 @@ local function execcmd_impl(cmd, log)
    -- Create io pipes 
    local stdout_rd, stdout_rw = pipe()
    local stderr_rd, stderr_rw = pipe()
+   
+   -- Make pipes read-end non-blocking
+   --local outflag = posix.fcntl(stdout_rd, posix.F_GETFL)
+   --local errflag = posix.fcntl(stderr_rd, posix.F_GETFL)
+   posix.fcntl(stdout_rd, posix.F_SETFL, posix.O_NONBLOCK);
+   posix.fcntl(stderr_rd, posix.F_SETFL, posix.O_NONBLOCK);
    
    -- Fork process
    local pid, errmsg, errnum = posix_fork()
@@ -182,7 +234,6 @@ local function execcmd_impl(cmd, log)
       posix_close(stderr_rw)
       
       -- Do exec call
-      print("EXEC")
       local bool, msg = posix_execp(cmd[0], cmd)
 
       -- If there is an error we report and exit child
@@ -197,8 +248,7 @@ local function execcmd_impl(cmd, log)
       posix_close(stderr_rw)
       
       -- Read output from child
-      read_from_fd(stdout_rd, log)
-      read_from_fd(stderr_rd, log)
+      read_from_fds({stdout_rd, stderr_rd}, log)
       
       -- We are done reading, so close read end of pipe on parent
       posix_close(stdout_rd)
@@ -237,11 +287,26 @@ local function execcmd_shexec(cmd, log)
    cmd = cmd_ensure_string(cmd)
    
    -- Then call execcmd impl
-   return execcmd_impl({[0] = "/bin/sh", "-exec", cmd}, log)
+   return execcmd_impl({[0] = "sh", "-exec", cmd}, log)
+end
+
+--- Execute command with 'bash -exec' and log output to a set of output streams.
+--
+-- @param cmd  The command.
+-- @param log  An optional log.
+--
+-- @return   Returns status of cmd.
+local function execcmd_bashexec(cmd, log)
+   -- Fix input if needed
+   cmd = cmd_ensure_string(cmd)
+   
+   -- Then call execcmd impl
+   return execcmd_impl({[0] = "bash", "-exec", cmd}, log)
 end
 
 -- Load module
-M.execcmd        = execcmd
-M.execcmd_shexec = execcmd_shexec
+M.execcmd          = execcmd
+M.execcmd_shexec   = execcmd_shexec
+M.execcmd_bashexec = execcmd_bashexec
 
 return M

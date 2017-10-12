@@ -329,7 +329,8 @@ local function make_package_ready_for_install(package)
          is_http_or_ftp = string.match(source, "http://") or string.match(source, "https://") or string.match(source, "ftp://")
          print(is_http_or_ftp)
          if is_http_or_ftp then
-            line = "wget --quiet -O " .. destination .. " " .. source
+            --line = "wget --quiet -O " .. destination .. " " .. source
+            line = "wget --progress=dot -O " .. destination .. " " .. source
             status = util.execute_command(line, package.log)
          else -- we assume local file
             line = "cp " .. source .. " " .. destination
