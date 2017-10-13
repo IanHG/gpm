@@ -1,6 +1,6 @@
-M = {}
+local M = {}
 
-local logging = require("logging")
+local logging = require "logging"
 
 --- Simulate exceptions in Lua.
 --

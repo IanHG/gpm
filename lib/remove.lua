@@ -3,6 +3,7 @@ local util       = require "util"
 local install    = require "install"
 local path       = require "path"
 local filesystem = require "filesystem"
+local exception  = require "exception"
 
 -- Create module
 local M = {}

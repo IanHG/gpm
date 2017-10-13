@@ -16,42 +16,69 @@ local function merge(a, b)
    return a
 end
 
-local function indent(level)
-   local indention = ""
-   for i=1,level do
-      indention = indention .. "   "
+--- Table print implementation function.
+-- 
+-- @param a       The current sub-table.
+-- @param level   The current level (used to calculate identation).
+--
+-- @return Returns string which contains all sub-tables.
+local function recursively_generate_table_string(a, level)
+   -- Setup some indentation
+   local function indent(level)
+      local indention = ""
+      for i=1,level do
+         indention = indention .. "   "
+      end
+      return indention
    end
-   return indention
-end
 
-local function recursive_table_print(a, level)
-   local indention_outer = indent(level)
-   local indention_inner = indent(level + 1)
-   io.write("{\n")
+   local indentation_outer = indent(level)
+   local indentation_inner = indent(level + 1)
+   
+   -- Begin scope
+   local stable = "{"
+   local firstpass = true
    for k,v in pairs(a) do
-      io.write(indention_inner, k, " = ")
+      -- If first pass we print newline
+      if firstpass then
+         firstpass = false
+         stable = stable .. "\n"
+      end
+      
+      -- Print current
+      stable = stable .. indentation_inner .. k .. " = "
+      
+      -- Print recursive
       if type(v) == 'table' and type(a[k] or false)=='table' then
-         recursive_table_print(v, level + 1)
+         stable = stable .. recursively_generate_table_string(v, level + 1)
       else
-         io.write(tostring(v))
-         io.write("\n")
+         stable = stable .. tostring(v) .. "\n"
       end
    end
-   io.write(indention_outer .. "}\n")
+   
+   -- End scope
+   stable = stable .. indentation_outer .. "}\n"
+   return stable
 end
 
+--- Turn a table into a string.
+--
+-- @param a      The table.
+-- @param name   The name of the table.
+--
+-- @return  Returns string with table.
 local function table_print(a, name)
-   io.write(name .. " = ")
-   recursive_table_print(a, 0)
+   local stable = name .. " = "
+   stable = stable .. recursively_generate_table_string(a, 0)
+   return stable
 end
 
--------------------------------------
--- Run command in shell.
+--- Run command in shell.
 --
--- @param command
+-- @param command    The command to run.
+-- @param log        An optional log.
 --
--- @return{Boolean}
--------------------------------------
+-- @return Returns status of command.
 local function execute_command(command, log)
    -- Do some pre-logging
    _logging.message("EXECUTING COMMAND : " .. command, log)
@@ -74,16 +101,8 @@ local function execute_command(command, log)
       _logging.alert(status, log)
       error("Command '" .. command .. "' exited with errors.")
    end
-
-   --if status ~= 0  then
-   --   -- Differences in what os.execute returns depending on system
-   --   if bool == 0 then
-   --      status = bool
-   --   else
-   --      error("Command '" .. command .. "' exited with errors.")
-   --   end
-   --end
-
+   
+   -- Return status
    return status
 end
 

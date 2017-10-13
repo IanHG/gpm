@@ -4,6 +4,7 @@ local util = require "util"
 local path = require "path"
 local version = require "version"
 local install = require "install"
+local exception = require "exception"
 
 M = {}
 

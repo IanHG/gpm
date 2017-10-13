@@ -3,6 +3,7 @@ local lfs = require "lfs"
 local util = require "util"
 local path = require "path"
 local filesystem = require "filesystem"
+local exception = require "exception"
 local logging = require "logging"
 
 M = {}
@@ -33,7 +34,7 @@ end
 -------------------------------------
 local function bootstrap_package(args)
    if args.debug then
-      print("Bootstrapping package")
+      logging.debug("Bootstrapping package", io.stdout)
    end
 
    package = {}
@@ -643,7 +644,7 @@ local function install(args)
       package = bootstrap_package(args)
 
       if args.debug then
-         util.print(package, "package")
+         logging.debug(util.print(package, "package"), io.stdout)
       end
 
       -- Create build dir

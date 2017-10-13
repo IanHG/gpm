@@ -12,7 +12,9 @@ local colors = {
    reset = 0,
    clear = 0,
    bright = 1,
+   bold = 1,
    dim = 2,
+   italic = 3,
    underscore = 4,
    blink = 5,
    reverse = 7,
@@ -53,15 +55,17 @@ end
 -- @param raw
 --
 -- @return Returns the created message.
-local function create_message(msg, prefix, raw)
+local function create_message(msg, prefix, postfix, raw)
    -- Create message
    if not msg then
       msg = ""
+   else
+      msg = tostring(msg)
    end
    if not raw then
-      msg = tostring(msg) .. "\n"
+      msg = msg:gsub("\n", "\n" .. prefix)
+      msg = prefix .. msg .. postfix .. "\n"
    end
-   msg = prefix .. msg
    return msg
 end
 
@@ -90,7 +94,7 @@ end
 local function message(msg, log, raw)
    if log then
       -- Create message
-      msg = create_message(msg, ansicolor.green .. " --> " .. ansicolor.reset, raw)
+      msg = create_message(msg, ansicolor.green .. " --> " .. ansicolor.reset .. ansicolor.bold, ansicolor.reset, raw)
       
       -- Then write to log
       write_to_log(msg, log)
@@ -107,7 +111,24 @@ end
 local function alert(msg, log, raw)
    if log then
       -- Create message
-      msg = create_message(msg, ansicolor.red .. " !!! " .. ansicolor.reset, raw)
+      msg = create_message(msg, ansicolor.red .. " !!! " .. ansicolor.reset .. ansicolor.bold, ansicolor.reset, raw)
+      
+      -- Then write to log
+      write_to_log(msg, log)
+   end
+end
+
+--- Print alert to log.
+--
+-- Print alert to log files.
+--
+-- @param msg   The message
+-- @param log   A single output stream or a set of output streams
+-- @param raw   Print raw message, or add newline to the end
+local function debug(msg, log, raw)
+   if log then
+      -- Create message
+      msg = create_message(msg, ansicolor.blue .. " >>> " .. ansicolor.reset .. ansicolor.bold, ansicolor.reset, raw)
       
       -- Then write to log
       write_to_log(msg, log)
@@ -117,5 +138,6 @@ end
 -- Load module
 M.message = message
 M.alert   = alert
+M.debug   = debug
 
 return M

@@ -1,6 +1,7 @@
 local M = {}
 
 local util = require "util"
+local exception = require "exception"
 
 --- Bootstrap stack command.
 --

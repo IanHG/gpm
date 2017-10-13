@@ -18,11 +18,12 @@ local install = require "install"
 local initializer = require "initialize"
 local remove = require "remove"
 local util = require "util"
+local logging = require "logging"
 
 -- Description of this script
 description = {
    script_name = "gpm-package.lua",
-   name = "Grendel Package Manager 2000 (GPM2K), or just GPM for short :)",
+   name = "Grendel/Great Package Manager 2000 (GPM2K), or just GPM for short :)",
    desc = "Grendels own easybuilder, yay!",
 }
 
@@ -57,7 +58,7 @@ end
 -------------------------------------
 local function bootstrap_config(args, default_config)
    if args.debug then
-      print("Bootstrapping config.")
+      logging.debug("Bootstrapping config.", io.stdout)
    end
    
    -- Make sure we have a config
@@ -148,7 +149,7 @@ function main()
    -- Parse arguments
    args = parser:parse()
    if args.debug then
-      util.print(args, "args")
+      logging.debug(util.print(args, "args"), io.stdout)
    end
    
    exception.try(function()
