@@ -1,12 +1,12 @@
-local util = require "util"
-
 local M = {}
 
--------------------------------------
--- Bootstrap stack command.
+local util = require "util"
+
+--- Bootstrap stack command.
 --
 -- @param{Table} args   The commandline arguments.
--------------------------------------
+--
+-- @return  Returns stack object.
 local function bootstrap_stack(args)
    -- Load package file
    if args.gps then
@@ -28,11 +28,14 @@ local function bootstrap_stack(args)
    return stack
 end
 
--------------------------------------
--- Install a whole software stack.
+--- Install a whole software stack.
+--  
+--  Install a whole sofware stack as defined by a .gps.
+--  If a package fails to install, execution will be abandoned.
+--  As later packages might depend on the failed package, it is 
+--  better to just stop execution.
 --
 -- @param{Table} args   The commandline arguments.
--------------------------------------
 local function stack(args)
    -- Try
    exception.try(function() 
@@ -52,15 +55,19 @@ local function stack(args)
       
       for level = 1, #stack do
          for key, value in pairs(stack[level]) do
-            util.execute_command(command .. value)
+            local status = util.execute_command(command .. value)
+            if status ~= 0 then
+               error("Failed to build package : " .. value)
+            end
          end
       end
    end, function (e)
-      exception.message(e)
+      -- Propagate the error
       error(e)
    end)
 end
 
+-- Load module
 M.stack = stack
 
 return M

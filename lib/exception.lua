@@ -1,11 +1,11 @@
-exception = {}
+M = {}
 
--------------------------------------
--- Simulate exceptions in Lua.
+local logging = require("logging")
+
+--- Simulate exceptions in Lua.
 --
 -- @param f       Function to try.
 -- @param catch_f Function to run on exception.
--------------------------------------
 local function try(f, catch_f)
    local status, exception = xpcall(f, debug.traceback)
    if not status then
@@ -13,16 +13,15 @@ local function try(f, catch_f)
    end
 end
 
--------------------------------------
--- Print exception message
+--- Print exception message
 --
 -- @param e Exception to print.
--------------------------------------
 local function message(e)
-   print ("[Exception caught : ]" .. e)
+   logging.alert("[Exception caught : ]" .. e)
 end
 
-exception.try = try
-exception.message = message
+-- Load module
+M.try     = try
+M.message = message
 
-return exception
+return M

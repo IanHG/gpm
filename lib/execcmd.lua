@@ -82,7 +82,6 @@ local function execwait(pid)
    -- string  error message
    -- int     errnum
    --
-   print("WAIT")
    local pid, msg, status = posix_wait(pid)
    
    if not pid then
@@ -200,7 +199,7 @@ end
 -- @param cmd   The command to run.
 -- @param log   An optional set of log files.
 --
--- @return     Returns status of running command.
+-- @return     Returns bool, msg, and status of running command (more or less like os.execute).
 local function execcmd_impl(cmd, log)
    -- Setup some output variables
    local wpid, msg, status
@@ -259,7 +258,11 @@ local function execcmd_impl(cmd, log)
    end
       
    -- Return status of call
-   return status
+   if status == 0 then
+      return true, msg, status
+   else
+      return false, msg, status
+   end
 end
 
 --- Execute command and log output to a set of output streams.

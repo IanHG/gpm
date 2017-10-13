@@ -669,6 +669,12 @@ local function install(args)
       -- Change back to calling dir
       filesystem.chdir(config.current_directory)
       
+      -- 
+      logging.message("Succesfully installed '" .. package.definition.pkg .. "'", package.log)
+
+      -- Close log file
+      close_log_file(package)
+      
       -- Remove build dir if requested (and various other degress of removing source data)
       if args.purgebuild then
          local status, msg = filesystem.rmdir(package.build_directory, true)
@@ -686,9 +692,6 @@ local function install(args)
             end
          end
       end
-
-      -- Close log file
-      close_log_file(package)
    end, function(e)
       --local status, msg = filesystem.rmdir(package.build_directory, true)
       --if not status then

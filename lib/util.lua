@@ -53,23 +53,36 @@ end
 -- @return{Boolean}
 -------------------------------------
 local function execute_command(command, log)
+   -- Do some pre-logging
    _logging.message("EXECUTING COMMAND : " .. command, log)
-   bool, msg, status = _execcmd.execcmd_shexec(command, log)
-   --bool, msg, status = os.execute(command)
-   
-   _logging.message("STATUS", log)
-   _logging.message(bool, log)
-   _logging.message(msg, log)
-   _logging.message(status, log)
 
-   if status ~= 0  then
-      -- Differences in what os.execute returns depending on system
-      if bool == 0 then
-         status = bool
-      else
-         error("Command '" .. command .. "' exited with errors.")
-      end
+   -- Run the command
+   bool, msg, status = _execcmd.execcmd_shexec(command, log)
+   
+   -- Do some post logging
+   if bool then
+      _logging.message("COMMAND : " .. command, log)
+      _logging.message("STATUS", log)
+      _logging.message(bool, log)
+      _logging.message(msg, log)
+      _logging.message(status, log)
+   else
+      _logging.alert("COMMAND :" .. command, log)
+      _logging.alert("STATUS", log)
+      _logging.alert(bool, log)
+      _logging.alert(msg, log)
+      _logging.alert(status, log)
+      error("Command '" .. command .. "' exited with errors.")
    end
+
+   --if status ~= 0  then
+   --   -- Differences in what os.execute returns depending on system
+   --   if bool == 0 then
+   --      status = bool
+   --   else
+   --      error("Command '" .. command .. "' exited with errors.")
+   --   end
+   --end
 
    return status
 end
