@@ -698,6 +698,7 @@ local function install(args)
       --if not status then
       --   print("Could not purge build directory after ERROR. Reason : '" .. msg .. "'.") 
       --end
+      logging.alert("There was a PROBLEM installing the package", io.stdout)
       error(e)
    end)
 end
