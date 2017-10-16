@@ -108,7 +108,6 @@ local function bootstrap_package(args)
             p = util.split(prereq_array[count], "=")
             if value == p[1] then
                package.prerequisite[value] = p[2]
-               print("VALUE SET : " .. value .. " = " .. p[2]) 
                found = true
                break
             end
