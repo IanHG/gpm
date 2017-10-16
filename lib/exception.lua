@@ -17,6 +17,7 @@ end
 --
 -- @param e Exception to print.
 local function message(e)
+   print("[Exception caught : ]" .. e)
    logging.alert("[Exception caught : ]" .. e)
 end
 

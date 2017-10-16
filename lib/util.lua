@@ -79,7 +79,11 @@ end
 -- @param log        An optional log.
 --
 -- @return Returns status of command.
-local function execute_command(command, log)
+local function execute_command(command, log, check)
+   if check == nil then
+      check = true
+   end
+
    -- Do some pre-logging
    _logging.message("EXECUTING COMMAND : " .. command, log)
 
@@ -87,7 +91,7 @@ local function execute_command(command, log)
    bool, msg, status = _execcmd.execcmd_shexec(command, log)
    
    -- Do some post logging
-   if bool then
+   if (not check) or bool then
       _logging.message("COMMAND : " .. command, log)
       _logging.message("STATUS", log)
       _logging.message(bool, log)

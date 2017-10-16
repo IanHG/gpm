@@ -4,6 +4,7 @@ local install    = require "install"
 local path       = require "path"
 local filesystem = require "filesystem"
 local exception  = require "exception"
+local logging    = require "logging"
 
 -- Create module
 local M = {}
@@ -48,6 +49,11 @@ end
 local function remove(args)
    -- Try
    exception.try(function()
+      --
+      if args.debug then
+         logging.debug("Removing package", io.stdout)
+      end
+
       -- Hack, we dont need source to uninstall
       args.source = ""
       

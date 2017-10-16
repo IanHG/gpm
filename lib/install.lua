@@ -28,6 +28,22 @@ local function check_package_is_valid(package)
 end
 
 -------------------------------------
+-- Is pkgtype a hierarchical one?
+--
+-- @param{String} pkgtype
+--
+-- @param{Boolean} 
+-------------------------------------
+function is_heirarchical(pkgtype)
+   for key,value in pairs(config.heirarchical) do
+      if pkgtype == value then
+         return true
+      end
+   end
+   return false
+end
+
+-------------------------------------
 -- Read GPM package file (GPK).
 --
 -- @return{Table} Returns definition of build.
@@ -116,6 +132,16 @@ local function bootstrap_package(args)
    package.dependson = util.ordered_table({})
    if args.depends_on then
       do_array = util.split(args.depends_on, ",")
+      for count = 1, #do_array do
+         d = util.split(do_array[count], "=")
+         if not d[2] then
+            package.dependson["dependson" .. count] = d[1]
+         else
+            package.dependson[d[1]] = d[2]
+         end
+      end
+   elseif depends_on then
+      do_array = util.split(depends_on, ",")
       for count = 1, #do_array do
          d = util.split(do_array[count], "=")
          if not d[2] then
@@ -216,6 +242,10 @@ local function bootstrap_package(args)
    check, reason = check_package_is_valid(package)
    if not check then
       error("Package not valid: " .. reason)
+   end
+
+   if args.debug then
+      logging.debug("Done bootstrapping package", io.stdout)
    end
 
    -- return package
@@ -330,7 +360,6 @@ local function make_package_ready_for_install(package)
          is_http_or_ftp = string.match(source, "http://") or string.match(source, "https://") or string.match(source, "ftp://")
          print(is_http_or_ftp)
          if is_http_or_ftp then
-            --line = "wget --quiet -O " .. destination .. " " .. source
             line = "wget --progress=dot -O " .. destination .. " " .. source
             status = util.execute_command(line, package.log)
          else -- we assume local file

@@ -20,6 +20,11 @@ definition = {
 -- Required types
 prerequisite = {}
 
+--depends_on = {
+--   "hw-loc/1.11.5",
+--   "libevent/2.0.33",
+--}
+
 -- Build section
 build = {
    -- Source of package
