@@ -36,10 +36,18 @@ config = {
    heirarchical = {},
 }
 
---- Log the call to gpm
+--- Log the call to gpm in the stack log-file.
+--
+-- Log the gpm-package call in the stack log-file, adding a date and username of
+-- the user who made the call. This creates a log over all
+-- calls such that it is easy to see how a package was installed,
+-- and by whom.
 local function log_gpm_call()
    if config.logfilepath then
+      -- Open log file
       local logfile = io.open(config.logfilepath, "a")
+      
+      -- Create call string
       local call = ""
       for count = 0,#arg do
          if count == 0 then
@@ -48,7 +56,38 @@ local function log_gpm_call()
             call = call .. " " .. arg[count]
          end
       end
-      logging.message(ansicolor.yellow .. "[ " .. os.date("%c") .. " ] " .. ansicolor.default .. call , {logfile, io.stdout})
+
+      -- Get user who ran the command
+      local user = os.getenv("USER")
+      if not user then
+         user = "INCOGNITO"
+      end
+
+      -- Log command
+      local msg = ansicolor.yellow .. ansicolor.bold .. "[ " .. os.date("%c") .. " ] ( " .. user .. " ) " .. ansicolor.default .. call
+      logging.message(msg , {logfile}, true)
+      logging.message(msg , {io.stdout})
+
+      logfile:close()
+   end
+end
+
+--- Log success/failure
+--
+-- Log whether call to gpm-package ended succesfully or with an error.
+-- This is written to the stack log-file after the command.
+local function log_gpm_call_end(success)
+   if config.logfilepath then
+      -- Open log file
+      local logfile = io.open(config.logfilepath, "a")
+      
+      if success then
+         logging.message("Success!", {logfile})
+      else
+         logging.alert("Failed!", {logfile})
+      end
+
+      logfile:close()
    end
 end
 
@@ -156,7 +195,7 @@ function main()
       -- Bootstrap config
       config = bootstrap_config(args, config)
       
-      --
+      -- Log the call to the stack log
       log_gpm_call()
       
       -- Switch on command
@@ -173,8 +212,17 @@ function main()
          -- Stack command
          stack.stack(args)
       end
+
+      -- Log command success
+      log_gpm_call_end(true)
    end, function(e)
+      -- Log command failed
+      log_gpm_call_end(false)
+      
+      -- Print exception
       exception.message(e)
+         
+      -- Print usage
       print("\n" .. parser:get_usage())
    end)
    

@@ -22,7 +22,8 @@ build = {
    -- Build command
    command = [[
       # Build openmpi
-      ./configure --prefix=<pkginstall> --enable-mpirun-prefix-by-default --with-slurm --enable-static --with-pmix=/comm/devstack/libs/pmix/1.2.3 --with-libevent=/comm/devstack/libs/libevent/2.0.22 --with-hwloc=/comm/devstack/libs/hwloc/1.11.5 --without-psm --disable-wrapper-rpath
+      #./configure --prefix=<pkginstall> --enable-mpirun-prefix-by-default --with-slurm --enable-static --with-pmix=/comm/devstack/libs/pmix/1.2.2 --with-libevent=/comm/devstack/libs/libevent/2.0.22 --with-hwloc=/comm/devstack/libs/hwloc/1.11.5 --without-psm --disable-wrapper-rpath
+      ./configure --prefix=<pkginstall> --enable-mpirun-prefix-by-default --with-pmi --with-pmi-libdir=/usr --without-psm --disable-wrapper-rpath
       #./configure --prefix=<pkginstall> --enable-mpirun-prefix-by-default --enable-static --without-psm
       
       make -j<nprocesses>
