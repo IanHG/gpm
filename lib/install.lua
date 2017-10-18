@@ -18,8 +18,10 @@ M = {}
 -------------------------------------
 local function check_package_is_valid(package)
    if not package.nomodulesource then
-      if not package.build.source then
-         return false, "No source"
+      if package.build then
+         if not package.build.source then
+            return false, "No source"
+         end
       end
    end
    
@@ -414,7 +416,7 @@ local function build_package(package)
    if package.build then
       -- Load needed modules
       if not package.nomodulesource then
-         ml = ". " .. config.install_directory .. "/bin/modules.sh --link-relative && "
+         ml = ". " .. config.install_directory .. "/bin/modules.sh --link-relative --force && "
          --for key,value in pairs(package.prerequisite) do
          for key,value in util.ordered(package.prerequisite) do
             ml = ml .. "ml " .. value .. " && "

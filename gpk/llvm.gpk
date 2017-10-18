@@ -21,7 +21,7 @@ build = {
    source = "http://releases.llvm.org/<pkgversion>/<pkg>.src.tar.xz",
    -- Build command
    command = [[
-      mkdir build
+      mkdir build || true
       cd build
       cmake ../. -DCMAKE_INSTALL_PREFIX=<pkginstall>
       make -j<nprocesses>
