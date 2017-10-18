@@ -224,6 +224,9 @@ function main()
          
       -- Print usage
       print("\n" .. parser:get_usage())
+
+      -- Exit with non zero status
+      os.exit(1)
    end)
    
    

@@ -26,7 +26,11 @@ local function bootstrap_stack(args)
       error("Error loading package. Reason : '" .. msg .. "'.")
    end
 
-   return stack
+   if not definitions then
+      local definitions = {}
+   end
+
+   return stack, definitions
 end
 
 --- Install a whole software stack.
@@ -41,10 +45,10 @@ local function stack(args)
    -- Try
    exception.try(function() 
       -- Bootstrap stack
-      stack = bootstrap_stack(args)
+      local stack, definitions = bootstrap_stack(args)
       
       -- Build the stack
-      command = arg[0] .. " --config " .. args.config .. " install "
+      local command = arg[0] .. " --config " .. args.config .. " "
       
       if args.no_build then
          command = command .. "--no-build "
@@ -54,9 +58,18 @@ local function stack(args)
          command = command .. "--no-lmod "
       end
       
+      -- Loop over stack level
       for level = 1, #stack do
          for key, value in pairs(stack[level]) do
-            local status = util.execute_command(command .. value)
+            -- Create specific command
+            local execcmd = command .. value
+            if definitions then
+               print("LOL")
+               execcmd = util.substitute_placeholders(definitions, execcmd)
+            end
+            
+            -- Run the command
+            local status = util.execute_command(execcmd, { io.stdout })
             if status ~= 0 then
                error("Failed to build package : " .. value)
             end

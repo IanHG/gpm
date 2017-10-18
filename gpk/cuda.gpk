@@ -1,0 +1,34 @@
+-- GCC gpk script
+
+-- Description of the gpk
+description = [[
+Cuda
+]]
+
+-- Definition section
+definition = {
+   pkgname = "cuda",
+   pkggroup = "core",
+   pkgfamily = "cuda",
+}
+
+-- Required types
+prerequisite = { }
+
+-- Build section
+build = {
+   -- Source of package
+   command = [[
+      mkdir <pkgbuild>/<pkg>_tmp
+      ./cuda_9.0.176_384.81_linux.run --silent --toolkitpath=<pkginstall> --tmpdir=<pkgbuild>/<pkg>_tmp --toolkit
+   ]]
+}
+
+-- Lmod section
+lmod = {
+   help = [[This module loads Cuda v. <pkgversion>.]],
+}
+
+--[[
+# vi:syntax=lua
+--]]
