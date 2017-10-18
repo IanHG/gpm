@@ -1,0 +1,63 @@
+-- Openmpi gpk script
+
+-- Description of the gpk
+description = [[
+FFTW - Fast Fourier Transform in the West.
+
+In certain cases, it may be advantageous to combine MPI (distributed-memory) and threads (shared-memory) parallelization. FFTW supports this, with certain caveats. For example, if you have a cluster of 4-processor shared-memory nodes, you may want to use threads within the nodes and MPI between the nodes, instead of MPI for all parallelization.
+
+In particular, it is possible to seamlessly combine the MPI FFTW routines with the multi-threaded FFTW routines (see Multi-threaded FFTW). However, some care must be taken in the initialization code, which should look something like this:
+
+   int threads_ok;
+   
+   int main(int argc, char **argv)
+   {
+      int provided;
+      MPI_Init_thread(&argc, &argv, MPI_THREAD_FUNNELED, &provided);
+      threads_ok = provided >= MPI_THREAD_FUNNELED;
+   
+      if (threads_ok) threads_ok = fftw_init_threads();
+      fftw_mpi_init();
+   
+      ...
+      if (threads_ok) fftw_plan_with_nthreads(...);
+      ...
+   
+      MPI_Finalize();
+   }
+]]
+
+-- Definition section
+definition = {
+   pkgname = "fftw",
+   pkggroup = "core",
+   pkgfamily = "fft",
+}
+
+-- Required types
+prerequisite = {"compiler", "mpi"}
+
+-- Build section
+build = {
+   -- Source of package
+   source = "ftp://ftp.fftw.org/pub/fftw/<pkg>.tar.gz",
+   -- Build command
+   command = [[
+      # Build FFTW
+
+      ./configure --prefix=<pkginstall> CC=icc CFLAGS=-gcc --with-our-malloc16 --enable-mpi --enable-openmp --enable-threads --with-combined-threads --enable-avx2 --enable-fma
+      
+      make -j<nprocesses>
+      make check
+      make install
+   ]]
+}
+
+-- Lmod section
+lmod = {
+   help = [[This module loads FFTW v. <pkgversion>.]],
+}
+
+--[[
+# vi:syntax=lua
+--]]
