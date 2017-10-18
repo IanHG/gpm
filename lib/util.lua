@@ -88,7 +88,8 @@ local function execute_command(command, log, check)
    _logging.message("EXECUTING COMMAND : " .. command, log)
 
    -- Run the command
-   bool, msg, status = _execcmd.execcmd_shexec(command, log)
+   --bool, msg, status = _execcmd.execcmd_shexec(command, log)
+   bool, msg, status = _execcmd.execcmd_bashexec(command, log)
    
    -- Do some post logging
    if (not check) or bool then
