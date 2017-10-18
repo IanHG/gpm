@@ -2,7 +2,9 @@
 
 -- Description of the gpk
 description = [[
-Git
+Git is a free and open source distributed version control system designed to handle everything from small to very large projects with speed and efficiency. 
+
+https://git-scm.com/
 ]]
 
 -- Definition section
@@ -18,16 +20,17 @@ prerequisite = {}
 -- Build section
 build = {
    -- Source of package
-   source = "https://github.com/git/git",
-   source_type = "git",
+   --source = "https://github.com/git/git",
+   --source_type = "git",
+   source = "https://www.kernel.org/pub/software/scm/git/git-<pkgversion>.tar.gz",
    -- Build command
    command = [[
-      git checkout v<pkgversion>
+      #git checkout v<pkgversion>
 
-      make configure
+      # make configure
       ./configure --prefix=<pkginstall> --enable-pthreads
-      make all doc -j<nprocesses>
-      make install install-doc install-html
+      make -j<nprocesses>
+      make install
    ]],
 }
 
