@@ -21,7 +21,7 @@ build = {
    source = "https://www.open-mpi.org/software/ompi/v<pkgmajor>.<pkgminor>/downloads/openmpi-<pkgversion>.tar.gz",
    -- Build command
    command = [[
-      # Setup 64 bit
+      # Setup 64 bit as specified here: http://diracprogram.org/doc/release-12/installation/int64/mpi.html
       export F77=gfortran
       export FC=gfortran
       export CC=gcc
