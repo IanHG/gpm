@@ -1,0 +1,37 @@
+-- GCC gpk script
+
+-- Description of the gpk
+description = [[
+Python
+]]
+
+-- Definition section
+definition = {
+   pkgname = "python",
+   pkggroup = "core",
+   pkgfamily = "python",
+}
+
+-- Required types
+prerequisite = { }
+
+-- Build section
+build = {
+   -- Source of package
+   source = "https://www.python.org/ftp/python/<pkgversion>/Python-<pkgversion>.tgz",
+   -- Build command
+   command = [[
+      ./configure --enable-shared --enable-profiling --enable-optimizations --prefix=<pkginstall> --with-lto
+      make -j<nprocesses>
+      make install
+   ]]
+}
+
+-- Lmod section
+lmod = {
+   help = [[This module loads Python v. <pkgversion>.]],
+}
+
+--[[
+# vi:syntax=lua
+--]]
