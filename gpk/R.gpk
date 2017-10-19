@@ -2,13 +2,15 @@
 
 -- Description of the gpk
 description = [[
-R statistical package.
+R is a free software environment for statistical computing and graphics. It compiles and runs on a wide variety of UNIX platforms, Windows and MacOS.
+
+https://www.r-project.org/
 ]]
 
 -- Definition section
 definition = {
    pkgname = "R",
-   pkggroup = "apps",
+   pkggroup = "core",
    pkgfamily = "R",
 }
 
@@ -22,7 +24,9 @@ build = {
    -- Build command
    command = [[
       # Build R
-      ./configure --prefix=<pkginstall> --with-x=no
+      #export LDFLAGS="-L/comm/devstack/libs/libreadline/5.2/lib -I/comm/devstack/libs/libreadline/5.2/include"
+      #export CPPFLAGS="-I/comm/devstack/libs/libreadline/5.2/include"
+      ./configure LDFLAGS="-L/comm/devstack/libs/libreadline/6.3/lib -I/comm/devstack/libs/libreadline/6.3/include" CPPFLAGS="-I/comm/devstack/libs/libreadline/6.3/include" LIBS="-L/comm/devstack/libs/libreadline/6.3/lib -I/comm/devstack/libs/libreadline/6.3/include" --prefix=<pkginstall> --with-x=no
       
       make -j<nprocesses>
       make install

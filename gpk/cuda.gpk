@@ -26,7 +26,7 @@ build = {
    -- Source of package
    command = [[
       mkdir <pkgbuild>/<pkg>_tmp
-      ./cuda_9.0.176_384.81_linux.run --silent --toolkitpath=<pkginstall> --tmpdir=<pkgbuild>/<pkg>_tmp --toolkit
+      ./<pkg>.run --silent --toolkitpath=<pkginstall> --tmpdir=<pkgbuild>/<pkg>_tmp --toolkit
    ]]
 }
 
