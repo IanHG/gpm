@@ -8,7 +8,7 @@ R statistical package.
 -- Definition section
 definition = {
    pkgname = "R",
-   pkggroup = "tools",
+   pkggroup = "apps",
    pkgfamily = "R",
 }
 
