@@ -21,7 +21,8 @@ build = {
    source = "https://www.python.org/ftp/python/<pkgversion>/Python-<pkgversion>.tgz",
    -- Build command
    command = [[
-      ./configure --enable-shared --enable-profiling --enable-optimizations --prefix=<pkginstall> --with-lto
+      #./configure --enable-shared --enable-profiling --enable-optimizations --prefix=<pkginstall> --with-lto
+      ./configure --enable-shared --enable-optimizations --prefix=<pkginstall> --with-lto --with-zlib-dir=/comm/devstack/libs/zlib/1.2.11/lib
       make -j<nprocesses>
       make install
    ]]

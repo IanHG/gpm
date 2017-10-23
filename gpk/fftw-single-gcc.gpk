@@ -32,7 +32,7 @@ However, some care must be taken in the initialization code, which should look s
 
 -- Definition section
 definition = {
-   pkgname = "fftw",
+   pkgname = "fftw-single",
    pkggroup = "core",
    pkgfamily = "fft",
 }
@@ -43,11 +43,11 @@ prerequisite = {"compiler", "mpi"}
 -- Build section
 build = {
    -- Source of package
-   source = "ftp://ftp.fftw.org/pub/fftw/<pkg>.tar.gz",
+   source = "ftp://ftp.fftw.org/pub/fftw/fftw-<pkgversion>.tar.gz",
    -- Build command
    command = [[
       # Build FFTW
-      ./configure --prefix=<pkginstall> --enable-mpi --enable-openmp --enable-threads --enable-avx2 --enable-fma
+      ./configure --prefix=<pkginstall> --enable-mpi --enable-openmp --enable-threads --enable-avx2 --enable-fma --enable-single
       
       make -j<nprocesses>
       make check
@@ -57,7 +57,7 @@ build = {
 
 -- Lmod section
 lmod = {
-   help = [[This module loads FFTW v. <pkgversion>.]],
+   help = [[This module loads FFTW v. <pkgversion> using single precision floats.]],
 }
 
 --[[

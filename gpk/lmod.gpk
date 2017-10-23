@@ -8,6 +8,7 @@ Lmod itself :D
 -- Definition section
 definition = {
    pkgname = "lmod",
+   pkggroup = "tools",
    pkgfamily = "lmod",
 }
 
@@ -22,7 +23,7 @@ build = {
    -- Build command
    command = [[
       git checkout <pkgversion>
-      ./configure --prefix=<pkginstall>
+      ./configure --prefix=<pkginstall> --with-spiderCacheDir=<pkginstall>/modulesdata/cache --with-updateSystemFn=<pkginstall>/modulesdata/system.txt
       make
       make install
    ]],

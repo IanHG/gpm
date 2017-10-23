@@ -1,0 +1,97 @@
+-- Intel compilers gpk script
+
+-- Description of the gpk
+description = [[
+MATLAB
+]]
+
+-- Definition section
+definition = {
+   pkgname = "matlab",
+   pkggroup = "core",
+   pkgfamily = "matlab",
+}
+
+-- Required types
+prerequisite = { }
+
+-- Build section
+build = {
+   -- source
+   source = "/comm/install/matlab_R2017a/dummy",
+
+   files = {
+      -- Licence file
+      {"license.lic", [[
+SERVER 10.88.2.52 005056854358 27000
+USE_SERVER
+      ]]},
+      -- Silent cfg install file
+      {"silent.cfg", [[
+##
+##
+## SPECIFY INSTALLATION FOLDER
+## 
+## Example: 
+##        (Windows) destinationFolder=C:\Program Files\MATLAB\RXXXX
+##        (Unix) destinationFolder=/usr/local/RXXXX
+##        (Mac) destinationFolder=/Applications
+##
+## Set the desired value for destinationFolder and 
+## uncomment the line. 
+destinationFolder=<pkginstall>
+
+##
+## SPECIFY FILE INSTALLATION KEY 
+##
+## Example: fileInstallationKey=xxxxx-xxxxx-xxxxx-xxxxx.....
+##
+## Set the desired value for fileInstallationKey and 
+## uncomment the line.
+##
+fileInstallationKey=60933-07809-63795-18984-17440-48320-11083-26141-50647-34996-55245-14531-08321-19392-52584-36000-29841-04901-44407
+
+##
+## ACCEPT LICENSE AGREEMENT  
+##
+## You must agree to the license agreement to install MathWorks products.
+## The license agreement can be found in the license_agreement.txt file at the
+## root level of the installation DVD.
+##
+## Example: agreeToLicense=yes
+##
+## Set agreeToLicense value to yes or no and 
+## uncomment the line.
+agreeToLicense=yes
+
+##
+## SPECIFY OUTPUT LOG
+##
+## Specify full path of file into which you want the results of the 
+## installation to be recorded.
+##
+## Example: 
+##            (Windows) outputFile=C:\TEMP\mathworks_<user_name>.log
+##            (Unix/Mac) outputFile=/tmp/mathworks_<user_name>.log
+##
+## Set the desired value for outputFile and 
+## uncomment the line.
+outputFile=<pkgbuild>/out.log
+      ]]},
+   },
+   -- Build command
+   command = [[
+      mkdir <pkgbuild>/<pkg>_tmp
+      /comm/install/matlab_R2017a/install -mode silent -inputFile <pkgbuild>/silent.cfg 
+      cp <pkgbuild>/license.lic <pkginstall>/licenses/license.dat
+   ]]
+}
+
+-- Lmod section
+lmod = {
+   help = [[This module loads the Intel compiler suite.]],
+}
+
+--[[
+# vi:syntax=lua
+--]]

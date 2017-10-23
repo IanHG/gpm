@@ -84,6 +84,8 @@ local function bootstrap_package(args)
    end
    if lmod then
       package.lmod = lmod
+   else
+      package.lmod = {}
    end
    
    -- Setup some version numbers and other needed variables
@@ -238,6 +240,7 @@ local function bootstrap_package(args)
    package.nomodulesource = util.conditional(args.nomodulesource, args.nomodulesource, false)
    package.forcedownload  = util.conditional(args.force_download, args.force_download, false)
    package.forceunpack    = util.conditional(args.force_unpack  , args.force_unpack  , false)
+   package.is_lmod        = util.conditional(args.is_lmod       , true               , false)
 
    -- check package validity
    check, reason = check_package_is_valid(package)
@@ -655,11 +658,39 @@ local function build_lmod_modulefile(package)
    lmod_file:close()
 
    -- Put the file in the correct place
-   modulefile_directory = package.lmod.modulefile_directory
+   local modulefile_directory = package.lmod.modulefile_directory
    --util.mkdir_recursively(modulefile_directory)
    filesystem.mkdir(modulefile_directory, "", true)
-   lmod_filename_new = path.join(modulefile_directory, package.definition.pkgversion .. ".lua")
+   local lmod_filename_new = path.join(modulefile_directory, package.definition.pkgversion .. ".lua")
    filesystem.copy(lmod_filename, lmod_filename_new)
+end
+
+---
+--
+--
+--
+local function setup_lmod_for_lmod(package)
+   -- Create lmod modules directory
+   local modulefile_directory = package.lmod.modulefile_directory
+   filesystem.mkdir(modulefile_directory, "", true)
+   
+   local lmod_filename     = path.join(package.definition.pkginstall .. "/lmod/" .. package.definition.pkgversion .. "/modulefiles/Core/lmod/", package.definition.pkgversion .. ".lua")
+   local lmod_filename_new = path.join(modulefile_directory, package.definition.pkgversion .. ".lua")
+   print("LMOD : ")
+   print("old : " .. lmod_filename)
+   print("new : " .. lmod_filename_new)
+   filesystem.copy(lmod_filename, lmod_filename_new)
+   
+   -- Create settarg modules directory
+   local settarg_modulefile_directory = package.lmod.modulefile_directory:gsub("lmod", "settarg")
+   filesystem.mkdir(settarg_modulefile_directory, "", true)
+   
+   local settarg_filename     = path.join(package.definition.pkginstall .. "/lmod/" .. package.definition.pkgversion .. "/modulefiles/Core/settarg/", package.definition.pkgversion .. ".lua")
+   local settarg_filename_new = path.join(settarg_modulefile_directory, package.definition.pkgversion .. ".lua")
+   print("SET ARG : ")
+   print("old : " .. settarg_filename)
+   print("new : " .. settarg_filename_new)
+   filesystem.copy(settarg_filename, settarg_filename_new)
 end
 
 -------------------------------------
@@ -695,6 +726,8 @@ local function install(args)
       -- Create Lmod file
       if package.lmod and not args.no_lmod then
          build_lmod_modulefile(package)
+      elseif package.is_lmod then
+         setup_lmod_for_lmod(package)
       end
       
       -- Change back to calling dir

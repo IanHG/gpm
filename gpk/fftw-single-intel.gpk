@@ -29,7 +29,7 @@ In particular, it is possible to seamlessly combine the MPI FFTW routines with t
 
 -- Definition section
 definition = {
-   pkgname = "fftw",
+   pkgname = "fftw-single",
    pkggroup = "core",
    pkgfamily = "fft",
 }
@@ -40,12 +40,12 @@ prerequisite = {"compiler", "mpi"}
 -- Build section
 build = {
    -- Source of package
-   source = "ftp://ftp.fftw.org/pub/fftw/<pkg>.tar.gz",
+   source = "ftp://ftp.fftw.org/pub/fftw/fftw-<pkgversion>.tar.gz",
    -- Build command
    command = [[
       # Build FFTW
-      export LIBS="-fopenmp=libiomp5"
-      ./configure --prefix=<pkginstall> CC=clang --enable-mpi --enable-openmp --enable-threads --enable-avx2 --enable-fma
+
+      ./configure --prefix=<pkginstall> CC=icc CFLAGS=-gcc --with-our-malloc16 --enable-mpi --enable-openmp --enable-threads --enable-avx2 --enable-fma --enable-single
       
       make -j<nprocesses>
       make check
@@ -55,7 +55,7 @@ build = {
 
 -- Lmod section
 lmod = {
-   help = [[This module loads FFTW v. <pkgversion>.]],
+   help = [[This module loads FFTW v. <pkgversion> using single precision floats.]],
 }
 
 --[[

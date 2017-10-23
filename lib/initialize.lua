@@ -15,6 +15,8 @@ local function install_luarocks(args)
    args.gpk = "luarocks"
    args.pkv = "2.4.1"
    args.nomodulesource = true
+   args.is_lmod = false
+   args.no_lmod = false
 
    install.install(args)
 end
@@ -57,6 +59,8 @@ local function install_lmod(args)
       args.gpk = "lmod"
       args.pkv = "7.6.14"
       args.nomodulesource = true
+      args.is_lmod = true
+      args.no_lmod = true
       
       install.install(args)
    end
@@ -72,6 +76,8 @@ local function install_gpm(args)
       args.pkv = version.get_version_number()
       args.no_build = true
       args.nomodulesource = false
+      args.is_lmod = false
+      args.no_lmod = false
 
       install.install(args)
    end
@@ -185,7 +191,7 @@ local function create_shell_environment(args)
       bin_file:write("   export MODULEPATH=\"" .. modulepath .. "\"\n")
       bin_file:write("\n")
       bin_file:write("   # Source lmod \n")
-      bin_file:write("  . ".. path.join(config.install_directory, "lmod/lmod/init/profile") .. "\n")
+      bin_file:write("  . ".. path.join(config.install_directory, "tools/lmod/7.6.14/lmod/lmod/init/profile") .. "\n")
       bin_file:write("\n")
       bin_file:write("   # Export stack path\n")
       bin_file:write("   export GPMSTACKPATH=\"" .. this_path .. "\"\n")
