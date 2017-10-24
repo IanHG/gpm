@@ -2,6 +2,8 @@
 
 ## Usage
 
+### Basic commands
+
 To __install__ packages using GPM you first load `gpm` using the module system:
 ```
 ml gpm
@@ -20,20 +22,82 @@ To __remove__ a package you can use the `remove` command:
 gpm-package remove --gpk gcc --pkv 7.2.0
 ```
 
-Some times packages depends on other packages. There are three kinds of dependencies in GPM:
+Some packages __depend__ on other packages, either to be installed or to function at all. 
+There are three kinds of dependencies when installing packages with GPM:
 * `--moduleload`
 * `--depends-on`
 * `--prereq`
 
-Use `--moduleload` when a package only needs another package when it is installing. This could _e.g._ be a package thats needs `cmake` to build. Intalling `llvm` using `cmake/3.9.4`:
+The first kind of dependency is the `--moduleload`-dependency, and is a somewhat "loose" dependency, and it is used when a package only needs another package when it is installing. This could _e.g._ be a package thats needs `cmake` to build. Intalling `llvm` using `cmake/3.9.4`:
 ```
 gpm-package install --gpk llvm --pkv 5.0.0 --moduleload='cmake/3.9.4'
 ```
 
-Use `--depends-on` when a package also needs another package loaded when it itself is loaded through the module system. This could _e.g._ be a programs thats needs to load a specific dynamic library before it can run.
+The second kind of package dependency is `--depends-on`, which is a little stronger,
+should be used when a package also needs other packages loaded when it itself is loaded through the module system. This could _e.g._ be a programs thats needs to load a specific dynamic library before it can run.
 ```
-gpm-package install --gpk 
+gpm-package install --gpk clang --pkv 5.0.0 --depends-on='llvm/5.0.0'
 ```
+This means that every time the `clang/5.0.0` module is loaded the `llvm/5.0.0` module is also loaded.
+
+The third and strongest kind of dependency is the prerequisite dependency given by `--prereq`.
+Use `--prereq`, when a package has set a prerequisite in its `.gpk`file. For example, the `openmpi-gcc` package has a `compiler` prerequite, and to build this a compiler needs to be given.
+```
+gpm-package install --gpk openmpi-gcc --pkv 2.1.0 --prereq='compiler=gcc/6.3.0'
+```
+This means that before one is able to load `openmpi/2.1.0` compiled with `gcc-6.3.0` compiler, one first has to load the `gcc/6.3.0` module. 
+
+### Grendel PacKage files (.gpk)
+
+All packages are installed from so-called `.gpk` files.
+The default location for these files is `<gpm-path>/gpk`.
+The `.gpk` are like `gpm-package` itself written in `lua` code, and define how a given package should be installed/build.
+
+```lua
+-- GCC gpk script
+
+-- Description of the gpk
+description = [[
+GCC - Gnu compiler suite, that is newer than the system default.
+]]
+
+-- Definition section
+definition = { 
+   pkgname = "gcc",
+   pkggroup = "core",
+   pkgfamily = "compiler",
+}
+
+-- Required types
+prerequisite = { } 
+
+-- Build section
+build = { 
+   -- Source of package
+   source = "ftp://gcc.gnu.org/pub/gcc/releases/<pkg>/<pkg>.tar.bz2",
+   -- Build command
+   command = [[
+      # Download and install prerequisites
+      contrib/download_prerequisites
+      
+      # Build gcc
+      mkdir build
+      cd build
+      ../configure --enable-lto --disable-multilib --enable-bootstrap --enable-shared --enable-threads=posix --prefix=<pkginstall> --with-local-prefix=<pkginstall>
+      
+      make -j<nprocesses>
+      make -k check || true
+      make install
+   ]]
+}
+
+-- Lmod section
+lmod = { 
+   help = [[This module loads a newer version of gcc than the system default.]],
+}
+
+```
+
 
 ## Dependencies 
 
