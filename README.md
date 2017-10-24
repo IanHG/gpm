@@ -1,23 +1,36 @@
 # Grendel Package Manager (GPM)
 
+## Usage
+
+To install packages you just load `gpm` using the module system 
+```
+ml gpm
+```
+and afterwards run the install command of the `gpm-package` script providing the desired package and version of that package
+```
+gpm-package install --gpk <package> --pkv <version>
+```
+For example, to install the `gcc` compiler version `7.1.0` you run:
+```
+gpm-pacakge install --gpk gcc --pkv 7.2.0
+```
+
 ## Dependencies 
 
-   System packages needed for installation:
-      lua
-      luarocks (optional)
+System packages needed for installation:
+* lua
+* luarocks (optional)
+* git   (for Lmod)
+* tclsh (for Lmod)
       
-   Lua Packages (can be installed with luarocks):
-      luafilesystem
-      argparse
-      luaposix  
+Lua Packages (can be installed with luarocks):
+* luafilesystem
+* argparse
+* luaposix  
 
-   GPM needs:
-      wget
-      tar
-
-   Lmod needs:
-      git
-      tclsh
+For using `gpm-package` command to install packages you will need the following programs:
+* wget
+* tar
 
 ## Special extenstions
 
