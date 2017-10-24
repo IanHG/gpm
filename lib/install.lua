@@ -87,6 +87,12 @@ local function bootstrap_package(args)
    else
       package.lmod = {}
    end
+
+   if post then
+      package.post = post
+   else
+      package.post = {}
+   end
    
    -- Setup some version numbers and other needed variables
    package.definition.pkgversion = args.pkv
@@ -693,6 +699,21 @@ local function setup_lmod_for_lmod(package)
    filesystem.copy(settarg_filename, settarg_filename_new)
 end
 
+---
+--
+--
+local function postprocess_package(package)
+   if package.post.command then
+      local ml = ". " .. config.install_directory .. "/bin/modules.sh --link-relative --force && "
+      for key,value in util.ordered(package.prerequisite) do
+         ml = ml .. "ml " .. value .. " && "
+      end
+      local cmd = ml .. package.post.command
+      cmd = util.substitute_placeholders(package.definition, util.trim(cmd))
+      util.execute_command(cmd, package.log)
+   end
+end
+
 -------------------------------------
 -- Wrapper for installing a package.
 --
@@ -732,6 +753,9 @@ local function install(args)
       
       -- Change back to calling dir
       filesystem.chdir(config.current_directory)
+
+      -- Post process
+      postprocess_package(package)
       
       -- 
       logging.message("Succesfully installed '" .. package.definition.pkg .. "'", package.log)
