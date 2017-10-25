@@ -54,6 +54,7 @@ post = {
       python -m pip install Werkzeug
       python -m pip install tensorflow
       python -m pip install tflearn
+      python -m pip install pytest
    ]]
 }
 

@@ -34,28 +34,21 @@ lmod = {
    help = [[This module loads Python v. <pkgversion>.]],
 }
 
---post = {
---   command = [[
---      cd <pkgbuild>
---      ml <pkgname>/<pkgversion>
---      python -m ensurepip
---      python -m pip install -U pip
---      python -m pip install numpy
---      python -m pip install scipy
---      python -m pip install backports.functools-lru-cache
---      python -m pip install cycler
---      python -m pip install funcsigs
---      python -m pip install matplotlib
---      python -m pip install mock
---      python -m pip install olefile
---      python -m pip install Pillow
---      python -m pip install protobuf
---      python -m pip install virtualenv
---      python -m pip install Werkzeug
---      python -m pip install tensorflow
---      python -m pip install tflearn
---   ]]
---}
+post = {
+   command = [[
+      cd <pkgbuild>
+      ml <pkgname>/<pkgversion>
+      #pip3 install -U pip3
+      pip3 install numpy
+      pip3 install scipy
+      pip3 install cycler
+      pip3 install funcsigs
+      pip3 install matplotlib
+      pip3 install mock
+      pip3 install virtualenv
+      pip3 install pytest
+   ]]
+}
 
 --[[
 # vi:syntax=lua
