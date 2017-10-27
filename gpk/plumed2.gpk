@@ -1,0 +1,40 @@
+-- Plumed gpk script
+
+-- Description of the gpk
+description = [[
+]]
+
+-- Definition section
+definition = {
+   pkgname = "plumed2",
+   pkggroup = "plumed",
+   pkgfamily = "plumed",
+}
+
+-- Required types
+prerequisite = {}
+
+-- Build section
+build = {
+   -- Source of package
+   source = " https://github.com/plumed/plumed2",
+   source_type = "git",
+   -- Build command
+   command = [[
+      #git checkout v<pkgversion>
+
+      # make configure
+      ./configure --prefix=<pkginstall> --enable-mpi --enable-gsl --enable-fftw
+      make -j<nprocesses>
+      make install
+   ]],
+}
+
+-- Lmod section
+lmod = {
+   help = [[This module loads Plumed v. <pkgversion>.]],
+}
+
+--[[
+# vi:syntax=lua
+--]]

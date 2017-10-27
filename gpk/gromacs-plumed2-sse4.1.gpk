@@ -1,0 +1,47 @@
+-- Lapack gpk script
+
+-- Description of the gpk
+description = [[
+GROMACS
+]]
+
+-- Definition section
+definition = {
+   pkgname = "gromacs-plumed2-sse4.1",
+   pkggroup = "gromacs",
+   pkgfamily = "gromacs",
+}
+
+-- Required types
+prerequisite = {}
+
+-- Build section
+build = {
+   -- Source of package
+   source = "http://ftp.gromacs.org/pub/gromacs/gromacs-<pkgversion>.tar.gz",
+   -- Build command
+   command = [[
+      # Apply plumed
+      plumed patch -p --runtime -e gromacs-5.1.4
+
+      # Build gromacs
+      mkdir build
+      cd build
+      
+      export CC=icc
+      export CXX=icpc
+      cmake -DCMAKE_INSTALL_PREFIX=<pkginstall> -DGMX_SIMD=SSE4.1 -DGMX_MPI=ON -DGMX_GPU=OFF -DGMX_BUILD_OWN_FFTW=ON ../
+      
+      make -j<nprocesses>
+      make install
+   ]]
+}
+
+-- Lmod section
+lmod = {
+   help = [[This module loads Gromacs v. <pkgversion>.]],
+}
+
+--[[
+# vi:syntax=lua
+--]]
