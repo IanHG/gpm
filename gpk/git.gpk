@@ -28,7 +28,7 @@ build = {
       #git checkout v<pkgversion>
 
       # make configure
-      ./configure --prefix=<pkginstall> --enable-pthreads
+      ./configure --prefix=<pkginstall> --enable-pthreads --with-curl
       make -j<nprocesses>
       make install
    ]],
@@ -37,6 +37,21 @@ build = {
 -- Lmod section
 lmod = {
    help = [[This module loads Git v. <pkgversion>.]],
+}
+
+-- Post
+post = {
+   command = [[
+      cd <pkgbuild>
+      ml <pkgname>/<pkgversion>
+
+      wget https://github.com/git-lfs/git-lfs/releases/download/v2.3.4/git-lfs-linux-amd64-2.3.4.tar.gz
+      tar xvf git-lfs-linux-amd64-2.3.4.tar.gz
+      cd git-lfs-2.3.4
+      
+      export PREFIX=<pkginstall>
+      ./install.sh
+   ]]
 }
 
 --[[
