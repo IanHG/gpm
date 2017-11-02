@@ -128,6 +128,8 @@ lmod = {
       -- PATH
       {"PATH", "compilers_and_libraries_<pkgversion>/linux/bin/intel64"},
       {"PATH", "compilers_and_libraries_<pkgversion>/linux/mpi/intel64/bin"},
+      -- MANPATH
+      {"MANPATH", "compilers_and_libraries_<pkgversion>/linux/man/common"},
    },
 }
 
