@@ -26,7 +26,7 @@ build = {
       # Build R
       #export LDFLAGS="-L/comm/devstack/libs/libreadline/5.2/lib -I/comm/devstack/libs/libreadline/5.2/include"
       #export CPPFLAGS="-I/comm/devstack/libs/libreadline/5.2/include"
-      ./configure LDFLAGS="-L/comm/devstack/libs/libreadline/6.3/lib -I/comm/devstack/libs/libreadline/6.3/include" CPPFLAGS="-I/comm/devstack/libs/libreadline/6.3/include" LIBS="-L/comm/devstack/libs/libreadline/6.3/lib -I/comm/devstack/libs/libreadline/6.3/include" --prefix=<pkginstall> --with-x=no
+      ./configure --prefix=<pkginstall> --with-x=no
       
       make -j<nprocesses>
       make install
