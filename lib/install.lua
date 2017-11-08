@@ -45,6 +45,36 @@ function is_heirarchical(pkgtype)
    return false
 end
 
+---
+--
+--
+local function locate_gpk_file(args)
+   -- Initialize to nil
+   local filepath = nil
+
+   -- Try to locate gpk file
+   if args.gpk then
+      local filename = args.gpk .. ".gpk"
+      local function locate_gpk_impl()
+         for gpk_path in path.iterator(config.gpk_path) do
+            local filepath = path.join(gpk_path, filename)
+            if filesystem.exists(filepath) then
+               return filepath
+            end
+         end
+         return nil
+      end
+      filepath = locate_gpk_impl()
+   elseif args.gpkf then
+      filepath = args.gpkf
+   else
+      error("Must provide either -gpk or -gpkf option.")
+   end
+   
+   -- Return found path
+   return filepath
+end
+
 -------------------------------------
 -- Read GPM package file (GPK).
 --
@@ -57,15 +87,9 @@ local function bootstrap_package(args)
 
    package = {}
    
-   -- Load package file
-   if args.gpk then
-      filename = args.gpk .. ".gpk"
-      filepath = path.join(config.gpk_directory, filename)
-   elseif args.gpkf then
-      filepath = args.gpkf
-   else
-      error("Must provide either -gpk or -gpkf option.")
-   end
+   -- Load the gpk file
+   local filepath = locate_gpk_file(args)
+   logging.message("GPK : " .. filepath, io.stdout)
    
    local f, msg = loadfile(filepath)
    if f then

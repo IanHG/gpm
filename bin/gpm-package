@@ -31,7 +31,7 @@ description = {
 -- Set config defaults
 config = {  
    current_directory = lfs.currentdir(),  
-   gpk_directory = folder_of_this .. "../gpk",
+   gpk_path = folder_of_this .. "../gpk",
    gps_directory = folder_of_this .. "../gps",
    heirarchical = {},
 }
@@ -139,6 +139,10 @@ local function bootstrap_config(args, default_config)
    assert(loadfile(args.config))()
 
    default_config = util.merge(default_config, config)
+
+   if config.gpk_path then
+      default_config.gpk_path = default_config.gpk_path .. ":" .. folder_of_this .. "../gpk"
+   end
 
    if not default_config.base_build_directory then default_config.base_build_directory = default_config.install_directory .. "/build" end
    if not default_config.lmod_directory then default_config.lmod_directory = default_config.install_directory .. "/modulefiles" end

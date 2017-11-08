@@ -56,7 +56,6 @@ local function split_filename(strFilename)
    return strFilename:match("(.-)([^\\/]-%.?([^%.\\/]*))$")
 end
 
-
 ---
 --
 --
@@ -75,13 +74,30 @@ local function get_file_extension(url)
   return ext
 end
 
+--- Take a separated string of paths and return an iterator to loop over the paths.
+--
+-- @param  path    The separated path string.
+-- @param  sep     A custom separator (defaults to ":").
+--
+-- @return Returns path iterator.
+local function iterator(path, sep)
+   if not sep then
+      sep = ":"
+   end
+   
+   return path:gmatch("([^" .. sep .. "]+)" .. sep .. "?")
+end
+
 -- Load functions for module
 M.is_abs_path    = is_abs_path
 M.has_dir_end    = has_dir_end
 M.remove_dir_end = remove_dir_end
 M.join           = join
+
 M.filename       = get_filename
 M.extension      = get_file_extension
 M.split_filename = split_filename
+
+M.iterator       = iterator
 
 return M
