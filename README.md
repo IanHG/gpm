@@ -178,7 +178,7 @@ git clone git@github.com:IanHG/gpm.git
 ```
 or download a zip and unpack.
 There is no installation or configuring as such, 
-but please sure that all dependencies are met or `gpm-package` will not run.
+but please make sure that all dependencies are met or `gpm-package` will not run.
 
 ### Dependencies 
 
@@ -186,16 +186,16 @@ Make sure all dependencies are met on your system.
 
 System packages needed for installation:
 
-* lua
-* luarocks (optional)
-* git   (for Lmod)
-* tclsh (for Lmod)
+* `lua`
+* `luarocks` (optional)
+* `git`   (for Lmod)
+* `tclsh` (for Lmod)
       
 Lua Packages needed by `gpm-package` (can be installed with luarocks):
 
-* luafilesystem
-* argparse
-* luaposix  
+* `luafilesystem`
+* `argparse`
+* `luaposix`
 
 For using `gpm-package` command to install packages you will need the following programs:
 
