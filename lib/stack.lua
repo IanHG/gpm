@@ -1,7 +1,41 @@
 local M = {}
 
-local util = require "util"
-local exception = require "exception"
+local util       = require "util"
+local exception  = require "exception"
+local filesystem = require "filesystem"
+local path       = require "path"
+
+--- Locate gps file by searching gps_path.
+--
+-- @param args   The input arguments.
+--
+-- @return   Returns gps filename as string.
+local function locate_gps_file(args)
+   -- Initialize to nil
+   local filepath = nil
+
+   -- Try to locate gps file
+   if args.gps then
+      local filename = args.gps .. ".gps"
+      local function locate_gps_impl()
+         for gps_path in path.iterator(config.gps_path) do
+            local filepath = path.join(gps_path, filename)
+            if filesystem.exists(filepath) then
+               return filepath
+            end
+         end
+         return nil
+      end
+      filepath = locate_gps_impl()
+   elseif args.gpsf then
+      filepath = args.gpsf
+   else
+      error("Must provide either -gps or -gpsf option.")
+   end
+   
+   -- Return found path
+   return filepath
+end
 
 --- Bootstrap stack command.
 --
@@ -10,14 +44,7 @@ local exception = require "exception"
 -- @return  Returns stack object.
 local function bootstrap_stack(args)
    -- Load package file
-   if args.gps then
-      filename = args.gps .. ".gps"
-      filepath = path.join(config.gps_directory, filename)
-   elseif args.gpsf then
-      filepath = args.gpsf
-   else
-      error("Must provide either -gps or -gpsf option.")
-   end
+   local filepath = locate_gps_file(args)
    
    local f, msg = loadfile(filepath)
    if f then

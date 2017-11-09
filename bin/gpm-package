@@ -32,7 +32,7 @@ description = {
 config = {  
    current_directory = lfs.currentdir(),  
    gpk_path = folder_of_this .. "../gpk",
-   gps_directory = folder_of_this .. "../gps",
+   gps_path = folder_of_this .. "../gps",
    heirarchical = {},
 }
 
@@ -142,6 +142,9 @@ local function bootstrap_config(args, default_config)
 
    if config.gpk_path then
       default_config.gpk_path = default_config.gpk_path .. ":" .. folder_of_this .. "../gpk"
+   end
+   if config.gps_path then
+      default_config.gps_path = default_config.gps_path .. ":" .. folder_of_this .. "../gps"
    end
 
    if not default_config.base_build_directory then default_config.base_build_directory = default_config.install_directory .. "/build" end

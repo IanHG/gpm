@@ -45,9 +45,11 @@ function is_heirarchical(pkgtype)
    return false
 end
 
----
+--- Locate gpk file by searching gpk_path.
 --
+-- @param args   The input arguments.
 --
+-- @return   Returns gpk filename as string.
 local function locate_gpk_file(args)
    -- Initialize to nil
    local filepath = nil
