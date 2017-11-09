@@ -59,7 +59,15 @@ local function locate_gpk_file(args)
       local filename = args.gpk .. ".gpk"
       local function locate_gpk_impl()
          for gpk_path in path.iterator(config.gpk_path) do
+            -- Check for abs path
+            if not path.is_abs_path(gpk_path) then
+               gpk_path = path.join(config.stack_path, gpk_path)
+            end
+            
+            -- Create filename
             local filepath = path.join(gpk_path, filename)
+            
+            -- Check for existance
             if filesystem.exists(filepath) then
                return filepath
             end
@@ -90,8 +98,7 @@ local function bootstrap_package(args)
    package = {}
    
    -- Load the gpk file
-   local filepath = locate_gpk_file(args)
-   logging.message("GPK : " .. filepath, io.stdout)
+   local filepath = assert(locate_gpk_file(args))
    
    local f, msg = loadfile(filepath)
    if f then
@@ -99,6 +106,8 @@ local function bootstrap_package(args)
    else
       error("Error loading package. Reason : '" .. msg .. "'.")
    end
+   
+   logging.message("GPK : " .. filepath, io.stdout)
    
    package.description = description
    package.definition = definition
@@ -216,7 +225,7 @@ local function bootstrap_package(args)
    package.definition.pkgbuild = package.build_directory
    
    if package.definition.pkggroup then
-      pkginstall = path.join(config.install_directory, package.definition.pkggroup)
+      pkginstall = path.join(config.stack_path, package.definition.pkggroup)
       if is_heirarchical(package.definition.pkggroup) then
          for key,prereq in util.ordered(package.prerequisite) do
             pkginstall = path.join(pkginstall, string.gsub(prereq, "/", "-"))
@@ -226,9 +235,9 @@ local function bootstrap_package(args)
    else
       -- Special care for lmod
       if package.definition.pkgname == "lmod" then
-         pkginstall = config.install_directory
+         pkginstall = config.stack_path
       else
-         pkginstall = path.join(path.join(config.install_directory, package.definition.pkgname), package.definition.pkgversion)
+         pkginstall = path.join(path.join(config.stack_path, package.definition.pkgname), package.definition.pkgversion)
       end
    end
    package.definition.pkginstall = pkginstall
@@ -451,7 +460,7 @@ local function build_package(package)
    if package.build then
       -- Load needed modules
       if not package.nomodulesource then
-         ml = ". " .. config.install_directory .. "/bin/modules.sh --link-relative --force && "
+         ml = ". " .. config.stack_path .. "/bin/modules.sh --link-relative --force && "
          --for key,value in pairs(package.prerequisite) do
          for key,value in util.ordered(package.prerequisite) do
             ml = ml .. "ml " .. value .. " && "
@@ -635,7 +644,7 @@ local function build_lmod_modulefile(package)
    if package.lmod.install_path then
       lmod_file:write("local installDir  = \"" .. package.lmod.install_path .. "\"\n")
    else
-      lmod_file:write("local installDir  = pathJoin(\"" .. path.join(config.install_directory, package.definition.pkggroup) .. "\", packageName)\n")
+      lmod_file:write("local installDir  = pathJoin(\"" .. path.join(config.stack_path, package.definition.pkggroup) .. "\", packageName)\n")
    end
    lmod_file:write("\n")
 
@@ -730,7 +739,7 @@ end
 --
 local function postprocess_package(package)
    if package.post.command then
-      local ml = ". " .. config.install_directory .. "/bin/modules.sh --link-relative --force && "
+      local ml = ". " .. config.stack_path .. "/bin/modules.sh --link-relative --force && "
       for key,value in util.ordered(package.prerequisite) do
          ml = ml .. "ml " .. value .. " && "
       end

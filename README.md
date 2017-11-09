@@ -2,8 +2,31 @@
 
 ## Usage
 
+### Basic setup
+
+```lua
+-- GPM config file
+config = {
+   nprocesses = 1,
+
+   -- Install directory
+   install_directory = "<stack-dir>",
+
+   -- Setup some paths
+   logfilepath = "<stack-dir>/stack.log",
+   gpk_path    = "<stack-dir>/gpk",
+   gps_path    = "<stack-dir>/gps",
+
+   -- Modulefiles setup
+   groups = {"core", "apps", "tools"},
+   heirarchical = {"core"},
+}
+```
+
+
 ### Basic commands
 
+Once a `gpm` stack is setup you can install and remove software packages using the `gpm-package` script.
 To __install__ packages using GPM you first load `gpm` using the module system:
 ```bash
 ml gpm
@@ -138,6 +161,8 @@ Special macros for .gpk files:
 
 ### Dependencies 
 
+Make sure all dependencies are met on your system.
+
 System packages needed for installation:
 
 * lua
@@ -145,7 +170,7 @@ System packages needed for installation:
 * git   (for Lmod)
 * tclsh (for Lmod)
       
-Lua Packages (can be installed with luarocks):
+Lua Packages needed by `gpm-package` (can be installed with luarocks):
 
 * luafilesystem
 * argparse
@@ -153,8 +178,8 @@ Lua Packages (can be installed with luarocks):
 
 For using `gpm-package` command to install packages you will need the following programs:
 
-* wget
-* tar
+* `wget`
+* `tar`
 
 ## Maintainer
 Ian H. Godtliebsen

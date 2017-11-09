@@ -45,9 +45,9 @@ config = {
 -- calls such that it is easy to see how a package was installed,
 -- and by whom.
 local function log_gpm_call(stack)
-   if config.logfilepath then
+   if config.log_path then
       -- Open log file
-      local logfile = io.open(config.logfilepath, "a")
+      local logfile = io.open(config.log_path, "a")
       
       -- Create call string
       local call = ""
@@ -86,9 +86,9 @@ end
 -- Log whether call to gpm-package ended succesfully or with an error.
 -- This is written to the stack log-file after the command.
 local function log_gpm_call_end(success, stack)
-   if config.logfilepath then
+   if config.log_path then
       -- Open log file
-      local logfile = io.open(config.logfilepath, "a")
+      local logfile = io.open(config.log_path, "a")
       
       -- If stack do extra printout
       if stack then
@@ -114,11 +114,12 @@ local function log_gpm_call_end(success, stack)
    end
 end
 
--------------------------------------
--- Read GPM package file (GPK).
+--- Boostrap config dictionary.
+-- 
+-- @param args
+-- @param default_config
 --
 -- @return{Dictionary} Returns definition og build.
--------------------------------------
 local function bootstrap_config(args, default_config)
    if args.debug then
       logging.debug("Bootstrapping config.", io.stdout)
@@ -140,15 +141,33 @@ local function bootstrap_config(args, default_config)
 
    default_config = util.merge(default_config, config)
 
+   -- 
+   if (not default_config.stack_path) then
+      local stack_path, _, _ = path.split_filename(args.config)
+      print(stack_path)
+      default_config.stack_path = path.remove_dir_end(stack_path)
+   end
+
+   --
+   if default_config.log_path and (not path.is_abs_path(default_config.log_path)) then
+      default_config.log_path = path.join(default_config.stack_path, default_config.log_path)
+   end
+   
+   -- Setup gpk_path and gps_path
    if config.gpk_path then
       default_config.gpk_path = default_config.gpk_path .. ":" .. folder_of_this .. "../gpk"
    end
    if config.gps_path then
       default_config.gps_path = default_config.gps_path .. ":" .. folder_of_this .. "../gps"
    end
-
-   if not default_config.base_build_directory then default_config.base_build_directory = default_config.install_directory .. "/build" end
-   if not default_config.lmod_directory then default_config.lmod_directory = default_config.install_directory .. "/modulefiles" end
+   
+   -- Setup build_path and lmod_path
+   if not default_config.base_build_directory then 
+      default_config.base_build_directory = default_config.stack_path .. "/build" 
+   end
+   if not default_config.lmod_directory then 
+      default_config.lmod_directory = default_config.stack_path .. "/modulefiles" 
+   end
 
    return default_config
 end

@@ -19,7 +19,15 @@ local function locate_gps_file(args)
       local filename = args.gps .. ".gps"
       local function locate_gps_impl()
          for gps_path in path.iterator(config.gps_path) do
+            -- Check for abs path
+            if not path.is_abs_path(gps_path) then
+               gps_path = path.join(config.stack_path, gps_path)
+            end
+
+            -- Create file path
             local filepath = path.join(gps_path, filename)
+
+            -- Check for existance
             if filesystem.exists(filepath) then
                return filepath
             end

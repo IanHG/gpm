@@ -87,7 +87,7 @@ end
 -- Create shell environtment file
 -------------------------------------
 local function create_shell_environment(args)
-   bin_dir = path.join(config.install_directory, "bin")
+   bin_dir = path.join(config.stack_path, "bin")
    lfs.mkdir(bin_dir)
    bin_file = io.open(path.join(bin_dir, "modules.sh"), "w")
 
@@ -193,7 +193,7 @@ local function create_shell_environment(args)
       bin_file:write("   export MANPATH=$(manpath)");
       bin_file:write("\n")
       bin_file:write("   # Source lmod \n")
-      bin_file:write("  . ".. path.join(config.install_directory, "tools/lmod/7.6.14/lmod/lmod/init/profile") .. "\n")
+      bin_file:write("  . ".. path.join(config.stack_path, "tools/lmod/7.6.14/lmod/lmod/init/profile") .. "\n")
       bin_file:write("\n")
       bin_file:write("   # Export stack path\n")
       bin_file:write("   export GPMSTACKPATH=\"" .. this_path .. "\"\n")
@@ -204,7 +204,7 @@ local function create_shell_environment(args)
    end
 
    bin_file:write("   # Export some GPM\n")
-   bin_file:write("   export GPM_CONFIG=\"" .. path.join(config.install_directory, args.config) .. "\"\n")
+   bin_file:write("   export GPM_CONFIG=\"" .. path.join(config.stack_path, args.config) .. "\"\n")
    
    bin_file:write("else\n")
    bin_file:write("   if [ \"$SILENT\" = \"0\" ]; then\n")
@@ -246,7 +246,7 @@ local function initialize(args)
       end
       
       for k,v in pairs(config.groups) do
-         lfs.mkdir(path.join(config.install_directory, v))
+         lfs.mkdir(path.join(config.stack_path, v))
          lfs.mkdir(path.join(config.lmod_directory, v))
       end
 
