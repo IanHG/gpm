@@ -9,20 +9,19 @@
 config = {
    nprocesses = 1,
 
-   -- Install directory
-   install_directory = "<stack-dir>",
+   -- Main directory
+   stack_path = "<some-directory>",
 
    -- Setup some paths
-   logfilepath = "<stack-dir>/stack.log",
-   gpk_path    = "<stack-dir>/gpk",
-   gps_path    = "<stack-dir>/gps",
+   log_path = "stack.log",
+   gpk_path = "gpk",
+   gps_path = "gps",
 
    -- Modulefiles setup
    groups = {"core", "apps", "tools"},
    heirarchical = {"core"},
 }
 ```
-
 
 ### Basic commands
 
