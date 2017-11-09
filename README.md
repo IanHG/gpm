@@ -21,9 +21,10 @@ config = {
    groups = {"core", "apps", "tools"},
    heirarchical = {"core"},
 }
+```
 Here `<stack-path>` is the directory where you want your software stack to be installed, 
 _i.e._ where all binaries, modulefiles, etc. are to placed.
-```
+
 To __initialize__ a sofware stack with the this `config.lua` run:
 ```bash
 <gpm-path>/gpm-package -c <config-path>/config.lua initialize
