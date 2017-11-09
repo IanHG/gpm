@@ -24,6 +24,7 @@ config = {
 ```
 Here `<stack-path>` is the directory where you want your software stack to be installed, 
 _i.e._ where all binaries, modulefiles, etc. are to be placed.
+This could _e.g._ be `/opt/swstack` for systemwide install or `/home/<user>/swstack` for local install.
 
 To __initialize__ a sofware stack with the this `config.lua` run:
 ```bash
