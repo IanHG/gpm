@@ -1,26 +1,40 @@
 # Grendel Package Manager (GPM)
 
+For installation instructions look below.
+
 ## Usage
 
 ### Basic setup
-
+To configure and initialize a software stack `gpm` uses a config file written `lua` code,
+which is usually named `config.lua`.
+A basic `config.lua` might look like the following:
 ```lua
 -- GPM config file
 config = {
-   nprocesses = 1,
-
    -- Main directory
-   stack_path = "<some-directory>",
+   stack_path = "<stack-path>",
 
    -- Setup some paths
    log_path = "stack.log",
-   gpk_path = "gpk",
-   gps_path = "gps",
 
    -- Modulefiles setup
    groups = {"core", "apps", "tools"},
    heirarchical = {"core"},
 }
+Here `<stack-path>` is the directory where you want your software stack to be installed, 
+_i.e._ where all binaries, modulefiles, etc. are to placed.
+```
+To __initialize__ a sofware stack with the this `config.lua` run:
+```bash
+<gpm-path>/gpm-package -c <config-path>/config.lua initialize
+```
+This will initialize and setup the software stack, which can now be loaded by:
+```bash
+source <stack-path>/bin/modules.sh
+```
+To view your new software stack use the Lmod command:
+```bash
+ml av
 ```
 
 ### Basic commands
@@ -157,6 +171,14 @@ Special macros for .gpk files:
 * `<pkgbuild>`    : Build directory for package.
 
 ## Installation 
+
+To get GPM just do a:
+```bash
+git clone git@github.com:IanHG/gpm.git
+```
+or download a zip and unpack.
+There is no installation or configuring as such, 
+but please sure that all dependencies are met or `gpm-package` will not run.
 
 ### Dependencies 
 
