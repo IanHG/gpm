@@ -44,8 +44,8 @@ build = {
    -- Build command
    command = [[
       # Build FFTW
-
-      ./configure --prefix=<pkginstall> CC=clang CFLAGS=-gcc --enable-mpi --enable-openmp --enable-threads --enable-avx2 --enable-fma --enable-single
+      export LIBS="-fopenmp=libiomp5"
+      ./configure --prefix=<pkginstall> CC=clang --enable-mpi --enable-openmp --enable-threads --enable-avx2 --enable-fma --enable-single
       
       make -j<nprocesses>
       make check
@@ -55,7 +55,7 @@ build = {
 
 -- Lmod section
 lmod = {
-   help = [[This module loads FFTW v. <pkgversion> using single precision floats.]],
+   help = [[This module loads FFTW v. <pkgversion>.]],
 }
 
 --[[

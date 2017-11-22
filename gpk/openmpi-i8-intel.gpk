@@ -7,7 +7,7 @@ OpenMPI - Open Message Passing Interface.
 
 -- Definition section
 definition = {
-   pkgname = "openmpi",
+   pkgname = "openmpi-i8",
    pkggroup = "core",
    pkgfamily = "mpi",
 }
@@ -18,7 +18,7 @@ prerequisite = {"compiler"}
 -- Build section
 build = {
    -- Source of package
-   source = "https://www.open-mpi.org/software/ompi/v<pkgmajor>.<pkgminor>/downloads/<pkg>.tar.bz2",
+   source = "https://www.open-mpi.org/software/ompi/v<pkgmajor>.<pkgminor>/downloads/openmpi-<pkgversion>.tar.bz2",
    -- Build command
    command = [[
       # Setup 64 bit as specified here: http://diracprogram.org/doc/release-12/installation/int64/mpi.html

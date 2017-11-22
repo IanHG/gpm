@@ -21,10 +21,17 @@ build = {
    source = "http://releases.llvm.org/<pkgversion>/<pkg>.src.tar.xz",
    -- Build command
    command = [[
+      # Get openmp
+      cd projects
+      svn co http://llvm.org/svn/llvm-project/openmp/trunk openmp
+      cd ..
+      
+      # build llvm
       mkdir build || true
       cd build
-      cmake ../. -DCMAKE_INSTALL_PREFIX=<pkginstall>
+      cmake ../. -DCMAKE_INSTALL_PREFIX=<pkginstall> || true
       make -j<nprocesses>
+      make -j<nprocesses> omp
       make install
    ]]
 }

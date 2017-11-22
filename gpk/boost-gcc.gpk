@@ -1,0 +1,41 @@
+-- Boost gpk script
+
+-- Description of the gpk
+description = [[
+Boost provides free peer-reviewed portable C++ source libraries.
+
+We emphasize libraries that work well with the C++ Standard Library. Boost libraries are intended to be widely useful, and usable across a broad spectrum of applications. The Boost license encourages both commercial and non-commercial use.
+
+http://www.boost.org/
+]]
+
+-- Definition section
+definition = {
+   pkgname = "boost",
+   pkggroup = "core",
+   pkgfamily = "boost",
+}
+
+-- Required types
+prerequisite = {"compiler"}
+
+-- Build section
+build = {
+   -- Source of package
+   source = "https://dl.bintray.com/boostorg/release/<pkgversion>/source/boost_<pkgmajor>_<pkgminor>_<pkgrevision>.tar.bz2",
+   -- Build command
+   command = [[
+      # Build boost
+      ./bootstrap.sh
+      ./b2 install --prefix=<pkginstall> --toolset=gcc
+   ]]
+}
+
+-- Lmod section
+lmod = {
+   help = [[This module loads Lib Boost v. <pkgversion>.]],
+}
+
+--[[
+# vi:syntax=lua
+--]]
