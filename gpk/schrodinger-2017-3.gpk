@@ -1,0 +1,65 @@
+-- Intel compilers gpk script
+
+-- Description of the gpk
+description = [[
+Schrodinger.
+]]
+
+-- Definition section
+definition = {
+   pkgname = "schrodinger",
+   pkggroup = "apps",
+   pkgfamily = "schrodinger",
+}
+
+-- Required types
+prerequisite = { }
+
+-- Build section
+build = {
+   -- source
+   source = "/comm/install/schrodinger/Schrodinger_Suites_2017-3_Advanced_Linux-x86_64.tar",
+
+   -- Build command
+   command = [[
+./INSTALL -d <pkgbuild>/<pkg> -m -b -s <pkginstall>/schrodinger -t <pkginstall>/third-party -k <pkgbuild>/tmp aacg-v2.1-Linux-x86_64.tar.gz
+#./INSTALL -d <pkgbuild>/<pkg> -m -b -s <pkginstall>/schrodinger -t <pkginstall>/third-party -k <pkgbuild>/tmp alldocs-v3.9-docs.tar.gz
+#./INSTALL -d <pkgbuild>/<pkg> -m -b -s <pkginstall>/schrodinger -t <pkginstall>/third-party -k <pkgbuild>/tmp bioluminate-v2.8-Linux-x86_64.tar.gz
+#./INSTALL -d <pkgbuild>/<pkg> -m -b -s <pkginstall>/schrodinger -t <pkginstall>/third-party -k <pkgbuild>/tmp canvas-v3.3-Linux-x86_64.tar.gz
+#./INSTALL -d <pkgbuild>/<pkg> -m -b -s <pkginstall>/schrodinger -t <pkginstall>/third-party -k <pkgbuild>/tmp combiglide-v4.6-Linux-x86_64.tar.gz
+#./INSTALL -d <pkgbuild>/<pkg> -m -b -s <pkginstall>/schrodinger -t <pkginstall>/third-party -k <pkgbuild>/tmp desmond-v5.1-Linux-x86_64.tar.gz
+#./INSTALL -d <pkgbuild>/<pkg> -m -b -s <pkginstall>/schrodinger -t <pkginstall>/third-party -k <pkgbuild>/tmp epik-v4.1-Linux-x86_64.tar.gz
+#./INSTALL -d <pkgbuild>/<pkg> -m -b -s <pkginstall>/schrodinger -t <pkginstall>/third-party -k <pkgbuild>/tmp ffld-v2.7-Linux-x86_64.tar.gz
+#./INSTALL -d <pkgbuild>/<pkg> -m -b -s <pkginstall>/schrodinger -t <pkginstall>/third-party -k <pkgbuild>/tmp glide-v7.6-Linux-x86_64.tar.gz
+#./INSTALL -d <pkgbuild>/<pkg> -m -b -s <pkginstall>/schrodinger -t <pkginstall>/third-party -k <pkgbuild>/tmp impact-v7.6-Linux-x86_64.tar.gz
+#./INSTALL -d <pkgbuild>/<pkg> -m -b -s <pkginstall>/schrodinger -t <pkginstall>/third-party -k <pkgbuild>/tmp jaguar-v9.7-Linux-x86_64.tar.gz
+#./INSTALL -d <pkgbuild>/<pkg> -m -b -s <pkginstall>/schrodinger -t <pkginstall>/third-party -k <pkgbuild>/tmp knime-v3.9-Linux-x86_64.tar.gz
+#./INSTALL -d <pkgbuild>/<pkg> -m -b -s <pkginstall>/schrodinger -t <pkginstall>/third-party -k <pkgbuild>/tmp leadopt-v2.7-Linux-x86_64.tar.gz
+#./INSTALL -d <pkgbuild>/<pkg> -m -b -s <pkginstall>/schrodinger -t <pkginstall>/third-party -k <pkgbuild>/tmp macromodel-v11.7-Linux-x86_64.tar.gz
+#./INSTALL -d <pkgbuild>/<pkg> -m -b -s <pkginstall>/schrodinger -t <pkginstall>/third-party -k <pkgbuild>/tmp maestro-v11.3-Linux-x86_64.tar.gz
+#./INSTALL -d <pkgbuild>/<pkg> -m -b -s <pkginstall>/schrodinger -t <pkginstall>/third-party -k <pkgbuild>/tmp mcpro-v4.7-Linux-x86_64.tar.gz
+#./INSTALL -d <pkgbuild>/<pkg> -m -b -s <pkginstall>/schrodinger -t <pkginstall>/third-party -k <pkgbuild>/tmp mmshare-v3.9-Linux-x86_64.tar.gz
+#./INSTALL -d <pkgbuild>/<pkg> -m -b -s <pkginstall>/schrodinger -t <pkginstall>/third-party -k <pkgbuild>/tmp phase-v5.2-Linux-x86_64.tar.gz
+#./INSTALL -d <pkgbuild>/<pkg> -m -b -s <pkginstall>/schrodinger -t <pkginstall>/third-party -k <pkgbuild>/tmp pldb-v3.9-Linux-x86_64.tar.gz
+#./INSTALL -d <pkgbuild>/<pkg> -m -b -s <pkginstall>/schrodinger -t <pkginstall>/third-party -k <pkgbuild>/tmp psp-blast-thirdparty-Linux-x86_64.tar.gz
+#./INSTALL -d <pkgbuild>/<pkg> -m -b -s <pkginstall>/schrodinger -t <pkginstall>/third-party -k <pkgbuild>/tmp psp-blastwebdb-thirdparty-database.tar.gz
+#./INSTALL -d <pkgbuild>/<pkg> -m -b -s <pkginstall>/schrodinger -t <pkginstall>/third-party -k <pkgbuild>/tmp psp-hmmerpfamdb-thirdparty-database.tar.gz
+#./INSTALL -d <pkgbuild>/<pkg> -m -b -s <pkginstall>/schrodinger -t <pkginstall>/third-party -k <pkgbuild>/tmp psp-hmmerpfam-thirdparty-Linux-x86_64.tar.gz
+#./INSTALL -d <pkgbuild>/<pkg> -m -b -s <pkginstall>/schrodinger -t <pkginstall>/third-party -k <pkgbuild>/tmp psp-v4.9-Linux-x86_64.tar.gz
+#./INSTALL -d <pkgbuild>/<pkg> -m -b -s <pkginstall>/schrodinger -t <pkginstall>/third-party -k <pkgbuild>/tmp qikprop-v5.3-Linux-x86_64.tar.gz
+#./INSTALL -d <pkgbuild>/<pkg> -m -b -s <pkginstall>/schrodinger -t <pkginstall>/third-party -k <pkgbuild>/tmp scisol-v2.7-Linux-x86_64.tar.gz
+#./INSTALL -d <pkgbuild>/<pkg> -m -b -s <pkginstall>/schrodinger -t <pkginstall>/third-party -k <pkgbuild>/tmp watermap-v3.2-Linux-x86_64.tar.gz
+   ]],
+}
+
+-- Lmod section
+lmod = {
+   help = [[This module loads Schrodinger Suite <pkgversion> suite.]],
+   setenv = {
+      {"LM_LICENSE_FILE", "27008@natlicens.ad.nfit.au.dk"},
+   },
+}
+
+--[[
+# vi:syntax=lua
+--]]
