@@ -594,8 +594,8 @@ local function generate_prepend_path(package)
    end
 
    -- Add any additions from .gpk
-   if package.lmod.preped_path_add then
-      for _,v in pairs(package.lmod.preped_path_add) do 
+   if package.lmod.prepend_path_add then
+      for _,v in pairs(package.lmod.prepend_path_add) do 
          table.insert(prepend_path, v)
       end
    end
@@ -683,6 +683,14 @@ local function build_lmod_modulefile(package)
       for key,value in pairs(package.lmod.setenv) do
          dir = util.substitute_placeholders(package.definition, value[2])
          lmod_file:write("setenv('" .. value[1] .. "', pathJoin(installDir, '" .. dir .. "'))\n")
+      end
+   end
+   
+   -- Do all setenv_abs (i.e. do not prepend installDir)
+   if package.lmod.setenv_abs then
+      for key,value in pairs(package.lmod.setenv_abs) do
+         dir = util.substitute_placeholders(package.definition, value[2])
+         lmod_file:write("setenv('" .. value[1] .. "','" .. dir .. "')\n")
       end
    end
    
