@@ -24,8 +24,15 @@ build = {
    -- Build command
    command = [[
       cd OpenBLAS-<pkgversion>
-      make -j<nprocesses> INTERFACE64=1 FC=gfortran CC=gcc
+      make -j<nprocesses> TARGET=HASWELL INTERFACE64=1 FC=gfortran CC=gcc
       make PREFIX=<pkginstall> install
+      make clean
+      make -j<nprocesses> TARGET=NEHALEM INTERFACE64=1 FC=gfortran CC=gcc
+      make PREFIX=<pkginstall> install
+      make clean
+      make -j<nprocesses> DYNAMIC_ARCH=1 INTERFACE64=1 FC=gfortran CC=gcc
+      make PREFIX=<pkginstall> install
+      make clean
    ]]
 }
 
