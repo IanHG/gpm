@@ -1,0 +1,128 @@
+#!/usr/bin/lua
+
+-- Load globally installed packages
+local lfs      = require "lfs"
+local argparse = require "argparse"
+
+-- Load local packages
+folder_of_this = arg[0]:match("(.-)[^\\/]+$") -- Get folder of executeable
+if folder_of_this:sub(1,1) ~= "/" then
+   folder_of_this = lfs.currentdir() .. "/" .. folder_of_this
+end
+package.path = folder_of_this .. '../lib/?.lua;' .. package.path -- Set package path
+local exception  = require "exception"
+local path       = require "path"
+local version    = require "version"
+local util       = require "util"
+local logging    = require "logging"
+local ansicolor  = require "ansicolor"
+local configload = require "configload"
+local filesystem = require "filesystem"
+
+-- Description of this script
+local description = version.get_description("gpm-stack.lua")
+
+-- Set config defaults
+config = {  
+   current_directory = filesystem.cwd(),  
+}
+
+--- Boostrap config dictionary.
+-- 
+-- @param args
+-- @param default_config
+--
+-- @return{Dictionary} Returns definition og build.
+local function bootstrap_config(args, default_config)
+   if args.debug then
+      logging.debug("Bootstrapping config.", io.stdout)
+   end
+   
+   -- Load config file
+   local path = configload.configpath(args)
+   assert(loadfile(path))()
+   
+   -- Merge with default
+   default_config = util.merge(default_config, config)
+   
+   if(args.debug) then
+      logging.debug(util.print(config, "config"), io.stdout)
+   end
+
+   return default_config
+end
+
+--- Print the currently loaded stacks.
+--
+local function lsloaded()
+   logging.message("\n Currently loaded stacks: \n", io.stdout)
+   local stackpath = os.getenv("GPMSTACKPATH")
+   for p in path.iterator(stackpath) do
+      logging.message("     " .. p, io.stdout)
+   end
+   logging.message("", io.stdout)
+end
+
+--- Main driver.
+function main()
+   -- Arg parser
+   local parser = argparse(description.script_name, description.name .. ":\n" .. description.desc)
+   
+   -- Commands
+   local parser_load = parser:command("load") 
+   local parser_ls   = parser:command("ls")
+   
+   -- Some general arguments
+   parser:option("-c --config", "Provide config file."):overwrite(false)
+   parser:flag("--debug", "Print debug information (mostly for developers).")
+   parser:flag("-v --version", "Print '" .. version.get_version() .. "' and exit."):action(function()
+      print(version.get_version())
+      os.exit(0)
+   end)
+   
+   -- load specific
+
+   -- ls specific
+   parser_ls:flag("-a --all"   , "List all available stacks."):overwrite(false)
+   parser_ls:flag("-l --loaded", "List currently loaded stacks."):overwrite(false)
+   
+   -- Parse arguments
+   args = parser:parse()
+   
+   if args.debug then
+      logging.debug(util.print(args, "args"), io.stdout)
+   end
+   
+   exception.try(function()
+      -- Bootstrap config
+      config = bootstrap_config(args, config)
+
+
+      if args.ls then
+         if args.all then
+            print("ALL")
+         elseif args.loaded then
+            lsloaded()
+         end
+      end
+      
+   end, function(e)
+      -- Print exception
+      exception.message(e)
+         
+      -- Print usage
+      print("\n" .. parser:get_usage())
+
+      -- Exit with non zero status
+      os.exit(1)
+   end)
+   
+   
+end
+
+-- Run main driver.
+main()
+
+--[[
+# vi:syntax=lua
+--]]

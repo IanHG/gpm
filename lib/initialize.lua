@@ -57,7 +57,7 @@ local function install_lmod(args)
    do_install_lmod = not args.parentstack
    if do_install_lmod then
       args.gpk = "lmod"
-      args.pkv = "7.6.14"
+      args.pkv = "7.7.13"
       args.nomodulesource = true
       args.is_lmod = true
       args.no_lmod = true
@@ -193,7 +193,7 @@ local function create_shell_environment(args)
       bin_file:write("   export MANPATH=$(manpath)");
       bin_file:write("\n")
       bin_file:write("   # Source lmod \n")
-      bin_file:write("  . ".. path.join(config.stack_path, "tools/lmod/7.6.14/lmod/lmod/init/profile") .. "\n")
+      bin_file:write("  . ".. path.join(config.stack_path, "tools/lmod/7.7.13/lmod/lmod/init/profile") .. "\n")
       bin_file:write("\n")
       bin_file:write("   # Export stack path\n")
       bin_file:write("   export GPMSTACKPATH=\"" .. this_path .. "\"\n")

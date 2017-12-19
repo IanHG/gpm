@@ -184,6 +184,13 @@ local function chdir(path)
    return lfs.chdir(path)
 end
 
+--- Get current working directory
+--
+-- @return Returns cwd.
+local function cwd()
+   return lfs.currentdir()
+end
+
 
 --- Load module
 M.exists    = exists
@@ -197,5 +204,6 @@ M.unlink    = unlink
 M.mkdir     = mkdir
 M.rmdir     = rmdir
 M.chdir     = chdir
+M.cwd       = cwd
 
 return M

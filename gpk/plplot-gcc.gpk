@@ -1,0 +1,47 @@
+-- Doxygen gpk script
+
+-- Description of the gpk
+description = [[
+PLplot
+
+PLplot is a cross-platform software package for creating scientific plots whose (UTF-8) plot symbols and text are limited in practice only by what Unicode-aware system fonts are installed on a user's computer. The PLplot software, which is primarily licensed under the LGPL, has a clean architecture that is organized as a core C library, separate language bindings for that library, and separate device drivers that are dynamically loaded by the core library which control how the plots are presented in noninteractive and interactive plotting contexts.
+
+The PLplot core library can be used to create standard x-y plots, semi-log plots, log-log plots, contour plots, 3D surface plots, mesh plots, bar charts and pie charts. Multiple graphs (of the same or different sizes) may be placed on a single page, and multiple pages are allowed for those device formats that support them.
+
+PLplot has core library support for plot symbols and text specified by the user in the UTF-8 encoding of Unicode. This means for our many Unicode-aware devices that plot symbols and text are only limited by the collection of glyphs normally available via installed system fonts. Furthermore, a large subset of our Unicode-aware devices also support complex text layout (CTL) languages such as Arabic, Hebrew, and Indic and Indic-derived CTL scripts such as Devanagari, Thai, Lao, and Tibetan. Thus, for these PLplot devices essentially any language that is supported by Unicode and installed system fonts can be used to label plots.
+
+http://plplot.sourceforge.net/
+]]
+
+-- Definition section
+definition = {
+   pkgname = "plplot",
+   pkggroup = "tools",
+   pkgfamily = "plplot",
+}
+
+-- Required types
+prerequisite = {}
+
+-- Build section
+build = {
+   -- Source of package
+   source = "https://sourceforge.net/projects/plplot/files/plplot/<pkgversion>%20Source/plplot-<pkgversion>.tar.gz",
+   -- Build command
+   command = [[
+      mkdir build
+      cd build
+      CC=gcc FC=gfortran CXX=g++ cmake ../. -DCMAKE_INSTALL_PREFIX=<pkginstall>
+      make -j<nprocesses>
+      make install
+   ]]
+}
+
+-- Lmod section
+lmod = {
+   help = [[This module loads PLplot v. <pkgversion>.]],
+}
+
+--[[
+# vi:syntax=lua
+--]]

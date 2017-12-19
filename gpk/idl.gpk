@@ -1,0 +1,66 @@
+-- IDL compilers gpk script
+
+-- Description of the gpk
+description = [[
+IDL compilers.
+]]
+
+-- Definition section
+definition = {
+   pkgname = "idl",
+   pkggroup = "core",
+   pkgfamily = "idl",
+}
+
+-- Required types
+prerequisite = { }
+
+-- Build section
+build = {
+   files = {
+      -- Silent cfg install file
+      {"silent.cfg", [[
+y
+<pkginstall>
+y
+y
+y
+y
+y
+y
+y
+y
+y
+y
+y
+n
+n
+
+      ]]},
+   },
+   -- Build command
+   command = [[
+      <pkgbuild>/install.sh -s < <pkgbuild>/silent.cfg
+   ]]
+}
+
+-- Lmod section
+lmod = {
+   help = [[This module loads the Intel compiler suite.]],
+   -- Set envs
+   setenv_abs = {
+      {"EXELIS_DIR","<pkginstall>"},
+      {"IDL_DIR"   ,"<pkginstall>/idl"},
+      {"ENVI_DIR"  ,"<pkginstall>/envi"},
+   },
+   -- Prepend paths
+   prepend_path = {
+      -- PATH
+      {"PATH", "idl/bin"},
+      {"PATH", "envi/bin"},
+   },
+}
+
+--[[
+# vi:syntax=lua
+--]]

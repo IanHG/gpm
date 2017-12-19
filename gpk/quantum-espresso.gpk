@@ -7,7 +7,7 @@ QE.
 
 -- Definition section
 definition = {
-   pkgname = "quantum-espresso",
+   pkgname = "qe",
    pkggroup = "apps",
    pkgfamily = "quantumespresso",
 }
