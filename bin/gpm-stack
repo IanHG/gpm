@@ -55,7 +55,15 @@ end
 --- Print the currently loaded stacks.
 --
 local function lsloaded()
-   logging.message("\n Currently loaded stacks: \n", io.stdout)
+   -- Just print a new line to get the first line down a bit... (purely for visual purposes)
+   logging.message("", io.stdout)
+
+   -- Print the stack we are currently installing into
+   local installpath = os.getenv("GPM_CONFIG")
+   logging.message("Currently installing in: " .. installpath .. "\n", io.stdout)
+
+   -- Print currently loaded stacks
+   logging.message("Currently loaded stacks: \n", io.stdout)
    local stackpath = os.getenv("GPMSTACKPATH")
    for p in path.iterator(stackpath) do
       logging.message("     " .. p, io.stdout)

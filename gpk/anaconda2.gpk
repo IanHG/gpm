@@ -1,0 +1,38 @@
+-- Anaconda gpk script
+
+-- Description of the gpk
+description = [[
+Anaconda
+
+https://www.anaconda.com/what-is-anaconda/
+]]
+
+-- Definition section
+definition = {
+   pkgname = "anaconda2",
+   pkggroup = "core",
+   pkgfamily = "anaconda",
+}
+
+-- Required types
+prerequisite = { }
+
+-- Build section
+build = {
+   -- Source of package
+   source = "https://repo.continuum.io/archive/Anaconda2-<pkgversion>-Linux-x86_64.sh",
+   -- Build command
+   command = [[
+      chmod +x anaconda2-5.0.1.sh
+      ./anaconda2-5.0.1.sh -f -b -p <pkginstall>
+   ]]
+}
+
+-- Lmod section
+lmod = {
+   help = [[This module loads Anaconda 3 v. <pkgversion>.]],
+}
+
+--[[
+# vi:syntax=lua
+--]]
