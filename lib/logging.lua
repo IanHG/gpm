@@ -91,9 +91,75 @@ local function debug(msg, log, raw)
    end
 end
 
+--- Match line with a list of strings.
+--
+-- @param search_strings  The strings to search for.
+-- @param line            The line to check.
+-- @param negate          Look for negative matches.
+--
+-- @return   Returns true if line matches all strings, otherwise false.
+local function search_for_strings(search_strings, line, negate)
+   -- Initialize default variable
+   if negate == nil then
+      negate = false
+   end
+
+   -- Loop through list of strings and if a match is not found we return false.
+   for _,str in pairs(search_strings) do
+      if not negate then
+         -- Look for match, so if the line doesn't match we return false now.
+         if not line:match(str) then
+            return false
+         end
+      else
+         -- Look for negative match, so ifthe line matches we return false now.
+         if line:match(str) then
+            return false
+         end
+      end
+   end
+
+   -- All strings matched, so we return true.
+   return true
+end
+
+--- "Grep" in log file and return list of hits.
+--
+-- @param search_str  String to search for.
+-- @param log_path    Path of log file.
+--
+-- @return    Returns list of hits.
+local function grep(search_strings, log_path)
+   local result = {}
+   local search_pos = {}
+   local search_neg = {}
+   
+   -- Setup search strings
+   for _,str in pairs(search_strings) do
+      if str:match("*") then --and (not str:match("\*"))) then
+         search_neg[#search_neg + 1] = str:gsub("*","")
+      else
+         search_pos[#search_neg + 1] = str
+      end
+   end
+
+   -- Do the search
+   for line in io.lines(log_path) do
+      if search_for_strings(search_pos, line) then 
+         if search_for_strings(search_neg, line, true) then
+            result[#result + 1] = line
+         end
+      end
+   end
+
+   -- Return results
+   return result
+end
+
 -- Load module
 M.message = message
 M.alert   = alert
 M.debug   = debug
+M.grep    = grep
 
 return M

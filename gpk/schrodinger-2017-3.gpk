@@ -56,11 +56,12 @@ build = {
 lmod = {
    help = [[This module loads Schrodinger Suite <pkgversion> suite.]],
    setenv_abs = {
-      {"LM_LICENSE_FILE", "27008@natlicens.ad.nfit.au.dk"},
+      {"LM_LICENSE_FILE", "27008@10.19.28.229"},
    },
    prepend_path = {
       {"PATH", "schrodinger"},
       {"PATH", "third-party"},
+      {"SCHRODINGER", "schrodinger"},
    },
 }
 

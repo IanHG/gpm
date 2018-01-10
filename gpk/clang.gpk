@@ -23,7 +23,7 @@ build = {
    command = [[
       mkdir build
       cd build
-      cmake ../. -DCMAKE_INSTALL_PREFIX=<pkginstall>
+      cmake ../. -DCMAKE_INSTALL_PREFIX=<pkginstall> -DGCC_INSTALL_PREFIX=/comm/swstack/core/gcc/7.2.0
       make -j<nprocesses>
       make install
    ]]

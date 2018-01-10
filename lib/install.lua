@@ -428,8 +428,11 @@ local function make_package_ready_for_install(package)
          is_tar_xz = string.match(source_file, "tar.xz")
          is_tar    = string.match(source_file, "tar")
          is_zip = string.match(source_file, "zip")
-         if is_tar_gz or is_tar_xz then
+         if is_tar_gz then
             line = "tar -zxvf " .. destination .. " --transform 's/" .. source_file_strip .. "/" .. package.definition.pkg .. "/'"
+            util.execute_command(line, package.log)
+         elseif is_tar_xz then
+            line = "tar -xvf " .. destination .. " --transform 's/" .. source_file_strip .. "/" .. package.definition.pkg .. "/'"
             util.execute_command(line, package.log)
          elseif is_tar_bz then
             --line = "tar -jxvf " .. destination
