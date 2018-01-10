@@ -71,6 +71,15 @@ local function lsloaded()
    logging.message("", io.stdout)
 end
 
+---
+--
+local function grepcmd(args)
+   local result = logging.grep(args.grep, config.log_path)
+   for _,line in pairs(result) do
+      io.stdout:write(line .. "\n")
+   end
+end
+
 --- Main driver.
 function main()
    -- Arg parser
@@ -79,6 +88,7 @@ function main()
    -- Commands
    local parser_load = parser:command("load") 
    local parser_ls   = parser:command("ls")
+   local parser_log  = parser:command("log")
    
    -- Some general arguments
    parser:option("-c --config", "Provide config file."):overwrite(false)
@@ -93,6 +103,9 @@ function main()
    -- ls specific
    parser_ls:flag("-a --all"   , "List all available stacks."):overwrite(false)
    parser_ls:flag("-l --loaded", "List currently loaded stacks."):overwrite(false)
+   
+   -- show specific
+   parser_log:option("-g --grep"   , "Grep in log file for string."):overwrite(false):args("*")
    
    -- Parse arguments
    args = parser:parse()
@@ -111,6 +124,10 @@ function main()
             print("ALL")
          elseif args.loaded then
             lsloaded()
+         end
+      elseif args.log then
+         if args.grep then
+            grepcmd(args)
          end
       end
       
