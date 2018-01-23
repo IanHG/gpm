@@ -18,7 +18,7 @@ prerequisite = { }
 -- Build section
 build = {
    -- Source of package
-   source = "ftp://gcc.gnu.org/pub/gcc/releases/<pkg>/<pkg>.tar.bz2",
+   source = "ftp://gcc.gnu.org/pub/gcc/releases/<pkg>/<pkg>.tar.gz",
    -- Build command
    command = [[
       # Download and install prerequisites

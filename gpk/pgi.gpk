@@ -2,12 +2,12 @@
 
 -- Description of the gpk
 description = [[
-Intel compilers.
+Portland group compilers.
 ]]
 
 -- Definition section
 definition = {
-   pkgname = "intel",
+   pkgname = "pgi",
    pkggroup = "core",
    pkgfamily = "compiler",
 }
@@ -19,24 +19,30 @@ prerequisite = { }
 build = {
    files = {
       -- Licence file
-      {"license.lic", [[
-SERVER in1 001e6837d0fd 28518
+      {"license.dat", [[
+SERVER 10.19.64.146 00034730b867 28000
 USE_SERVER
       ]]},
+   },
    -- Build command
    command = [[
-      export PGI_SILENT="true"
-      export PGI_ACCEPT_EULA="accept"
-      export PGI_INSTALL_DIR="<pkginstall>"
-      export PGI_INSTALL_TYPE="network"
-      export PGI_INSTALL_LOCAL_DIR="<pkginstall>"
-      export PGI_INSTALL_NVIDIA="true"
-      # export PGI_INSTALL_AMD="true" 
-      # export PGI_INSTALL_JAVA="true"
-      export PGI_INSTALL_MPI="true"
-      export PGI_MPI_GPU_SUPPORT="true"
+      # Setup silent install
+      export PGI_SILENT=true
+      export PGI_ACCEPT_EULA=accept
+      export PGI_INSTALL_DIR=<pkginstall>
+      export PGI_INSTALL_TYPE=network
+      export PGI_INSTALL_LOCAL_DIR=<pkginstall>
+      export PGI_INSTALL_NVIDIA=false
+      export PGI_INSTALL_AMD=false
+      export PGI_INSTALL_JAVA=false
+      export PGI_INSTALL_MPI=false
+      export PGI_MPI_GPU_SUPPORT=false
 
-      ./install
+      # Do install
+      <pkgbuild>/install
+
+      # Copy license file
+      cp <pkgbuild>/license.dat <pkginstall>/.
    ]]
 }
 
@@ -44,41 +50,13 @@ USE_SERVER
 lmod = {
    help = [[This module loads the Intel compiler suite.]],
    -- Set envs
-   setenv = {
-      {"INTEL_LICENCE_FILE", "licenses"},
-      {"MKLROOT", "mkl"},
-      {"DALLROOT", "daal"},
-      {"I_MPI_ROOT", "mpi"},
-      {"IPPROOT", "ipp"},
-      {"TBBROOT", "tbb"},
-      {"INCLUDE", "mkl/include"},
+   setenv_abs = {
+      {"PGI", "<pkginstall>"},
    },
    -- Prepend paths
    prepend_path = {
-      -- CPATH
-      {"CPATH", "compilers_and_libraries_<pkgversion>/linux/ipp/include"},
-      {"CPATH", "compilers_and_libraries_<pkgversion>/linux/mkl/include"},
-      {"CPATH", "compilers_and_libraries_<pkgversion>/linux/tbb/include"},
-      {"CPATH", "compilers_and_libraries_<pkgversion>/linux/daal/include"},
-      -- LD_LIBRARY_PATH
-      {"LD_LIBRARY_PATH", "compilers_and_libraries_<pkgversion>/linux/compiler/lib/intel64"},
-      {"LD_LIBRARY_PATH", "compilers_and_libraries_<pkgversion>/linux/mpi/intel64/lib"},
-      {"LD_LIBRARY_PATH", "compilers_and_libraries_<pkgversion>/linux/mpi/mic/lib"},
-      {"LD_LIBRARY_PATH", "compilers_and_libraries_<pkgversion>/linux/ipp/lib/intel64"},
-      {"LD_LIBRARY_PATH", "compilers_and_libraries_<pkgversion>/linux/mkl/lib/intel64_lin"},
-      {"LD_LIBRARY_PATH", "compilers_and_libraries_<pkgversion>/linux/tbb/lib/intel64/gcc4.4"},
-      {"LD_LIBRARY_PATH", "compilers_and_libraries_<pkgversion>/linux/daal/lib/intel64_lin"},
-      {"LD_LIBRARY_PATH", "compilers_and_libraries_<pkgversion>/linux/daal/../tbb/lib/intel64_lin/gcc4.4"},
-      -- LIBRARY_PATH
-      {"LIBRARY_PATH", "compilers_and_libraries_<pkgversion>/linux/ipp/lib/intel64"},
-      {"LIBRARY_PATH", "compilers_and_libraries_<pkgversion>/linux/compiler/lib/intel64"},
-      {"LIBRARY_PATH", "compilers_and_libraries_<pkgversion>/linux/mkl/lib/intel64_lin"},
-      {"LIBRARY_PATH", "compilers_and_libraries_<pkgversion>/linux/tbb/lib/intel64/gcc4.4"},
-      {"LIBRARY_PATH", "compilers_and_libraries_<pkgversion>/linux/daal/lib/intel64_lin"},
-      {"LIBRARY_PATH", "compilers_and_libraries_<pkgversion>/linux/daal/../tbb/lib/intel64_lin/gcc4.4"},
-      -- PATH
-      {"PATH", "compilers_and_libraries_<pkgversion>/linux/bin/intel64"},
-      {"PATH", "compilers_and_libraries_<pkgversion>/linux/mpi/intel64/bin"},
+      {"PATH"   , "linux86-64/<pkgversion>/bin"},
+      {"MANPATH", "linux86-64/<pkgversion>/man"},
    },
 }
 
