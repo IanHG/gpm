@@ -18,7 +18,7 @@ prerequisite = {}
 -- Build section
 build = {
    -- Source of package
-   source = "http://releases.llvm.org/5.0.0/cfe-<pkgversion>.src.tar.xz",
+   source = "http://releases.llvm.org/<pkgversion>/cfe-<pkgversion>.src.tar.xz",
    -- Build command
    command = [[
       mkdir build
