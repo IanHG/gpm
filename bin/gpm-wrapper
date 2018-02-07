@@ -1,0 +1,39 @@
+#!/bin/sh
+_=[[
+IFS=:
+for D in ${PATH}; do
+   for F in "${D}"/lua "${D}"/lua5* "${D}"/luajit*; do
+      if [ -x "${F}" ]; then
+         exec "${F}" "$0" "$@"
+      fi
+   done
+done
+Printf "%s: no Lua interpreter found\n" "${0##*/}" >&2
+Exit 1
+]]
+
+-- Load filesystem
+local lfs = require "lfs"
+
+-- Load local packages
+folder_of_this = arg[0]:match("(.-)[^\\/]+$") -- Get folder of executeable
+if folder_of_this:sub(1,1) ~= "/" then
+   folder_of_this = lfs.currentdir() .. "/" .. folder_of_this
+end
+package.path = folder_of_this .. '../?.lua;' .. package.path -- Set package path
+
+-- Load actual script from libexec
+assert(loadfile(folder_of_this .. "../libexec/" ..arg[1]))()
+
+-- Clean argv by first shifting all args one position, then removing last element.
+for i = 1, #arg - 1 do
+   arg[i] = arg[i + 1]
+end
+local head = table.remove(arg, #arg)
+
+-- Run main function loaded from libexec
+main()
+
+--[[
+# vi:syntax=lua
+--]]
