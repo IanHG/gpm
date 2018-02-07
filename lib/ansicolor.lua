@@ -5,7 +5,7 @@ local tostring = tostring
 local setmetatable = setmetatable
 local schar = string.char
 
-module 'ansicolor'
+local _M = {}
 
 -- Setup meta table for concatenation of attributes
 local colormt = {}
