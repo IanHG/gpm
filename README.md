@@ -26,7 +26,7 @@ Here `<stack-path>` is the directory where you want your software stack to be in
 _i.e._ where all binaries, modulefiles, etc. are to be placed.
 This could _e.g._ be `/opt/swstack` for systemwide install or `/home/<user>/swstack` for local install.
 
-To __initialize__ a sofware stack with the this `config.lua` run:
+To __initialize__ a sofware stack with this `config.lua` run:
 ```bash
 <gpm-path>/gpm-package -c <config-path>/config.lua initialize
 ```
@@ -53,7 +53,7 @@ gpm-package install --gpk <package> --pkv <version>
 ```
 For example, to install the `gcc` compiler version `7.1.0` you run:
 ```bash
-gpm-pacakge install --gpk gcc --pkv 7.2.0
+gpm-package install --gpk gcc --pkv 7.2.0
 ```
 To __remove__ a package you can use the `remove` command:
 ```bash

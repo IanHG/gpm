@@ -1,9 +1,9 @@
 local M = {}
 
-local util       = require "util"
-local exception  = require "exception"
-local filesystem = require "filesystem"
-local path       = require "path"
+local util       = require "lib.util"
+local exception  = require "lib.exception"
+local filesystem = require "lib.filesystem"
+local path       = require "lib.path"
 
 --- Locate gps file by searching gps_path.
 --

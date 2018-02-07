@@ -1,6 +1,6 @@
 M = {}
 
-local ansicolor = require "ansicolor"
+local ansicolor = require "lib.ansicolor"
 
 --- Create message
 -- 

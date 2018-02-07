@@ -1,0 +1,37 @@
+-- CMake gpk script
+
+-- Description of the gpk
+description = [[
+The Netwide Assembler (NASM)
+]]
+
+-- Definition section
+definition = {
+   pkgname = "nasm",
+   pkggroup = "core",
+   pkgfamily = "nasm",
+}
+
+-- Required types
+prerequisite = {}
+
+-- Build section
+build = {
+   -- Source of package
+   source = "http://www.nasm.us/pub/nasm/releasebuilds/<pkgversion>/nasm-<pkgversion>.tar.bz2",
+   -- Build command
+   command = [[
+      ./configure --enable-sections --enable-lto --enable-sanitizer --prefix=<pkginstall>
+      make -j<nprocesses>
+      make install
+   ]]
+}
+
+-- Lmod section
+lmod = {
+   help = [[This module loads NASM v. <pkgversion>.]],
+}
+
+--[[
+# vi:syntax=lua
+--]]

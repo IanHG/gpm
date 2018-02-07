@@ -1,7 +1,7 @@
 local M = {}
 
-local _execcmd = require "execcmd"
-local _logging = require "logging"
+local _execcmd = require "lib.execcmd"
+local _logging = require "lib.logging"
 
 local function merge(a, b)
    if type(a) == 'table' and type(b) == 'table' then

@@ -1,56 +1,33 @@
-#!/usr/bin/lua
+#!/bin/sh
+_=[[
+IFS=:
+for D in ${PATH}; do
+   for F in "${D}"/lua "${D}"/lua5* "${D}"/luajit*; do
+      if [ -x "${F}" ]; then
+         exec "${F}" "$0" "$@"
+      fi
+   done
+done
+Printf "%s: no Lua interpreter found\n" "${0##*/}" >&2
+Exit 1
+]]
 
 -- Load globally installed packages
 local lfs      = require "lfs"
 local argparse = require "argparse"
 
 -- Load local packages
-folder_of_this = arg[0]:match("(.-)[^\\/]+$") -- Get folder of executeable
-if folder_of_this:sub(1,1) ~= "/" then
-   folder_of_this = lfs.currentdir() .. "/" .. folder_of_this
-end
-package.path = folder_of_this .. '../lib/?.lua;' .. package.path -- Set package path
-local exception  = require "exception"
-local path       = require "path"
-local version    = require "version"
-local util       = require "util"
-local logging    = require "logging"
-local ansicolor  = require "ansicolor"
-local configload = require "configload"
-local filesystem = require "filesystem"
+local exception  = require "lib.exception"
+local path       = require "lib.path"
+local version    = require "lib.version"
+local util       = require "lib.util"
+local logging    = require "lib.logging"
+local ansicolor  = require "lib.ansicolor"
+local configload = require "lib.configload"
+local filesystem = require "lib.filesystem"
 
 -- Description of this script
 local description = version.get_description("gpm-stack.lua")
-
--- Set config defaults
-config = {  
-   current_directory = filesystem.cwd(),  
-}
-
---- Boostrap config dictionary.
--- 
--- @param args
--- @param default_config
---
--- @return{Dictionary} Returns definition og build.
-local function bootstrap_config(args, default_config)
-   if args.debug then
-      logging.debug("Bootstrapping config.", io.stdout)
-   end
-   
-   -- Load config file
-   local path = configload.configpath(args)
-   assert(loadfile(path))()
-   
-   -- Merge with default
-   default_config = util.merge(default_config, config)
-   
-   if(args.debug) then
-      logging.debug(util.print(config, "config"), io.stdout)
-   end
-
-   return default_config
-end
 
 --- Print the currently loaded stacks.
 --
@@ -71,7 +48,7 @@ local function lsloaded()
    logging.message("", io.stdout)
 end
 
----
+--- Grep in log file and print hits to terminal.
 --
 local function grepcmd(args)
    local result = logging.grep(args.grep, config.log_path)
@@ -111,13 +88,13 @@ function main()
    args = parser:parse()
    
    if args.debug then
+      logging.debug("Lua version : " .. _VERSION, io.stdout)
       logging.debug(util.print(args, "args"), io.stdout)
    end
    
    exception.try(function()
       -- Bootstrap config
-      config = bootstrap_config(args, config)
-
+      config = configload.bootstrap(args, config)
 
       if args.ls then
          if args.all then

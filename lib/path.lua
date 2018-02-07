@@ -61,7 +61,7 @@ end
 --
 local function get_filename(url)
   --return url:match("^.+/(.+)$")
-  _, file, _ = split_filename(url)
+  local _, file, _ = split_filename(url)
   return file
 end
 
@@ -70,7 +70,7 @@ end
 --
 local function get_file_extension(url)
   --return url:match("^.+(%..+)$")
-  path, file, ext = split_filename(url)
+  local path, file, ext = split_filename(url)
   return ext
 end
 

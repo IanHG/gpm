@@ -1,10 +1,10 @@
 local lfs = require "lfs"
 
-local util = require "util"
-local path = require "path"
-local version = require "version"
-local install = require "install"
-local exception = require "exception"
+local util      = require "lib.util"
+local path      = require "lib.path"
+local version   = require "lib.version"
+local install   = require "lib.install"
+local exception = require "lib.exception"
 
 M = {}
 

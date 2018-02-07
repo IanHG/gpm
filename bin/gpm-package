@@ -1,40 +1,43 @@
-#!/usr/bin/lua
+#!/bin/sh
+_=[[
+IFS=:
+for D in ${PATH}; do
+   for F in "${D}"/lua "${D}"/lua5* "${D}"/luajit*; do
+      if [ -x "${F}" ]; then
+         exec "${F}" "$0" "$@"
+      fi
+   done
+done
+Printf "%s: no Lua interpreter found\n" "${0##*/}" >&2
+Exit 1
+]]
 
 -- Load globally installed packages
 local lfs = require "lfs"
 local argparse = require "argparse"
 
 -- Load local packages
-folder_of_this = arg[0]:match("(.-)[^\\/]+$") -- Get folder of executeable
-if folder_of_this:sub(1,1) ~= "/" then
-   folder_of_this = lfs.currentdir() .. "/" .. folder_of_this
-end
-package.path = folder_of_this .. '../lib/?.lua;' .. package.path -- Set package path
-local exception = require "exception"
-local path = require "path"
-local version = require "version"
-local stack = require "stack"
-local install = require "install"
-local initializer = require "initialize"
-local remove = require "remove"
-local util = require "util"
-local logging = require "logging"
-local ansicolor = require "ansicolor"
+--folder_of_this = arg[0]:match("(.-)[^\\/]+$") -- Get folder of executeable
+--if folder_of_this:sub(1,1) ~= "/" then
+--   folder_of_this = lfs.currentdir() .. "/" .. folder_of_this
+--end
+--package.path = folder_of_this .. '../lib/?.lua;' .. package.path -- Set package path
+--package.path = '../lib/?.lua;' .. package.path -- Set package path
+
+local exception   = require "lib.exception"
+local path        = require "lib.path"
+local configload  = require "lib.configload"
+local version     = require "lib.version"
+local stack       = require "lib.stack"
+local install     = require "lib.install"
+local initializer = require "lib.initialize"
+local remove      = require "lib.remove"
+local util        = require "lib.util"
+local logging     = require "lib.logging"
+local ansicolor   = require "lib.ansicolor"
 
 -- Description of this script
-description = {
-   script_name = "gpm-package.lua",
-   name = "Grendel/Great Package Manager 2000 (GPM2K), or just GPM for short :)",
-   desc = "Grendels own easybuilder, yay!",
-}
-
--- Set config defaults
-config = {  
-   current_directory = lfs.currentdir(),  
-   gpk_path = folder_of_this .. "../gpk",
-   gps_path = folder_of_this .. "../gps",
-   heirarchical = {},
-}
+local description = version.get_description("gpm-package.lua")
 
 --- Log the call to gpm in the stack log-file.
 --
@@ -114,63 +117,63 @@ local function log_gpm_call_end(success, stack)
    end
 end
 
---- Boostrap config dictionary.
--- 
--- @param args
--- @param default_config
+----- Boostrap config dictionary.
+---- 
+---- @param args
+---- @param default_config
+----
+---- @return{Dictionary} Returns definition og build.
+--local function bootstrap_config(args, default_config)
+--   if args.debug then
+--      logging.debug("Bootstrapping config.", io.stdout)
+--   end
+--   
+--   -- Make sure we have a config
+--   if not args.config then
+--      -- If none was given we check for the environtment one.
+--      config_path = os.getenv("GPM_CONFIG")
+--      if config_path then
+--         args.config = config_path
+--      else
+--         -- If enviroment config wasn't found, we check current directory
+--         args.config = path.join(config.current_directory, "config.lua")
+--      end
+--   end
 --
--- @return{Dictionary} Returns definition og build.
-local function bootstrap_config(args, default_config)
-   if args.debug then
-      logging.debug("Bootstrapping config.", io.stdout)
-   end
-   
-   -- Make sure we have a config
-   if not args.config then
-      -- If none was given we check for the environtment one.
-      config_path = os.getenv("GPM_CONFIG")
-      if config_path then
-         args.config = config_path
-      else
-         -- If enviroment config wasn't found, we check current directory
-         args.config = path.join(config.current_directory, "config.lua")
-      end
-   end
-
-   assert(loadfile(args.config))()
-
-   default_config = util.merge(default_config, config)
-
-   -- 
-   if (not default_config.stack_path) then
-      local stack_path, _, _ = path.split_filename(args.config)
-      print(stack_path)
-      default_config.stack_path = path.remove_dir_end(stack_path)
-   end
-
-   --
-   if default_config.log_path and (not path.is_abs_path(default_config.log_path)) then
-      default_config.log_path = path.join(default_config.stack_path, default_config.log_path)
-   end
-   
-   -- Setup gpk_path and gps_path
-   if config.gpk_path then
-      default_config.gpk_path = default_config.gpk_path .. ":" .. folder_of_this .. "../gpk"
-   end
-   if config.gps_path then
-      default_config.gps_path = default_config.gps_path .. ":" .. folder_of_this .. "../gps"
-   end
-   
-   -- Setup build_path and lmod_path
-   if not default_config.base_build_directory then 
-      default_config.base_build_directory = default_config.stack_path .. "/build" 
-   end
-   if not default_config.lmod_directory then 
-      default_config.lmod_directory = default_config.stack_path .. "/modulefiles" 
-   end
-
-   return default_config
-end
+--   assert(loadfile(args.config))()
+--
+--   default_config = util.merge(default_config, config)
+--
+--   -- 
+--   if (not default_config.stack_path) then
+--      local stack_path, _, _ = path.split_filename(args.config)
+--      print(stack_path)
+--      default_config.stack_path = path.remove_dir_end(stack_path)
+--   end
+--
+--   --
+--   if default_config.log_path and (not path.is_abs_path(default_config.log_path)) then
+--      default_config.log_path = path.join(default_config.stack_path, default_config.log_path)
+--   end
+--   
+--   -- Setup gpk_path and gps_path
+--   if config.gpk_path then
+--      default_config.gpk_path = default_config.gpk_path .. ":" .. folder_of_this .. "../gpk"
+--   end
+--   if config.gps_path then
+--      default_config.gps_path = default_config.gps_path .. ":" .. folder_of_this .. "../gps"
+--   end
+--   
+--   -- Setup build_path and lmod_path
+--   if not default_config.base_build_directory then 
+--      default_config.base_build_directory = default_config.stack_path .. "/build" 
+--   end
+--   if not default_config.lmod_directory then 
+--      default_config.lmod_directory = default_config.stack_path .. "/modulefiles" 
+--   end
+--
+--   return default_config
+--end
 
 -------------------------------------
 -- Main driver.
@@ -242,7 +245,7 @@ function main()
    
    exception.try(function()
       -- Bootstrap config
-      config = bootstrap_config(args, config)
+      config = configload.bootstrap(args, config)
       
       -- Log the call to the stack log
       log_gpm_call(args.stack)

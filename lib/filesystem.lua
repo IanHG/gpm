@@ -2,7 +2,7 @@ M = {}
 
 local _posix = require "posix"
 local _lfs   = require "lfs"
-local _path  = require "path"
+local _path  = require "lib.path"
 
 --- Check existance of file object.
 --
