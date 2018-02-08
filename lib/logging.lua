@@ -93,6 +93,9 @@ end
 
 --- Match line with a list of strings.
 --
+-- Grep helper function. Will check whether a speficic string matches a set of search strings.
+-- These can be positive or negative matches.
+--
 -- @param search_strings  The strings to search for.
 -- @param line            The line to check.
 -- @param negate          Look for negative matches.
@@ -125,7 +128,12 @@ end
 
 --- "Grep" in log file and return list of hits.
 --
--- @param search_str  String to search for.
+-- Grep in file for matching hits. 
+-- Prepending a string with '*', will make it a negative search,
+-- which will exclude all matching hits.
+-- Can search for both positive and negative matches in same search.
+--
+-- @param search_str  String or array of strings to search for.
 -- @param log_path    Path of log file.
 --
 -- @return    Returns list of hits.

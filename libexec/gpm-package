@@ -1,14 +1,8 @@
+-- Load globally installed packages
 local lfs = require "lfs"
 local argparse = require "argparse"
 
 -- Load local packages
---folder_of_this = arg[0]:match("(.-)[^\\/]+$") -- Get folder of executeable
---if folder_of_this:sub(1,1) ~= "/" then
---   folder_of_this = lfs.currentdir() .. "/" .. folder_of_this
---end
---package.path = folder_of_this .. '../lib/?.lua;' .. package.path -- Set package path
---package.path = '../lib/?.lua;' .. package.path -- Set package path
-
 local exception   = require "lib.exception"
 local path        = require "lib.path"
 local configload  = require "lib.configload"
@@ -102,63 +96,6 @@ local function log_gpm_call_end(success, stack)
    end
 end
 
------ Boostrap config dictionary.
----- 
----- @param args
----- @param default_config
-----
----- @return{Dictionary} Returns definition og build.
---local function bootstrap_config(args, default_config)
---   if args.debug then
---      logging.debug("Bootstrapping config.", io.stdout)
---   end
---   
---   -- Make sure we have a config
---   if not args.config then
---      -- If none was given we check for the environtment one.
---      config_path = os.getenv("GPM_CONFIG")
---      if config_path then
---         args.config = config_path
---      else
---         -- If enviroment config wasn't found, we check current directory
---         args.config = path.join(config.current_directory, "config.lua")
---      end
---   end
---
---   assert(loadfile(args.config))()
---
---   default_config = util.merge(default_config, config)
---
---   -- 
---   if (not default_config.stack_path) then
---      local stack_path, _, _ = path.split_filename(args.config)
---      print(stack_path)
---      default_config.stack_path = path.remove_dir_end(stack_path)
---   end
---
---   --
---   if default_config.log_path and (not path.is_abs_path(default_config.log_path)) then
---      default_config.log_path = path.join(default_config.stack_path, default_config.log_path)
---   end
---   
---   -- Setup gpk_path and gps_path
---   if config.gpk_path then
---      default_config.gpk_path = default_config.gpk_path .. ":" .. folder_of_this .. "../gpk"
---   end
---   if config.gps_path then
---      default_config.gps_path = default_config.gps_path .. ":" .. folder_of_this .. "../gps"
---   end
---   
---   -- Setup build_path and lmod_path
---   if not default_config.base_build_directory then 
---      default_config.base_build_directory = default_config.stack_path .. "/build" 
---   end
---   if not default_config.lmod_directory then 
---      default_config.lmod_directory = default_config.stack_path .. "/modulefiles" 
---   end
---
---   return default_config
---end
 
 -------------------------------------
 -- Main driver.

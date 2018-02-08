@@ -1,16 +1,16 @@
 -- Load globally installed packages
-local lfs      = require "lfs"
-local argparse = require "argparse"
+local lfs      = assert(require "lfs")
+local argparse = assert(require "argparse")
 
 -- Load local packages
-local exception  = require "lib.exception"
-local path       = require "lib.path"
-local version    = require "lib.version"
-local util       = require "lib.util"
-local logging    = require "lib.logging"
-local ansicolor  = require "lib.ansicolor"
-local configload = require "lib.configload"
-local filesystem = require "lib.filesystem"
+local exception  = assert(require "lib.exception")
+local path       = assert(require "lib.path")
+local version    = assert(require "lib.version")
+local util       = assert(require "lib.util")
+local logging    = assert(require "lib.logging")
+local ansicolor  = assert(require "lib.ansicolor")
+local configload = assert(require "lib.configload")
+local filesystem = assert(require "lib.filesystem")
 
 -- Description of this script
 local description = version.get_description("gpm-stack.lua")
@@ -80,7 +80,7 @@ function main()
    
    exception.try(function()
       -- Bootstrap config
-      config = configload.bootstrap(args, config)
+      config = configload.bootstrap(args)
 
       if args.ls then
          if args.all then

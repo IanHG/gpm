@@ -1,5 +1,6 @@
 #!/bin/sh
 
 cmd=`basename $0`
+dir=`dirname $0`
 
-gpm-wrapper $cmd $@
+$dir/gpm-wrapper $cmd $@

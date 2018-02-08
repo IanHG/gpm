@@ -1,10 +1,13 @@
+-- Create module
 local M = {}
 
-local filesystem = require "lib.filesystem"
-local util = require "lib.util"
-local path = assert(require "lib.path")
-local logging = assert(require "lib.logging")
+-- Load local packages
+local filesystem = assert(require "lib.filesystem")
+local util       = assert(require "lib.util")
+local path       = assert(require "lib.path")
+local logging    = assert(require "lib.logging")
 
+-- Helper function to find folder of current script.
 local function folder_of_this()
    local folder = arg[0]:match("(.-)[^\\/]+$") -- Get folder of executeable
    if folder:sub(1,1) ~= "/" then
@@ -22,6 +25,7 @@ local global_default_config = {
    heirarchical = {},
 }
 
+-- Global config
 config = {
 }
 
@@ -54,6 +58,8 @@ local function configpath(args)
 end
 
 --- Boostrap config dictionary.
+--
+-- Read in config file, and set some default configurations if needed.
 -- 
 -- @param args
 -- @param default_config
@@ -63,6 +69,11 @@ local function bootstrap(args, default_config)
    -- Do some debug output if requested
    if args.debug then
       logging.debug("Bootstrapping config.", io.stdout)
+   end
+   
+   -- Set default
+   if not default_config then
+      default_config = {}
    end
    
    -- Load config file
