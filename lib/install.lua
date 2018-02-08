@@ -1,10 +1,10 @@
-local lfs = require "lfs"
+local lfs = assert(require "lfs")
 
-local util       = require "lib.util"
-local path       = require "lib.path"
-local filesystem = require "lib.filesystem"
-local exception  = require "lib.exception"
-local logging    = require "lib.logging"
+local util       = assert(require "lib.util")
+local path       = assert(require "lib.path")
+local filesystem = assert(require "lib.filesystem")
+local exception  = assert(require "lib.exception")
+local logging    = assert(require "lib.logging")
 
 M = {}
 

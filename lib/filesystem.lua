@@ -1,8 +1,8 @@
 M = {}
 
-local _posix = require "posix"
-local _lfs   = require "lfs"
-local _path  = require "lib.path"
+local _posix = assert(require "posix")
+local _lfs   = assert(require "lfs")
+local _path  = assert(require "lib.path")
 
 --- Check existance of file object.
 --

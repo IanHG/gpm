@@ -1,6 +1,6 @@
 local M = {}
 
-local logging = require "lib.logging"
+local logging = assert(require "lib.logging")
 
 --- Simulate exceptions in Lua.
 --
