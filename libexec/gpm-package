@@ -1,19 +1,19 @@
 -- Load globally installed packages
-local lfs = require "lfs"
-local argparse = require "argparse"
+local lfs      = assert(require "lfs")
+local argparse = assert(require "argparse")
 
 -- Load local packages
-local exception   = require "lib.exception"
-local path        = require "lib.path"
-local configload  = require "lib.configload"
-local version     = require "lib.version"
-local stack       = require "lib.stack"
-local install     = require "lib.install"
-local initializer = require "lib.initialize"
-local remove      = require "lib.remove"
-local util        = require "lib.util"
-local logging     = require "lib.logging"
-local ansicolor   = require "lib.ansicolor"
+local exception   = assert(require "lib.exception")
+local path        = assert(require "lib.path")
+local configload  = assert(require "lib.configload")
+local version     = assert(require "lib.version")
+local stack       = assert(require "lib.stack")
+local install     = assert(require "lib.install")
+local initializer = assert(require "lib.initialize")
+local remove      = assert(require "lib.remove")
+local util        = assert(require "lib.util")
+local logging     = assert(require "lib.logging")
+local ansicolor   = assert(require "lib.ansicolor")
 
 -- Description of this script
 local description = version.get_description("gpm-package.lua")

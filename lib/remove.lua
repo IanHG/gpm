@@ -1,10 +1,11 @@
 -- Load packages
-local util       = require "lib.util"
-local install    = require "lib.install"
-local path       = require "lib.path"
-local filesystem = require "lib.filesystem"
-local exception  = require "lib.exception"
-local logging    = require "lib.logging"
+local util       = assert(require "lib.util")
+local install    = assert(require "lib.install")
+local path       = assert(require "lib.path")
+local filesystem = assert(require "lib.filesystem")
+local exception  = assert(require "lib.exception")
+local logging    = assert(require "lib.logging")
+local packages   = assert(require "lib.packages")
 
 -- Create module
 local M = {}
@@ -58,7 +59,7 @@ local function remove(args)
       args.source = ""
       
       -- Bootstrap the package we are removing
-      package = install.bootstrap_package(args)
+      package = packages.bootstrap(args)
 
       -- Remove the package
       remove_package(package)

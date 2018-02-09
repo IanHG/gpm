@@ -18,10 +18,15 @@ end
 
 -- Default config
 local global_default_config = {
+   -- Set current directory
    current_directory = filesystem.cwd(),  
+   -- Set folder of running script
    folder = folder_of_this(),
+   -- Set default .gpk path
    gpk_path = folder_of_this() .. "../gpk",
+   -- Set default .gps path
    gps_path = folder_of_this() .. "../gps",
+   -- As of now we must give the hierarchical keyword, so we just default to empty
    heirarchical = {},
 }
 

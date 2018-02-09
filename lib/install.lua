@@ -5,297 +5,11 @@ local path       = assert(require "lib.path")
 local filesystem = assert(require "lib.filesystem")
 local exception  = assert(require "lib.exception")
 local logging    = assert(require "lib.logging")
+local packages   = assert(require "lib.packages")
 
 M = {}
 
--------------------------------------
--- Check package validity.
---
--- @param{Table} 
---
--- @return{bool, String} Return true if package is valid, and false otherwise. 
---                       If false a string describing the error is also returned.
--------------------------------------
-local function check_package_is_valid(package)
-   if not package.nomodulesource then
-      if package.build then
-         if not package.build.source then
-            return false, "No source"
-         end
-      end
-   end
-   
-   -- If we reach here package is valid and ready for installation
-   return true, "Success"
-end
 
--------------------------------------
--- Is pkgtype a hierarchical one?
---
--- @param{String} pkgtype
---
--- @param{Boolean} 
--------------------------------------
-function is_heirarchical(pkgtype)
-   for key,value in pairs(config.heirarchical) do
-      if pkgtype == value then
-         return true
-      end
-   end
-   return false
-end
-
---- Locate gpk file by searching gpk_path.
---
--- @param args   The input arguments.
---
--- @return   Returns gpk filename as string.
-local function locate_gpk_file(args)
-   -- Initialize to nil
-   local filepath = nil
-
-   -- Try to locate gpk file
-   if args.gpk then
-      local filename = args.gpk .. ".gpk"
-      local function locate_gpk_impl()
-         for gpk_path in path.iterator(config.gpk_path) do
-            -- Check for abs path
-            if not path.is_abs_path(gpk_path) then
-               gpk_path = path.join(config.stack_path, gpk_path)
-            end
-            
-            -- Create filename
-            local filepath = path.join(gpk_path, filename)
-            
-            -- Check for existance
-            if filesystem.exists(filepath) then
-               return filepath
-            end
-         end
-         return nil
-      end
-      filepath = locate_gpk_impl()
-   elseif args.gpkf then
-      filepath = args.gpkf
-   else
-      error("Must provide either -gpk or -gpkf option.")
-   end
-   
-   -- Return found path
-   return filepath
-end
-
--------------------------------------
--- Read GPM package file (GPK).
---
--- @return{Table} Returns definition of build.
--------------------------------------
-local function bootstrap_package(args)
-   if args.debug then
-      logging.debug("Bootstrapping package", io.stdout)
-   end
-
-   package = {}
-   
-   -- Load the gpk file
-   local filepath = assert(locate_gpk_file(args))
-   
-   local f, msg = loadfile(filepath)
-   if f then
-      f()
-   else
-      error("Error loading package. Reason : '" .. msg .. "'.")
-   end
-   
-   logging.message("GPK : " .. filepath, io.stdout)
-   
-   package.description = description
-   package.definition = definition
-   if build then
-      package.build = build
-      if args.source then
-         package.build.source = args.source
-      end
-   end
-   if lmod then
-      package.lmod = lmod
-   else
-      package.lmod = {}
-   end
-
-   if post then
-      package.post = post
-   else
-      package.post = {}
-   end
-   
-   -- Setup some version numbers and other needed variables
-   package.definition.pkgversion = args.pkv
-   version_array = util.split(args.pkv, ".")
-   if version_array[1] then
-      package.definition.pkgmajor = version_array[1]
-   end
-   if version_array[2] then
-      package.definition.pkgminor = version_array[2]
-   end
-   if version_array[3] then
-      package.definition.pkgrevision = version_array[3]
-   end
-   package.definition.pkg = package.definition.pkgname .. "-" .. package.definition.pkgversion
-
-   -- Bootstrap prerequisite
-   package.prerequisite = util.ordered_table({})
-   if #prerequisite ~= 0 then
-      prereq_array = util.split(args.prereq, ",")
-      for key, value in pairs(prerequisite) do
-         found = false
-         for count = 1, #prereq_array do
-            p = util.split(prereq_array[count], "=")
-            if value == p[1] then
-               package.prerequisite[value] = p[2]
-               found = true
-               break
-            end
-         end
-         if not found then
-            error("Prequisite '" .. value .. "' not set.")
-         end
-      end
-   elseif args.prereq then
-      prereq_array = util.split(args.prereq, ",")
-      for count = 1, #prereq_array do
-         p = util.split(prereq_array[count], "=")
-         if not p[2] then
-            package.prerequisite["prereq" .. count] = p[1]
-         else
-            package.prerequisite[p[1]] = p[2]
-         end
-      end
-   end
-   
-   package.dependson = util.ordered_table({})
-   if args.depends_on then
-      do_array = util.split(args.depends_on, ",")
-      for count = 1, #do_array do
-         d = util.split(do_array[count], "=")
-         if not d[2] then
-            package.dependson["dependson" .. count] = d[1]
-         else
-            package.dependson[d[1]] = d[2]
-         end
-      end
-   elseif depends_on then
-      do_array = util.split(depends_on, ",")
-      for count = 1, #do_array do
-         d = util.split(do_array[count], "=")
-         if not d[2] then
-            package.dependson["dependson" .. count] = d[1]
-         else
-            package.dependson[d[1]] = d[2]
-         end
-      end
-   end
-
-   package.moduleload = util.ordered_table({})
-   if args.moduleload then
-      ml_array = util.split(args.moduleload, ",")
-      for count = 1, #ml_array do
-         m = util.split(ml_array[count], "=")
-         if not m[2] then
-            package.moduleload["moduleload" .. count] = m[1]
-         else
-            package.moduleload[m[1]] = m[2]
-         end
-      end
-   end
-   
-   -- Setup build, install and modulefile directories
-   build_directory = "build-"
-   for key,prereq in util.ordered(package.prerequisite) do
-      build_directory = build_directory .. string.gsub(prereq, "/", "-") .. "-"
-   end
-   for key,prereq in util.ordered(package.dependson) do
-      build_directory = build_directory .. string.gsub(prereq, "/", "-") .. "-"
-   end
-   for key,prereq in util.ordered(package.moduleload) do
-      build_directory = build_directory .. string.gsub(prereq, "/", "-") .. "-"
-   end
-   build_directory = build_directory .. package.definition.pkg
-   package.build_directory = path.join(config.base_build_directory, build_directory)
-   package.definition.pkgbuild = package.build_directory
-   
-   if package.definition.pkggroup then
-      pkginstall = path.join(config.stack_path, package.definition.pkggroup)
-      if is_heirarchical(package.definition.pkggroup) then
-         for key,prereq in util.ordered(package.prerequisite) do
-            pkginstall = path.join(pkginstall, string.gsub(prereq, "/", "-"))
-         end
-      end
-      pkginstall = path.join(path.join(pkginstall, package.definition.pkgname), package.definition.pkgversion)
-   else
-      -- Special care for lmod
-      if package.definition.pkgname == "lmod" then
-         pkginstall = config.stack_path
-      else
-         pkginstall = path.join(path.join(config.stack_path, package.definition.pkgname), package.definition.pkgversion)
-      end
-   end
-   package.definition.pkginstall = pkginstall
-   
-   -- Lmod stuff
-   if package.lmod then
-      lmod_base = package.definition.pkggroup
-      if is_heirarchical(package.definition.pkggroup) then
-         if prerequisite then
-            nprereq = #prerequisite
-         else
-            nprereq = 0
-         end
-         --for _ in pairs(package.prerequisite) do
-         --   nprereq = nprereq + 1
-         --end
-
-         if nprereq ~= 0 then
-            lmod_base = prerequisite[nprereq]
-         end
-      end
-
-      package.lmod.base = lmod_base
-      package.nprerequisite = nprereq
-      package.lmod.modulefile_directory = path.join(config.lmod_directory, lmod_base)
-      
-      if is_heirarchical(package.definition.pkggroup) then
-         for key,prereq in util.ordered(package.prerequisite) do
-            package.lmod.modulefile_directory = path.join(package.lmod.modulefile_directory, prereq)
-         end
-      end
-      
-      package.lmod.modulefile_directory = path.join(package.lmod.modulefile_directory, package.definition.pkgname)
-   end
-   
-   -- Miscellaneous (spellcheck? :) )
-   package.definition.nprocesses = config.nprocesses
-   --if args.nomodulesource then
-   --   package.nomodulesource = args.nomodulesource
-   --end
-   package.nomodulesource = util.conditional(args.nomodulesource, args.nomodulesource, false)
-   package.forcedownload  = util.conditional(args.force_download, args.force_download, false)
-   package.forceunpack    = util.conditional(args.force_unpack  , args.force_unpack  , false)
-   package.is_lmod        = util.conditional(args.is_lmod       , true               , false)
-
-   -- check package validity
-   check, reason = check_package_is_valid(package)
-   if not check then
-      error("Package not valid: " .. reason)
-   end
-
-   if args.debug then
-      logging.debug("Done bootstrapping package", io.stdout)
-   end
-
-   -- return package
-   return package
-end
 
 -------------------------------------
 -- Open log file. This will log all steps taken
@@ -639,7 +353,7 @@ local function build_lmod_modulefile(package)
    lmod_file:write("local fileName    = myFileName()\n")
    lmod_file:write("local nameVersion = pathJoin(name, version)\n")
    
-   if is_heirarchical(package.definition.pkggroup) and package.nprerequisite ~= 0 then
+   if packages.is_heirarchical(package.definition.pkggroup) and package.nprerequisite ~= 0 then
       lmod_file:write("local prereq = string.match(fileName,\"/" .. package.lmod.base .. "/(.-)/\" .. nameVersion:gsub(\"-\", \"?-\"))\n")
       lmod_file:write("local packagePrereq = pathJoin(prereq, nameVersion)\n")
       lmod_file:write("local packageName = pathJoin(prereq:gsub(\"[^/]+/[^/]+\", function (str) return str:gsub(\"/\", \"-\") end), nameVersion)\n")
@@ -655,7 +369,7 @@ local function build_lmod_modulefile(package)
    end
    lmod_file:write("\n")
 
-   if (not is_heirarchical(package.definition.pkggroup)) and package.prerequisite then
+   if (not packages.is_heirarchical(package.definition.pkggroup)) and package.prerequisite then
       for key, prereq in pairs(package.prerequisite) do
          if tonumber(key) == nil then
             lmod_file:write("depends_on(\"" .. prereq .. "\")\n")
@@ -773,7 +487,7 @@ local function install(args)
    exception.try(function() 
       -- Bootstrap build
       logging.message("BOOTSTRAP PACKAGE", io.stdout)
-      package = bootstrap_package(args)
+      package = packages.bootstrap(args)
 
       if args.debug then
          logging.debug(util.print(package, "package"), io.stdout)
@@ -840,7 +554,7 @@ local function install(args)
    end)
 end
 
-M.bootstrap_package = bootstrap_package
+-- Load module
 M.install = install
 
 return M
