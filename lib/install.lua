@@ -40,9 +40,9 @@ end
 -- @param{String} content  File content.
 -------------------------------------
 local function create_file(name, content, package)
-   name = util.substitute_placeholders(package.definition, name)
+   local name = util.substitute_placeholders(package.definition, name)
    name = path.join(package.build_directory, name)
-   content = util.substitute_placeholders(package.definition, content)
+   local content = util.substitute_placeholders(package.definition, content)
    
    cfile = io.open(name, "w")
    cfile:write(content)
@@ -59,11 +59,11 @@ end
 -- @return{String,String,String}  Returns path, filename, and extension.
 -------------------------------------
 local function split_filename(filepath)
-   source_path, source_file, source_ext = path.split_filename(source)
+   local source_path, source_file, source_ext = path.split_filename(filepath)
    
-   is_tar_gz = string.match(source_file, "tar.gz")
-   is_tar_bz = string.match(source_file, "tar.bz2")
-   is_tar_xz = string.match(source_file, "tar.xz")
+   local is_tar_gz = string.match(source_file, "tar.gz")
+   local is_tar_bz = string.match(source_file, "tar.bz2")
+   local is_tar_xz = string.match(source_file, "tar.xz")
    if is_tar_gz then
       source_ext = "tar.gz"
    elseif is_tar_bz then
@@ -96,11 +96,13 @@ local function make_package_ready_for_install(package)
    
    -- Get/download the package
    local source = util.substitute_placeholders(package.definition, package.build.source)
+   print("SOURCE : " .. source)
    local source_path, source_file, source_ext = split_filename(source)
    local source_file_strip = string.gsub(source_file, "%." .. source_ext, "")
    local destination = package.definition.pkg .. "." .. source_ext
    package.build.source_destination = destination
    print(source_file_strip)
+   print("SOURCE 2 : " .. source)
    
    if package.build.source_type == "git" then
       if (not filesystem.exists(path.join(package.build_directory, package.definition.pkg))) then

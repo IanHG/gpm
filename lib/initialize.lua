@@ -83,22 +83,158 @@ local function install_gpm(args)
    end
 end
 
--------------------------------------
--- Create shell environtment file
--------------------------------------
-local function create_shell_environment(args)
-   bin_dir = path.join(config.stack_path, "bin")
-   lfs.mkdir(bin_dir)
-   bin_file = io.open(path.join(bin_dir, "modules.sh"), "w")
-
-   modulepath_root = config.lmod_directory
-   modulepath = ""
+--- Create modulepaths and return these.
+--
+-- @return{string,string}   Returns modulepath_root and modulepath strings.
+local function create_modulepaths()
+   local modulepath_root = config.lmod_directory
+   local modulepath = ""
    for k,v in pairs(config.groups) do
       modulepath = modulepath .. path.join(modulepath_root, v) .. ":"
    end
    if modulepath[-1] == ":" then
       modulepath = modulepath.sub(1, -2)
    end
+
+   return modulepath_root, modulepath
+end
+
+--- Create source file for csh/tsch environments
+-- 
+-- @param args
+-- @param bin_path
+-- @param source_filename
+local function write_csh_source(args, bin_path, source_filename)
+   -- Get modulepaths and source_path
+   local modulepath_root, modulepath = create_modulepaths()
+   local source_path     = path.join(bin_path, source_filename)
+   local lmodsource_path = path.join(config.stack_path, "tools/lmod/7.7.13/lmod/lmod/init/csh")
+   local config_path     = path.join(config.stack_path, args.config)
+   
+   -- Open file
+   local source_file = io.open(path.join(bin_path, source_filename), "w")
+   
+   -- Write shebang
+   source_file:write("#!/bin/csh\n")
+   source_file:write("\n")
+   
+   -- Source parentstacks
+   if args.parentstack then
+      local parentstack_split = util.split(args.parentstack, ",")
+      source_file:write("# Source parent stacks\n")
+      for k,v in pairs(parentstack_split) do
+         source_file:write("source " .. v .. source_filename .. " $*\n")
+      end
+      source_file:write("\n")
+   end
+   
+   -- Setup input parsing
+   source_file:write("## Usage function\n")
+   source_file:write("alias usage 'echo \"Use me correctly please :) (and btw change to bash!).\";'\n")
+   source_file:write("\n")
+   source_file:write("# Parameters\n")
+   source_file:write("set SILENT=0\n")
+   source_file:write("set FORCE=0\n")
+   source_file:write("set GPM_USE_LD_RUN_PATH=1\n")
+   source_file:write("\n")
+   source_file:write("# Process command line\n")
+   source_file:write("while ( $#argv != 0 )\n")
+   source_file:write("   switch ( $argv[1] )\n")
+   source_file:write("      case \"--force\":\n")
+   source_file:write("         set FORCE=1;\n")
+   source_file:write("         breaksw\n")
+   source_file:write("      case \"--silent\":\n")
+   source_file:write("         set SILENT=1;\n")
+   source_file:write("         breaksw\n")
+   source_file:write("      case \"--link-relative\":\n")
+   source_file:write("         set GPM_USE_LD_RUN_PATH=1\n")
+   source_file:write("         breaksw\n")
+   source_file:write("      case \"--help\":\n")
+   source_file:write("         usage;\n")
+   source_file:write("         exit 0\n")
+   source_file:write("         breaksw\n")
+   source_file:write("      default:\n")
+   source_file:write("         usage;\n")
+   source_file:write("         exit 1\n")
+   source_file:write("         breaksw\n")
+   source_file:write("   endsw\n")
+   source_file:write("   shift\n")
+   source_file:write("end\n")
+   source_file:write("\n")
+
+   -- Check if we should source
+   source_file:write("# Check if this file should be sourced\n")
+   source_file:write("set SOURCEME=1\n")
+   source_file:write("set delimiter = ':'\n")
+   source_file:write("foreach gpmpath ($GPMSTACKPATH)\n")
+   source_file:write("   if ($gpmpath == \"" .. source_path .. "\") then\n")
+   source_file:write("      set SOURCEME=0\n")
+   source_file:write("   endif\n")
+   source_file:write("end\n")
+   source_file:write("\n")
+
+   -- Do the actual source 
+   source_file:write("# Source\n")
+   source_file:write("if (($SOURCEME == 1) || ($FORCE == 1)) then\n")
+   source_file:write("   if ($SILENT == 0) then\n")
+   source_file:write("      echo \"Sourcing" .. source_path .. "\"\n")
+   source_file:write("   endif\n")
+   source_file:write("\n")
+
+   if args.parentstack then
+      source_file:write("   # Setup module paths\n")
+      source_file:write("   setenv MODULEPATH_ROOT $MODULEPATH_ROOT\":" .. modulepath_root .."\"\n")
+      source_file:write("   setenv MODULEPATH $MODULEPATH\":" .. modulepath .. "\"\n")
+      source_file:write("\n")
+      source_file:write("   # Export stack path\n")
+      source_file:write("   setenv GPMSTACKPATH $GPMSTACKPATH\":" .. source_path .. "\"\n")
+   else
+      source_file:write("   # Unset paths\n")
+      source_file:write("   unset MODULEPATH_ROOT\n")
+      source_file:write("   unset MODULEPATH\n")
+      source_file:write("   unset GPMSTACKPATH\n")
+      source_file:write("   unset MANPATH\n")
+      source_file:write("\n")
+      source_file:write("   # Setup module paths\n")
+      source_file:write("   setenv MODULEPATH_ROOT \"" .. modulepath_root .."\"\n")
+      source_file:write("   setenv MODULEPATH \"" .. modulepath .. "\"\n")
+      source_file:write("   setenv MANPATH manpath\n")
+      source_file:write("\n")
+      source_file:write("   # Source lmod \n")
+      source_file:write("   source " .. lmodsource_path .. "\n")
+      source_file:write("\n")
+      source_file:write("   # Export stack path\n")
+      source_file:write("   setenv GPMSTACKPATH \"" .. source_path .. "\"\n")
+      source_file:write("\n")
+      source_file:write("   # Export stack path\n")
+      source_file:write("   setenv GPM_USE_LD_RUN_PATH \n")
+      source_file:write("\n")
+      source_file:write("   # Export some GPM\n")
+      source_file:write("   setenv GPM_CONFIG \"" .. config_path .. "\"\n")
+   end
+
+   source_file:write("else\n")
+   source_file:write("   if ($SILENT == 0) then\n")
+   source_file:write("      echo \"NOT sourcing " .. source_path .. "\"\n")
+   source_file:write("   endif\n")
+   source_file:write("endif\n")
+   
+   -- Close source file
+   source_file:close()
+end
+
+-------------------------------------
+-- Create shell environtment file
+-------------------------------------
+local function write_sh_source(args, bin_path, source_filename)
+   -- Get modulepaths
+   local modulepath_root, modulepath = create_modulepaths()
+   local source_path     = path.join(bin_path, source_filename)
+   local lmodsource_path = path.join(config.stack_path, "tools/lmod/7.7.13/lmod/lmod/init/profile")
+   local config_path     = path.join(config.stack_path, args.config)
+   
+   -- Open file for writing
+   local bin_file = io.open(path.join(bin_path, "modules.sh"), "w")
    
    -- Set shebang
    bin_file:write("#!/bin/sh\n")
@@ -106,10 +242,10 @@ local function create_shell_environment(args)
    
    -- Source parent stacks
    if args.parentstack then
-      parentstack_split = util.split(args.parentstack, ",")
+      local parentstack_split = util.split(args.parentstack, ",")
       bin_file:write("# Source parent stacks\n")
       for k,v in pairs(parentstack_split) do
-         bin_file:write(". " .. v .. " \"$@\"\n")
+         bin_file:write(". " .. v .. source_filename .. " \"$@\"\n")
       end
       bin_file:write("\n")
    end
@@ -150,13 +286,12 @@ local function create_shell_environment(args)
    bin_file:write("\n")
 
    -- Do some setup
-   local this_path = path.join(bin_dir, "modules.sh")
    bin_file:write("# Check if this file should be sourced\n")
    bin_file:write("SOURCEME=$(\n")
    bin_file:write("   SOURCEME=1\n")
    bin_file:write("   IFS=:\n")
    bin_file:write("   for path in $GPMSTACKPATH; do\n")
-   bin_file:write("      if [ \"$path\" = \"" .. this_path .. "\" ]; then\n")
+   bin_file:write("      if [ \"$path\" = \"" .. source_path .. "\" ]; then\n")
    bin_file:write("         SOURCEME=0\n")
    bin_file:write("      fi\n")
    bin_file:write("   done\n")
@@ -168,7 +303,7 @@ local function create_shell_environment(args)
    bin_file:write("# Source\n")
    bin_file:write("if [ \"$SOURCEME\" = \"1\" ] || [ \"$FORCE\" = \"1\" ]; then\n")
    bin_file:write("   if [ \"$SILENT\" = \"0\" ]; then\n")
-   bin_file:write("      echo \"Sourcing " .. this_path .. "\"\n")
+   bin_file:write("      echo \"Sourcing " .. source_path .. "\"\n")
    bin_file:write("   fi\n")
    
    if args.parentstack then
@@ -178,7 +313,7 @@ local function create_shell_environment(args)
       bin_file:write("   export MODULEPATH=$MODULEPATH:\"" .. modulepath .. "\"\n")
       bin_file:write("\n")
       bin_file:write("   # Export stack path\n")
-      bin_file:write("   export GPMSTACKPATH=\"$GPMSTACKPATH:" .. this_path .. "\"\n")
+      bin_file:write("   export GPMSTACKPATH=\"$GPMSTACKPATH:" .. source_path .. "\"\n")
       bin_file:write("\n")
    else
       bin_file:write("   # Unset paths\n")
@@ -193,10 +328,10 @@ local function create_shell_environment(args)
       bin_file:write("   export MANPATH=$(manpath)");
       bin_file:write("\n")
       bin_file:write("   # Source lmod \n")
-      bin_file:write("  . ".. path.join(config.stack_path, "tools/lmod/7.7.13/lmod/lmod/init/profile") .. "\n")
+      bin_file:write("  . ".. lmodsource_path .. "\n")
       bin_file:write("\n")
       bin_file:write("   # Export stack path\n")
-      bin_file:write("   export GPMSTACKPATH=\"" .. this_path .. "\"\n")
+      bin_file:write("   export GPMSTACKPATH=\"" .. source_path .. "\"\n")
       bin_file:write("\n")
       bin_file:write("   # Export stack path\n")
       bin_file:write("   export GPM_USE_LD_RUN_PATH\n")
@@ -204,15 +339,28 @@ local function create_shell_environment(args)
    end
 
    bin_file:write("   # Export some GPM\n")
-   bin_file:write("   export GPM_CONFIG=\"" .. path.join(config.stack_path, args.config) .. "\"\n")
+   bin_file:write("   export GPM_CONFIG=\"" .. config_path .. "\"\n")
    
    bin_file:write("else\n")
    bin_file:write("   if [ \"$SILENT\" = \"0\" ]; then\n")
-   bin_file:write("      echo \"NOT sourcing " .. this_path .. "\"\n")
+   bin_file:write("      echo \"NOT sourcing " .. source_path .. "\"\n")
    bin_file:write("   fi\n")
    bin_file:write("fi\n")
 
    bin_file:close()
+end
+
+--- Create shell enviroment sourcing scripts.
+-- 
+-- @param args
+local function create_shell_environment(args)
+   --
+   local bin_path = path.join(config.stack_path, "bin")
+   lfs.mkdir(bin_path)
+   
+   -- Write files for each shell type
+   write_sh_source (args, bin_path, "modules.sh")
+   write_csh_source(args, bin_path, "modules.csh")
 end
 
 -------------------------------------
