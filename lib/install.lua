@@ -95,10 +95,10 @@ local function make_package_ready_for_install(package)
    end
    
    -- Get/download the package
-   source = util.substitute_placeholders(package.definition, package.build.source)
-   source_path, source_file, source_ext = split_filename(source)
-   source_file_strip = string.gsub(source_file, "%." .. source_ext, "")
-   destination = package.definition.pkg .. "." .. source_ext
+   local source = util.substitute_placeholders(package.definition, package.build.source)
+   local source_path, source_file, source_ext = split_filename(source)
+   local source_file_strip = string.gsub(source_file, "%." .. source_ext, "")
+   local destination = package.definition.pkg .. "." .. source_ext
    package.build.source_destination = destination
    print(source_file_strip)
    
@@ -137,11 +137,11 @@ local function make_package_ready_for_install(package)
          filesystem.rmdir(path.join(package.build_directory, package.definition.pkg), true)
       end
       if not lfs.attributes(path.join(package.build_directory, package.definition.pkg), 'mode') then
-         is_tar_gz = string.match(source_file, "tar.gz") or string.match(source_file, "tgz")
-         is_tar_bz = string.match(source_file, "tar.bz2") or string.match(source_file, "tbz2")
-         is_tar_xz = string.match(source_file, "tar.xz")
-         is_tar    = string.match(source_file, "tar")
-         is_zip = string.match(source_file, "zip")
+         local is_tar_gz = string.match(source_file, "tar.gz") or string.match(source_file, "tgz")
+         local is_tar_bz = string.match(source_file, "tar.bz2") or string.match(source_file, "tbz2")
+         local is_tar_xz = string.match(source_file, "tar.xz")
+         local is_tar    = string.match(source_file, "tar")
+         local is_zip = string.match(source_file, "zip")
          if is_tar_gz then
             line = "tar -zxvf " .. destination .. " --transform 's/" .. source_file_strip .. "/" .. package.definition.pkg .. "/'"
             util.execute_command(line, package.log)
@@ -162,12 +162,8 @@ local function make_package_ready_for_install(package)
       end
    end
    
-   status, msg = filesystem.mkdir(package.definition.pkginstall, {}, true)
-
-   --for line in string.gmatch(package.build.source, ".*$") do
-   --   line = util.substitute_placeholders(package.definition, util.trim(line))
-   --   util.execute_command(line, package.log)
-   --end
+   -- Create install directory
+   local status, msg = filesystem.mkdir(package.definition.pkginstall, {}, true)
 end
 
 -------------------------------------

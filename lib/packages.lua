@@ -80,22 +80,73 @@ local function is_valid(package)
    return true, "Success"
 end
 
+--- Set build path for package
+-- 
+-- @param package   The package to set build directory for.
+local function set_build_path(package)
+   -- Create build path
+   local build_directory = "build-"
+   for key,prereq in util.ordered(package.prerequisite) do
+      build_directory = build_directory .. string.gsub(prereq, "/", "-") .. "-"
+   end
+   for key,prereq in util.ordered(package.dependson) do
+      build_directory = build_directory .. string.gsub(prereq, "/", "-") .. "-"
+   end
+   for key,prereq in util.ordered(package.moduleload) do
+      build_directory = build_directory .. string.gsub(prereq, "/", "-") .. "-"
+   end
+   build_directory = build_directory .. package.definition.pkg
+
+   -- Set build path in package table
+   package.build_directory = path.join(config.base_build_directory, build_directory)
+   package.definition.pkgbuild = package.build_directory
+end
+
+--- Set install path for package
+--
+-- @param package   The package to set install path for.
+local function set_install_path(package)
+   -- Create install path
+   local pkginstall = ""
+   if package.definition.pkggroup then
+      pkginstall = path.join(config.stack_path, package.definition.pkggroup)
+      if is_heirarchical(package.definition.pkggroup) then
+         for key,prereq in util.ordered(package.prerequisite) do
+            pkginstall = path.join(pkginstall, string.gsub(prereq, "/", "-"))
+         end
+      end
+      pkginstall = path.join(path.join(pkginstall, package.definition.pkgname), package.definition.pkgversion)
+   else
+      -- Special care for lmod
+      if package.definition.pkgname == "lmod" then
+         pkginstall = config.stack_path
+      else
+         pkginstall = path.join(path.join(config.stack_path, package.definition.pkgname), package.definition.pkgversion)
+      end
+   end
+
+   -- Set install path
+   package.definition.pkginstall = pkginstall
+end
+
 --- Read GPM package file (GPK).
 --
 -- Bootstrap package dictionary by reading .gpk file and command line arguments.
 --
 -- @return{Table} Returns definition of build.
 local function bootstrap(args)
+   -- Do some debug printout if requested
    if args.debug then
       logging.debug("Bootstrapping package", io.stdout)
    end
-
-   package = {}
+   
+   -- Create local package table
+   local package = {}
    
    -- Load the gpk file
    local filepath = assert(locate_gpk_file(args))
    
-   local f, msg = loadfile(filepath)
+   local f, msg = assert(loadfile(filepath))
    if f then
       f()
    else
@@ -205,37 +256,8 @@ local function bootstrap(args)
    end
    
    -- Setup build, install and modulefile directories
-   build_directory = "build-"
-   for key,prereq in util.ordered(package.prerequisite) do
-      build_directory = build_directory .. string.gsub(prereq, "/", "-") .. "-"
-   end
-   for key,prereq in util.ordered(package.dependson) do
-      build_directory = build_directory .. string.gsub(prereq, "/", "-") .. "-"
-   end
-   for key,prereq in util.ordered(package.moduleload) do
-      build_directory = build_directory .. string.gsub(prereq, "/", "-") .. "-"
-   end
-   build_directory = build_directory .. package.definition.pkg
-   package.build_directory = path.join(config.base_build_directory, build_directory)
-   package.definition.pkgbuild = package.build_directory
-   
-   if package.definition.pkggroup then
-      pkginstall = path.join(config.stack_path, package.definition.pkggroup)
-      if is_heirarchical(package.definition.pkggroup) then
-         for key,prereq in util.ordered(package.prerequisite) do
-            pkginstall = path.join(pkginstall, string.gsub(prereq, "/", "-"))
-         end
-      end
-      pkginstall = path.join(path.join(pkginstall, package.definition.pkgname), package.definition.pkgversion)
-   else
-      -- Special care for lmod
-      if package.definition.pkgname == "lmod" then
-         pkginstall = config.stack_path
-      else
-         pkginstall = path.join(path.join(config.stack_path, package.definition.pkgname), package.definition.pkgversion)
-      end
-   end
-   package.definition.pkginstall = pkginstall
+   set_build_path  (package)
+   set_install_path(package)
    
    -- Lmod stuff
    if package.lmod then
@@ -246,9 +268,6 @@ local function bootstrap(args)
          else
             nprereq = 0
          end
-         --for _ in pairs(package.prerequisite) do
-         --   nprereq = nprereq + 1
-         --end
 
          if nprereq ~= 0 then
             lmod_base = prerequisite[nprereq]
@@ -270,9 +289,6 @@ local function bootstrap(args)
    
    -- Miscellaneous (spellcheck? :) )
    package.definition.nprocesses = config.nprocesses
-   --if args.nomodulesource then
-   --   package.nomodulesource = args.nomodulesource
-   --end
    package.nomodulesource = util.conditional(args.nomodulesource, args.nomodulesource, false)
    package.forcedownload  = util.conditional(args.force_download, args.force_download, false)
    package.forceunpack    = util.conditional(args.force_unpack  , args.force_unpack  , false)
