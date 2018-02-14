@@ -164,6 +164,9 @@ local function write_csh_source(args, bin_path, source_filename)
 
    -- Check if we should source
    source_file:write("# Check if this file should be sourced\n")
+   source_file:write("if (! $?GPMSTACKPATH) then\n")
+   source_file:write("   setenv GPMSTACKPATH \"\"\n")
+   source_file:write("endif\n")
    source_file:write("set SOURCEME=1\n")
    source_file:write("set delimiter = ':'\n")
    source_file:write("foreach gpmpath ($GPMSTACKPATH)\n")
