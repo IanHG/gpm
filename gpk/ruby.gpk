@@ -1,0 +1,41 @@
+-- R gpk script
+
+-- Description of the gpk
+description = [[
+Wondering why Ruby is so popular? Its fans call it a beautiful, artful language. And yet, they say it’s handy and practical. What gives?
+
+https://www.ruby-lang.org/en/
+]]
+
+-- Definition section
+definition = {
+   pkgname = "ruby",
+   pkggroup = "core",
+   pkgfamily = "ruby",
+}
+
+-- Required types
+prerequisite = { }
+
+-- Build section
+build = {
+   -- Source of package
+   source = "https://cache.ruby-lang.org/pub/ruby/<pkgmajor>.<pkgminor>/ruby-<pkgversion>.tar.gz",
+   -- Build command
+   command = [[
+      # Build Ruby
+      ./configure --prefix=<pkginstall>
+      
+      make -j<nprocesses>
+      make install
+   ]],
+}
+
+-- Lmod section
+lmod = {
+   help = [[This module loads Ruby version <pkgversion>.]],
+}
+
+--[[
+# vi:syntax=lua
+--]]

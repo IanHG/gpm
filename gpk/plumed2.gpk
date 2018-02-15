@@ -34,7 +34,7 @@ build = {
 lmod = {
    help = [[This module loads Plumed v. <pkgversion>.]],
 
-   prepend_path = {
+   prepend_path_add = {
       -- Set plumed kernel
       {"PLUMED_KERNEL", "lib/libplumedKernel.so"},
    },
