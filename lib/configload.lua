@@ -87,7 +87,14 @@ local function bootstrap(args, default_config)
    
    -- Merge with default config
    default_config = util.merge(global_default_config, default_config)
-   default_config = util.merge(default_config, config)
+   
+   if config then
+      default_config = util.merge(default_config, config)
+   end
+
+   default_config.this_path = cpath
+
+   --config = nil
 
    -- Setup stack_path
    if (not default_config.stack_path) then
