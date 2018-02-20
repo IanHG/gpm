@@ -6,6 +6,7 @@ local filesystem = assert(require "lib.filesystem")
 local exception  = assert(require "lib.exception")
 local logging    = assert(require "lib.logging")
 local packages   = assert(require "lib.packages")
+local database   = assert(require "lib.database")
 
 M = {}
 
@@ -488,62 +489,72 @@ local function install(args)
    exception.try(function() 
       -- Bootstrap build
       logging.message("BOOTSTRAP PACKAGE", io.stdout)
-      package = packages.bootstrap(args)
-
+      local package = packages.bootstrap(args)
+      database.load_db(config)
+      
       if args.debug then
          logging.debug(util.print(package, "package"), io.stdout)
       end
+      
+      -- If package is not installed we install it
+      if (not database.installed(package)) and (not args.force) then
 
-      -- Create build dir
-      logging.message("BUILD DIR", io.stdout)
-      logging.message(package.build_directory, io.stdout)
-      filesystem.rmdir(package.build_directory, false)
-      filesystem.mkdir(package.build_directory, {}, true)
-      filesystem.chdir(package.build_directory)
-      
-      -- Open a log file
-      open_log_file(package)
-      
-      -- Do the build
-      if not args.no_build then
-         build_package(package)
-      end
-
-      -- Create Lmod file
-      if package.lmod and not args.no_lmod then
-         build_lmod_modulefile(package)
-      elseif package.is_lmod then
-         setup_lmod_for_lmod(package)
-      end
-      
-      -- Change back to calling dir
-      filesystem.chdir(config.current_directory)
-
-      -- Post process
-      postprocess_package(package)
-      
-      -- 
-      logging.message("Succesfully installed '" .. package.definition.pkg .. "'", package.log)
-
-      -- Close log file
-      close_log_file(package)
-      
-      -- Remove build dir if requested (and various other degress of removing source data)
-      if args.purgebuild then
-         local status, msg = filesystem.rmdir(package.build_directory, true)
-         if not status then
-            print("Could not purge build directory. Reason : '" .. msg .. "'.") 
+         -- Create build dir
+         logging.message("BUILD DIR", io.stdout)
+         logging.message(package.build_directory, io.stdout)
+         filesystem.rmdir(package.build_directory, false)
+         filesystem.mkdir(package.build_directory, {}, true)
+         filesystem.chdir(package.build_directory)
+         
+         -- Open a log file
+         open_log_file(package)
+         
+         -- Do the build
+         if not args.no_build then
+            build_package(package)
          end
-      else 
-         if args.delete_source then
-            local status, msg = filesystem.remove(path.join(package.build_directory, package.build.source_destination))
+
+         -- Create Lmod file
+         if package.lmod and not args.no_lmod then
+            build_lmod_modulefile(package)
+         elseif package.is_lmod then
+            setup_lmod_for_lmod(package)
          end
-         if (not args.keep_build_directory) then
-            local status, msg = filesystem.rmdir(path.join(package.build_directory, package.definition.pkg), true)
+         
+         -- Change back to calling dir
+         filesystem.chdir(config.current_directory)
+
+         -- Post process
+         postprocess_package(package)
+
+         database.insert_element(package)
+         database.save_db(config)
+         
+         -- 
+         logging.message("Succesfully installed '" .. package.definition.pkg .. "'", package.log)
+
+         -- Close log file
+         close_log_file(package)
+         
+         -- Remove build dir if requested (and various other degress of removing source data)
+         if args.purgebuild then
+            local status, msg = filesystem.rmdir(package.build_directory, true)
             if not status then
-               print(msg)
+               print("Could not purge build directory. Reason : '" .. msg .. "'.") 
+            end
+         else 
+            if args.delete_source then
+               local status, msg = filesystem.remove(path.join(package.build_directory, package.build.source_destination))
+            end
+            if (not args.keep_build_directory) then
+               local status, msg = filesystem.rmdir(path.join(package.build_directory, package.definition.pkg), true)
+               if not status then
+                  print(msg)
+               end
             end
          end
+      else
+         logging.message("Package already installed!", io.stdout)
       end
    end, function(e)
       --local status, msg = filesystem.rmdir(package.build_directory, true)
