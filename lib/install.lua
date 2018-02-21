@@ -8,43 +8,39 @@ local logging    = assert(require "lib.logging")
 local packages   = assert(require "lib.packages")
 local database   = assert(require "lib.database")
 
-M = {}
+local M = {}
 
-
-
--------------------------------------
--- Open log file. This will log all steps taken
+--- Open log file. This will log all steps taken
 -- when installing the package.
 --
 -- @param package   The package we are installing.
--------------------------------------
 local function open_log_file(package)
    logpath = path.join(package.build_directory, package.definition.pkg .. ".log")
    package.logfile = io.open(logpath, "w")
    package.log = {package.logfile, io.stdout}
 end
 
--------------------------------------
--- Close log file after package has been
+--- Close log file after package has been
 -- installed succesfully.
 --
 -- @param package   The package we are installing.
--------------------------------------
 local function close_log_file(package)
    package.logfile:close()
 end
 
--------------------------------------
--- Create file with name and content.
+--- Create file with name and content.
 --
 -- @param{String} name     The name of the file.
 -- @param{String} content  File content.
--------------------------------------
 local function create_file(name, content, package)
+   -- Create filename 
    local name = util.substitute_placeholders(package.definition, name)
    name = path.join(package.build_directory, name)
+
+   -- Create content
    local content = util.substitute_placeholders(package.definition, content)
    
+   -- Open file and write content
    cfile = io.open(name, "w")
    cfile:write(content)
    cfile:close()
@@ -180,8 +176,8 @@ local function build_package(package)
    if package.build then
       -- Load needed modules
       if not package.nomodulesource then
-         ml = ". " .. config.stack_path .. "/bin/modules.sh --link-relative --force && "
-         --for key,value in pairs(package.prerequisite) do
+         ml = ". " .. global_config.stack_path .. "/bin/modules.sh --link-relative --force && "
+         
          for key,value in util.ordered(package.prerequisite) do
             ml = ml .. "ml " .. value .. " && "
          end
@@ -213,15 +209,14 @@ local function build_package(package)
    end
 end
 
--------------------------------------
--- Helper function to generate prepend_path for lmod.
+--- Helper function to generate prepend_path for lmod.
+-- 
 -- This function will handle exports for directories named "include".
 -- It will export both to INCLUDE, C_INCLUDE_PATH, CPLUS_INCLUDE_PATH.
 --
 -- @param{String}  include             "include".
 -- @param{Table}   prepend_path        Will be appended with new paths for lmod to prepend.
 -- @param{String}  install_directory   The directory.
--------------------------------------
 local function generate_prepend_path_include(include, prepend_path, install_directory)
    -- Insert in paths
    table.insert(prepend_path, {"INCLUDE", include})
@@ -229,8 +224,8 @@ local function generate_prepend_path_include(include, prepend_path, install_dire
    table.insert(prepend_path, {"CPLUS_INCLUDE_PATH", include})
 end
 
--------------------------------------
--- Helper function to generate prepend_path for lmod.
+--- Helper function to generate prepend_path for lmod.
+-- 
 -- This function will handle exports for directories named "lib" or "lib64.
 -- It will export both to LIBRARY_PATH, LD_LIBRARY_PATH, and LD_RUN_PATH.
 -- It will look for a directory called pkgconfig, which it will add to
@@ -239,7 +234,6 @@ end
 -- @param{String}  lib                 "lib" or "lib64".
 -- @param{Table}   prepend_path        Will be appended with new paths for lmod to prepend.
 -- @param{String}  install_directory   The directory.
--------------------------------------
 local function generate_prepend_path_lib(lib, prepend_path, install_directory)
    -- Insert in paths
    table.insert(prepend_path, {"LIBRARY_PATH", lib})
@@ -254,8 +248,8 @@ local function generate_prepend_path_lib(lib, prepend_path, install_directory)
    end
 end
 
--------------------------------------
--- Helper function to generate prepend_path for lmod.
+--- Helper function to generate prepend_path for lmod.
+--
 -- This function will handle exports for "share" directory.
 -- Will look for "info" and "man", and if found will prepend to
 -- "INFOPATH" and "MANPATH" respectively.
@@ -263,7 +257,6 @@ end
 -- @param{String}  share               Always "share" (for now).
 -- @param{Table}   prepend_path        Will be appended with new paths for lmod to prepend.
 -- @param{String}  install_directory   The directory.
--------------------------------------
 local function generate_prepend_path_share(share, prepend_path, install_directory)
    for f in lfs.dir(path.join(install_directory, "share")) do
       if f:match("info") then
@@ -274,16 +267,16 @@ local function generate_prepend_path_share(share, prepend_path, install_director
    end
 end
 
--------------------------------------
+--- Automatically generate which env variables to prepend by looking at what is present in install directory.
+--
 -- Will automatically generate a table of paths the lmod script should prepend.
 -- This is done based on the directories present in the install directory for the package.
 --
 -- @param{Table}  package  The package we are installing.
--------------------------------------
 local function generate_prepend_path(package)
    -- If .gpk provides one we just use that
    if package.lmod.prepend_path then
-      if config.debug then
+      if globald_config.debug then
          logging.debug("Taking prepend_path from .gpk file ( no auto-generation ).", {io.stdout} )
       end
       return package.lmod.prepend_path
@@ -367,7 +360,7 @@ local function build_lmod_modulefile(package)
    if package.lmod.install_path then
       lmod_file:write("local installDir  = \"" .. package.lmod.install_path .. "\"\n")
    else
-      lmod_file:write("local installDir  = pathJoin(\"" .. path.join(config.stack_path, package.definition.pkggroup) .. "\", packageName)\n")
+      lmod_file:write("local installDir  = pathJoin(\"" .. path.join(global_config.stack_path, package.definition.pkggroup) .. "\", packageName)\n")
    end
    lmod_file:write("\n")
 
@@ -470,7 +463,7 @@ end
 --
 local function postprocess_package(package)
    if package.post.command then
-      local ml = ". " .. config.stack_path .. "/bin/modules.sh --link-relative --force && "
+      local ml = ". " .. global_config.stack_path .. "/bin/modules.sh --link-relative --force && "
       for key,value in util.ordered(package.prerequisite) do
          ml = ml .. "ml " .. value .. " && "
       end
@@ -490,7 +483,7 @@ local function install(args)
       -- Bootstrap build
       logging.message("BOOTSTRAP PACKAGE", io.stdout)
       local package = packages.bootstrap(args)
-      database.load_db(config)
+      database.load_db(global_config)
       
       if args.debug then
          logging.debug(util.print(package, "package"), io.stdout)
@@ -522,13 +515,13 @@ local function install(args)
          end
          
          -- Change back to calling dir
-         filesystem.chdir(config.current_directory)
+         filesystem.chdir(global_config.current_directory)
 
          -- Post process
          postprocess_package(package)
 
          database.insert_element(package)
-         database.save_db(config)
+         database.save_db(global_config)
          
          -- 
          logging.message("Succesfully installed '" .. package.definition.pkg .. "'", package.log)

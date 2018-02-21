@@ -8,9 +8,14 @@ local M = {}
 --- Locate gpk file by searching gpk_path.
 --
 -- @param args   The input arguments.
+-- @param config A config.
 --
 -- @return   Returns gpk filename as string.
-local function locate_gpk_file(args)
+local function locate_gpk_file(args, config)
+   if not config then
+      config = global_config
+   end
+
    -- Initialize to nil
    local filepath = nil
 
@@ -32,7 +37,6 @@ local function locate_gpk_file(args)
                return filepath
             end
          end
-         return nil
       end
       filepath = locate_gpk_impl()
    elseif args.gpkf then
@@ -52,7 +56,7 @@ end
 --
 -- @param{Boolean} 
 local function is_heirarchical(pkgtype)
-   for key,value in pairs(config.heirarchical) do
+   for key,value in pairs(global_config.heirarchical) do
       if pkgtype == value then
          return true
       end
@@ -98,7 +102,7 @@ local function set_build_path(package)
    build_directory = build_directory .. package.definition.pkg
 
    -- Set build path in package table
-   package.build_directory = path.join(config.base_build_directory, build_directory)
+   package.build_directory = path.join(global_config.base_build_directory, build_directory)
    package.definition.pkgbuild = package.build_directory
 end
 
@@ -109,7 +113,7 @@ local function set_install_path(package)
    -- Create install path
    local pkginstall = ""
    if package.definition.pkggroup then
-      pkginstall = path.join(config.stack_path, package.definition.pkggroup)
+      pkginstall = path.join(global_config.stack_path, package.definition.pkggroup)
       if is_heirarchical(package.definition.pkggroup) then
          for key,prereq in util.ordered(package.prerequisite) do
             pkginstall = path.join(pkginstall, string.gsub(prereq, "/", "-"))
@@ -119,9 +123,9 @@ local function set_install_path(package)
    else
       -- Special care for lmod
       if package.definition.pkgname == "lmod" then
-         pkginstall = config.stack_path
+         pkginstall = global_config.stack_path
       else
-         pkginstall = path.join(path.join(config.stack_path, package.definition.pkgname), package.definition.pkgversion)
+         pkginstall = path.join(path.join(global_config.stack_path, package.definition.pkgname), package.definition.pkgversion)
       end
    end
 
@@ -144,7 +148,7 @@ local function bootstrap(args)
    local package = {}
    
    -- Load the gpk file
-   local filepath = assert(locate_gpk_file(args))
+   local filepath = assert(locate_gpk_file(args, global_config))
    
    local f, msg = assert(loadfile(filepath))
    if f then
@@ -276,7 +280,7 @@ local function bootstrap(args)
 
       package.lmod.base = lmod_base
       package.nprerequisite = nprereq
-      package.lmod.modulefile_directory = path.join(config.lmod_directory, lmod_base)
+      package.lmod.modulefile_directory = path.join(global_config.lmod_directory, lmod_base)
       
       if is_heirarchical(package.definition.pkggroup) then
          for key,prereq in util.ordered(package.prerequisite) do
@@ -288,7 +292,7 @@ local function bootstrap(args)
    end
    
    -- Miscellaneous (spellcheck? :) )
-   package.definition.nprocesses = config.nprocesses
+   package.definition.nprocesses = global_config.nprocesses
    package.nomodulesource = util.conditional(args.nomodulesource, args.nomodulesource, false)
    package.forcedownload  = util.conditional(args.force_download, args.force_download, false)
    package.forceunpack    = util.conditional(args.force_unpack  , args.force_unpack  , false)

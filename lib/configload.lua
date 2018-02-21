@@ -31,7 +31,7 @@ local global_default_config = {
 }
 
 -- Global config
-config = {
+global_config = {
 }
 
 --- Search for config path.
@@ -54,7 +54,7 @@ local function configpath(args)
       path = os.getenv("GPM_CONFIG")
       if not path then
          -- If enviroment config wasn't found, we check current directory
-         args.config = path.join(config.current_directory, "config.lua")
+         args.config = path.join(filesystem.cwd(), "config.lua")
       end
    end
    
@@ -70,7 +70,7 @@ end
 -- @param default_config
 --
 -- @return{Dictionary} Returns definition og build.
-local function bootstrap(args, default_config)
+local function bootstrap(args, default_config, set_global)
    -- Do some debug output if requested
    if args.debug then
       logging.debug("Bootstrapping config.", io.stdout)
@@ -94,7 +94,6 @@ local function bootstrap(args, default_config)
 
    default_config.this_path = cpath
 
-   --config = nil
 
    -- Setup stack_path
    if (not default_config.stack_path) then
@@ -131,7 +130,16 @@ local function bootstrap(args, default_config)
    if(args.debug) then
       logging.debug(util.print(config, "config"), io.stdout)
    end
-
+   
+   -- Unset the loaded config (which has been loaded into global space!)
+   config = nil
+   
+   -- If requested set the global config
+   if set_global then
+      global_config = default_config
+   end
+   
+   -- Return the created config (return can be ignored if setting global config).
    return default_config
 end
 

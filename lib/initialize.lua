@@ -1,10 +1,10 @@
-local lfs = require "lfs"
+local lfs = assert(require "lfs")
 
-local util      = require "lib.util"
-local path      = require "lib.path"
-local version   = require "lib.version"
-local install   = require "lib.install"
-local exception = require "lib.exception"
+local util      = assert(require "lib.util")
+local path      = assert(require "lib.path")
+local version   = assert(require "lib.version")
+local install   = assert(require "lib.install")
+local exception = assert(require "lib.exception")
 
 M = {}
 
@@ -87,9 +87,9 @@ end
 --
 -- @return{string,string}   Returns modulepath_root and modulepath strings.
 local function create_modulepaths()
-   local modulepath_root = config.lmod_directory
+   local modulepath_root = global_config.lmod_directory
    local modulepath = ""
-   for k,v in pairs(config.groups) do
+   for k,v in pairs(global_config.groups) do
       modulepath = modulepath .. path.join(modulepath_root, v) .. ":"
    end
    if modulepath[-1] == ":" then
@@ -108,8 +108,8 @@ local function write_csh_source(args, bin_path, source_filename)
    -- Get modulepaths and source_path
    local modulepath_root, modulepath = create_modulepaths()
    local source_path     = path.join(bin_path, source_filename)
-   local lmodsource_path = path.join(config.stack_path, "tools/lmod/7.7.13/lmod/lmod/init/csh")
-   local config_path     = path.join(config.stack_path, args.config)
+   local lmodsource_path = path.join(global_config.stack_path, "tools/lmod/7.7.13/lmod/lmod/init/csh")
+   local config_path     = path.join(global_config.stack_path, args.config)
    
    -- Open file
    local source_file = io.open(path.join(bin_path, source_filename), "w")
@@ -233,8 +233,8 @@ local function write_sh_source(args, bin_path, source_filename)
    -- Get modulepaths
    local modulepath_root, modulepath = create_modulepaths()
    local source_path     = path.join(bin_path, source_filename)
-   local lmodsource_path = path.join(config.stack_path, "tools/lmod/7.7.13/lmod/lmod/init/profile")
-   local config_path     = path.join(config.stack_path, args.config)
+   local lmodsource_path = path.join(global_config.stack_path, "tools/lmod/7.7.13/lmod/lmod/init/profile")
+   local config_path     = path.join(global_config.stack_path, args.config)
    
    -- Open file for writing
    local bin_file = io.open(path.join(bin_path, "modules.sh"), "w")
@@ -358,7 +358,7 @@ end
 -- @param args
 local function create_shell_environment(args)
    --
-   local bin_path = path.join(config.stack_path, "bin")
+   local bin_path = path.join(global_config.stack_path, "bin")
    lfs.mkdir(bin_path)
    
    -- Write files for each shell type
@@ -378,8 +378,8 @@ local function initialize(args)
       -- config = bootstrap_initialize(args)
       
       -- Create a build directory
-      if not lfs.attributes(config.base_build_directory) then
-         lfs.mkdir(config.base_build_directory)
+      if not lfs.attributes(global_config.base_build_directory) then
+         lfs.mkdir(global_config.base_build_directory)
       end
 
       -- Check that required luapackages exist
@@ -392,13 +392,13 @@ local function initialize(args)
       create_shell_environment(args)
 
       -- Create directories
-      if not lfs.attributes(config.lmod_directory) then
-         lfs.mkdir(config.lmod_directory)
+      if not lfs.attributes(global_config.lmod_directory) then
+         lfs.mkdir(global_config.lmod_directory)
       end
       
-      for k,v in pairs(config.groups) do
-         lfs.mkdir(path.join(config.stack_path, v))
-         lfs.mkdir(path.join(config.lmod_directory, v))
+      for k,v in pairs(global_config.groups) do
+         lfs.mkdir(path.join(global_config.stack_path, v))
+         lfs.mkdir(path.join(global_config.lmod_directory, v))
       end
 
       -- Create module file for gpm

@@ -41,7 +41,7 @@ end
 -- @param entry2  Second entry.
 --
 -- @return   Returns true if the two entries are the same, otherwise false.
-local function is_same_db_entry(entry1, entry2)
+local function is_same_package_db_entry(entry1, entry2)
    if entry1["gpk"] == entry2["gpk"] and
       entry1["pkv"] == entry2["pkv"] then
 
@@ -152,7 +152,7 @@ local function remove_element(package)
 
    local i = 1
    while i <= #db do
-      if is_same_db_entry(db[i], package_entry) then
+      if is_same_package_db_entry(db[i], package_entry) then
          table.remove(db, i)
       else
          i = i + 1
@@ -175,7 +175,7 @@ local function installed(package)
    
    -- Look for package in db
    for _, db_entry in pairs(db) do
-      if is_same_db_entry(db_entry, package_entry) then
+      if is_same_package_db_entry(db_entry, package_entry) then
          return true
       end
    end

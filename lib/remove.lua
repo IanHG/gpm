@@ -63,7 +63,7 @@ local function remove(args)
       package = packages.bootstrap(args)
       
       -- Load database
-      database.load_db(config)
+      database.load_db(global_config)
       
       if (util.conditional(database.use_db(), database.installed(package), true)) or args.force then
          -- Remove the package
@@ -74,7 +74,7 @@ local function remove(args)
       
       -- Fix the database
       database.remove_element(package)
-      database.save_db(config)
+      database.save_db(global_config)
 
    end, function (e)
       exception.message(e)

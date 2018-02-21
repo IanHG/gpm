@@ -27,9 +27,9 @@ local description = version.get_description("gpm-package.lua")
 -- calls such that it is easy to see how a package was installed,
 -- and by whom.
 local function log_gpm_call(stack)
-   if config.log_path then
+   if global_config.log_path then
       -- Open log file
-      local logfile = io.open(config.log_path, "a")
+      local logfile = io.open(global_config.log_path, "a")
       
       -- Create call string
       local call = ""
@@ -68,9 +68,9 @@ end
 -- Log whether call to gpm-package ended succesfully or with an error.
 -- This is written to the stack log-file after the command.
 local function log_gpm_call_end(success, stack)
-   if config.log_path then
+   if global_config.log_path then
       -- Open log file
-      local logfile = io.open(config.log_path, "a")
+      local logfile = io.open(global_config.log_path, "a")
       
       -- If stack do extra printout
       if stack then
@@ -169,7 +169,7 @@ function main()
    
    exception.try(function()
       -- Bootstrap config
-      config = configload.bootstrap(args, config)
+      configload.bootstrap(args, {}, true)
       
       -- Log the call to the stack log
       log_gpm_call(args.stack)

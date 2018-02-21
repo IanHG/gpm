@@ -1,9 +1,9 @@
-local M = {}
+local util       = assert(require "lib.util")
+local exception  = assert(require "lib.exception")
+local filesystem = assert(require "lib.filesystem")
+local path       = assert(require "lib.path")
 
-local util       = require "lib.util"
-local exception  = require "lib.exception"
-local filesystem = require "lib.filesystem"
-local path       = require "lib.path"
+local M = {}
 
 --- Locate gps file by searching gps_path.
 --
@@ -18,10 +18,10 @@ local function locate_gps_file(args)
    if args.gps then
       local filename = args.gps .. ".gps"
       local function locate_gps_impl()
-         for gps_path in path.iterator(config.gps_path) do
+         for gps_path in path.iterator(global_config.gps_path) do
             -- Check for abs path
             if not path.is_abs_path(gps_path) then
-               gps_path = path.join(config.stack_path, gps_path)
+               gps_path = path.join(global_config.stack_path, gps_path)
             end
 
             -- Create file path

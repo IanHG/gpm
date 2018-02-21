@@ -37,7 +37,7 @@ end
 --- Grep in log file and print hits to terminal.
 --
 local function grepcmd(args)
-   local result = logging.grep(args.grep, config.log_path)
+   local result = logging.grep(args.grep, global_config.log_path)
    for _,line in pairs(result) do
       io.stdout:write(line .. "\n")
    end
@@ -80,7 +80,7 @@ function main()
    
    exception.try(function()
       -- Bootstrap config
-      config = configload.bootstrap(args)
+      configload.bootstrap(args, {}, true)
 
       if args.ls then
          if args.all then
