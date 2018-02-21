@@ -6,6 +6,7 @@ local filesystem = assert(require "lib.filesystem")
 local exception  = assert(require "lib.exception")
 local logging    = assert(require "lib.logging")
 local packages   = assert(require "lib.packages")
+local database   = assert(require "lib.database")
 
 -- Create module
 local M = {}
@@ -60,9 +61,20 @@ local function remove(args)
       
       -- Bootstrap the package we are removing
       package = packages.bootstrap(args)
-
-      -- Remove the package
-      remove_package(package)
+      
+      -- Load database
+      database.load_db(config)
+      
+      if database.installed(package) or args.force then
+         -- Remove the package
+         remove_package(package)
+      else
+         logging.message("Package not installed.", io.stdout)
+      end
+      
+      -- Fix the database
+      database.remove_element(package)
+      database.save_db(config)
 
    end, function (e)
       exception.message(e)

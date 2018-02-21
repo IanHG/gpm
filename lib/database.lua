@@ -12,7 +12,7 @@ local db = {}
 -- @param package  The package.
 --
 -- @return   Return database entry for package
-local function create_db_entry(package)
+local function create_package_db_entry(package)
    return { 
        gpk    = util.conditional(package.definition.pkgname, package.definition.pkgname, "nil"), 
        pkv    = util.conditional(package.definition.pkgversion, package.definition.pkgversion, "nil"), 
@@ -27,16 +27,17 @@ end
 --
 -- @return   Returns true if the two entries are the same, otherwise false.
 local function is_same_db_entry(entry1, entry2)
-   util.print(entry1, "entry1")
-   util.print(entry2, "entry2")
-
    if entry1["gpk"] == entry2["gpk"] and
-      entry1["pkv"] == entry2["pkv"] and
-      entry1["prereq"] == entry2["prereq"] then
-      
-      return true
-   end
+      entry1["pkv"] == entry2["pkv"] then
 
+      if not entry1["prereq"] or not entry2["prereq"] then
+         return true
+      elseif entry1["prereq"] == entry2["prereq"] then
+         return true
+      end 
+   end
+   
+   -- If we get here the two entries are not the same
    return false
 end
 
@@ -66,7 +67,8 @@ local function load_db(config)
    if not config.db then
       return
    end
-
+   
+   -- Open db file
    local db_path = get_db_path(config)
    local db_file = io.open(db_path, "r")
 
@@ -74,12 +76,18 @@ local function load_db(config)
       -- Read and parse lines:
       -- gpk: gcc; pkv: 6.3.0; prereq: nil
       for line in db_file:lines() do
-         print(line)
+         -- Create db entry for line
+         local db_entry = {}
+         local sline = util.split(line, ";")
+         for _, field in pairs(sline) do
+            sfield = util.split(field, ":")
+            db_entry[util.trim(sfield[1])] = util.trim(sfield[2])
+         end
+
+         -- Insert entry into db
+         table.insert(db, #db + 1, db_entry)
       end
    end
-   --assert(loadfile(db_path))()
-   --db  = db_
-   --db_ = nil
 end
 
 --- Save the database to disk
@@ -102,11 +110,23 @@ end
 --
 -- @param package   The package to insert.
 local function insert_element(package)
-   table.insert(db, #db + 1, create_db_entry(package))
+   table.insert(db, #db + 1, create_package_db_entry(package))
 end
 
---- 
+--- Remove an element from the database.
+--
+-- @param package    The package to remove.
 local function remove_element(package)
+   local package_entry = create_package_db_entry(package)
+
+   local i = 1
+   while i <= #db do
+      if is_same_db_entry(db[i], package_entry) then
+         table.remove(db, i)
+      else
+         i = i + 1
+      end
+   end
 end
 
 --- Check if a package is already installed
@@ -116,18 +136,15 @@ end
 -- @return   Returns true if already installed, otherwise false.
 local function installed(package)
    -- Create database entry to look for
-   local package_entry = create_db_entry(package)
-   print("HERE")
+   local package_entry = create_package_db_entry(package)
+   
    -- Look for package in db
    for _, db_entry in pairs(db) do
-      print ("WTF")
       if is_same_db_entry(db_entry, package_entry) then
          return true
       end
    end
 
-   os.exit(0)
-   
    -- If we reach here the package was not found
    return false
 end
