@@ -1,8 +1,17 @@
+local _execcmd = assert(require "lib.execcmd")
+local _logging = assert(require "lib.logging")
+
 local M = {}
 
-local _execcmd = require "lib.execcmd"
-local _logging = require "lib.logging"
-
+--- Merge two tables recursively.
+-- 
+-- If both tables have the same entry, 
+-- the one from the primary table is carried over to the merged table.
+--
+-- @param a   Primary table.
+-- @param b   Secondary table.
+--
+-- @return   Returns the merged table.
 local function merge(a, b)
    if type(a) == 'table' and type(b) == 'table' then
       for k,v in pairs(b) do 
@@ -171,6 +180,15 @@ local function ordered(t)
    return iter, t
 end
 
+--- Conditional statement.
+--
+-- Can take three parameters.
+--
+-- @param conditional
+-- @param if_true
+-- @param if_false
+--
+-- @return If conditional is true, returns if_true, else returns if_false.
 local function conditional(condition, if_true, if_false)
    if condition then return if_true else return if_false end
 end
