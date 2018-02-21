@@ -5,7 +5,22 @@ local M = {}
 
 -- Database with entries e.g.:
 -- gpk: gcc, pkv: 6.3.0, prereq: ...
-local db = {}
+local db = nil
+
+--- Create db entry from string (read from file).
+--
+-- @param line    The line to create db_entry from.
+--
+-- @return   Returns the creat db_entry table.
+local function create_db_entry(line)
+   local db_entry = {}
+   local sline = util.split(line, ";")
+   for _, field in pairs(sline) do
+      sfield = util.split(field, ":")
+      db_entry[util.trim(sfield[1])] = util.trim(sfield[2])
+   end
+   return db_entry
+end
 
 --- Create database entry
 --
@@ -60,6 +75,17 @@ local function get_db_path(config)
    return db_path
 end
 
+--- Use the database?
+--
+-- @return     Returns whether to use the database or not.
+local function use_db()
+   if db then
+      return true
+   else
+      return false
+   end
+end
+
 --- Load the database to memory
 --
 -- @param config   The config.
@@ -67,6 +93,8 @@ local function load_db(config)
    if not config.db then
       return
    end
+
+   db = {}
    
    -- Open db file
    local db_path = get_db_path(config)
@@ -77,12 +105,7 @@ local function load_db(config)
       -- gpk: gcc; pkv: 6.3.0; prereq: nil
       for line in db_file:lines() do
          -- Create db entry for line
-         local db_entry = {}
-         local sline = util.split(line, ";")
-         for _, field in pairs(sline) do
-            sfield = util.split(field, ":")
-            db_entry[util.trim(sfield[1])] = util.trim(sfield[2])
-         end
+         local db_entry = create_db_entry(line)
 
          -- Insert entry into db
          table.insert(db, #db + 1, db_entry)
@@ -110,6 +133,10 @@ end
 --
 -- @param package   The package to insert.
 local function insert_element(package)
+   if not db then
+      return
+   end
+
    table.insert(db, #db + 1, create_package_db_entry(package))
 end
 
@@ -117,6 +144,10 @@ end
 --
 -- @param package    The package to remove.
 local function remove_element(package)
+   if not db then
+      return
+   end
+
    local package_entry = create_package_db_entry(package)
 
    local i = 1
@@ -135,6 +166,10 @@ end
 --
 -- @return   Returns true if already installed, otherwise false.
 local function installed(package)
+   if not db then
+      return false
+   end
+
    -- Create database entry to look for
    local package_entry = create_package_db_entry(package)
    
@@ -157,6 +192,7 @@ local function list_installed()
 end
 
 -- Load module
+M.use_db         = use_db
 M.load_db        = load_db
 M.save_db        = save_db
 M.insert_element = insert_element

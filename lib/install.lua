@@ -497,7 +497,7 @@ local function install(args)
       end
       
       -- If package is not installed we install it
-      if (not database.installed(package)) or args.force then
+      if (util.conditional(database.use_db(), not database.installed(package), true)) or args.force then
 
          -- Create build dir
          logging.message("BUILD DIR", io.stdout)

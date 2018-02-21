@@ -65,7 +65,7 @@ local function remove(args)
       -- Load database
       database.load_db(config)
       
-      if database.installed(package) or args.force then
+      if (util.conditional(database.use_db(), database.installed(package), true)) or args.force then
          -- Remove the package
          remove_package(package)
       else
