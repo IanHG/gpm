@@ -1,6 +1,6 @@
-M = {}
+local ansicolor = assert(require "lib.ansicolor")
 
-local ansicolor = require "lib.ansicolor"
+M = {}
 
 --- Create message
 -- 
@@ -164,10 +164,90 @@ local function grep(search_strings, log_path)
    return result
 end
 
+--- Log the call to gpm in the stack log-file.
+--
+-- @param stack  Boolean, are we running a stack command?
+--
+-- Log the gpm-package call in the stack log-file, adding a date and username of
+-- the user who made the call. This creates a log over all
+-- calls such that it is easy to see how a package was installed,
+-- and by whom.
+local function log_call(stack)
+   if global_config.log_path then
+      -- Open log file
+      local logfile = io.open(global_config.log_path, "a")
+      
+      -- Create call string
+      local call = ""
+      for count = 0,#arg do
+         if count == 0 then
+            call = arg[count]
+         else
+            call = call .. " " .. arg[count]
+         end
+      end
+
+      -- Get user who ran the command
+      local user = os.getenv("USER")
+      if not user then
+         user = "INCOGNITO"
+      end
+
+      -- Log command
+      local msg = ansicolor.yellow .. ansicolor.bold .. "[ " .. os.date("%c") .. " ] ( " .. user .. " ) " .. ansicolor.default .. call
+      if stack then
+         msg = msg .. ansicolor.blue " ... " .. ansicolor.default .. "Running\n"
+      end
+      
+      message(msg , {logfile}, true)
+      message(msg , {io.stdout})
+
+      logfile:close()
+   end
+end
+
+--- Log success/failure
+-- 
+-- @param success Boolean, was the call to gpm a success.
+-- @param stack   Boolean, are we running stack command.
+--
+-- Log whether call to gpm-package ended succesfully or with an error.
+-- This is written to the stack log-file after the command.
+local function log_call_end(success, stack)
+   if global_config.log_path then
+      -- Open log file
+      local logfile = io.open(global_config.log_path, "a")
+      
+      -- If stack do extra printout
+      if stack then
+         -- Get user who ran the command
+         local user = os.getenv("USER")
+         if not user then
+            user = "INCOGNITO"
+         end
+
+         local msg = ansicolor.yellow .. ansicolor.bold .. "[ " .. os.date("%c") .. " ] ( " .. user .. " ) " .. ansicolor.default .. "Stack call"
+         message(msg, {logfile}, true)
+      end
+      
+      -- Print success/fail
+      if success then
+         message("Success!", {logfile})
+      else
+         alert("Failed!", {logfile})
+      end
+      
+      -- Close the log file
+      logfile:close()
+   end
+end
+
 -- Load module
-M.message = message
-M.alert   = alert
-M.debug   = debug
-M.grep    = grep
+M.message      = message
+M.alert        = alert
+M.debug        = debug
+M.grep         = grep
+M.log_call     = log_call
+M.log_call_end = log_call_end
 
 return M

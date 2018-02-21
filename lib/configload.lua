@@ -143,7 +143,7 @@ local function bootstrap(args, default_config, set_global)
    return default_config
 end
 
---- Load module
+-- Load module
 M.configpath = configpath
 M.bootstrap  = bootstrap
 

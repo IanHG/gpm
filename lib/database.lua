@@ -117,7 +117,7 @@ end
 --
 -- @param config   The config.
 local function save_db(config)
-   if not config.db then
+   if (not config.db) or (not db) then
       return
    end
 

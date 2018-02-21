@@ -18,90 +18,8 @@ local ansicolor   = assert(require "lib.ansicolor")
 -- Description of this script
 local description = version.get_description("gpm-package.lua")
 
---- Log the call to gpm in the stack log-file.
---
--- @param stack  Boolean, are we running a stack command?
---
--- Log the gpm-package call in the stack log-file, adding a date and username of
--- the user who made the call. This creates a log over all
--- calls such that it is easy to see how a package was installed,
--- and by whom.
-local function log_gpm_call(stack)
-   if global_config.log_path then
-      -- Open log file
-      local logfile = io.open(global_config.log_path, "a")
-      
-      -- Create call string
-      local call = ""
-      for count = 0,#arg do
-         if count == 0 then
-            call = arg[count]
-         else
-            call = call .. " " .. arg[count]
-         end
-      end
-
-      -- Get user who ran the command
-      local user = os.getenv("USER")
-      if not user then
-         user = "INCOGNITO"
-      end
-
-      -- Log command
-      local msg = ansicolor.yellow .. ansicolor.bold .. "[ " .. os.date("%c") .. " ] ( " .. user .. " ) " .. ansicolor.default .. call
-      if stack then
-         msg = msg .. ansicolor.blue " ... " .. ansicolor.default .. "Running\n"
-      end
-      
-      logging.message(msg , {logfile}, true)
-      logging.message(msg , {io.stdout})
-
-      logfile:close()
-   end
-end
-
---- Log success/failure
--- 
--- @param success Boolean, was the call to gpm a success.
--- @param stack   Boolean, are we running stack command.
---
--- Log whether call to gpm-package ended succesfully or with an error.
--- This is written to the stack log-file after the command.
-local function log_gpm_call_end(success, stack)
-   if global_config.log_path then
-      -- Open log file
-      local logfile = io.open(global_config.log_path, "a")
-      
-      -- If stack do extra printout
-      if stack then
-         -- Get user who ran the command
-         local user = os.getenv("USER")
-         if not user then
-            user = "INCOGNITO"
-         end
-
-         local msg = ansicolor.yellow .. ansicolor.bold .. "[ " .. os.date("%c") .. " ] ( " .. user .. " ) " .. ansicolor.default .. "Stack call"
-         logging.message(msg, {logfile}, true)
-      end
-      
-      -- Print success/fail
-      if success then
-         logging.message("Success!", {logfile})
-      else
-         logging.alert("Failed!", {logfile})
-      end
-      
-      -- Close the log file
-      logfile:close()
-   end
-end
-
-
--------------------------------------
--- Main driver.
--------------------------------------
+--- Main driver for gpm-package script.
 function main()
-
    -- Arg parser
    local parser = argparse(description.script_name, description.name .. ":\n" .. description.desc)
    
@@ -172,7 +90,7 @@ function main()
       configload.bootstrap(args, {}, true)
       
       -- Log the call to the stack log
-      log_gpm_call(args.stack)
+      logging.log_call(args.stack)
       
       -- Switch on command
       if args.initialize then
@@ -190,10 +108,10 @@ function main()
       end
 
       -- Log command success
-      log_gpm_call_end(true, args.stack)
+      logging.log_call_end(true, args.stack)
    end, function(e)
       -- Log command failed
-      log_gpm_call_end(false, args.stack)
+      logging.log_call_end(false, args.stack)
       
       -- Print exception
       exception.message(e)
@@ -204,8 +122,6 @@ function main()
       -- Exit with non zero status
       os.exit(1)
    end)
-   
-   
 end
 
 --[[

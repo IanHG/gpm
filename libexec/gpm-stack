@@ -1,5 +1,4 @@
 -- Load globally installed packages
-local lfs      = assert(require "lfs")
 local argparse = assert(require "argparse")
 
 -- Load local packages
