@@ -73,7 +73,7 @@ local function remove(args)
       end
       
       -- Fix the database
-      database.remove_element(package)
+      database.remove_package(package)
       database.save_db(global_config)
 
    end, function (e)

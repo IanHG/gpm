@@ -10,6 +10,7 @@ local logging    = assert(require "lib.logging")
 local ansicolor  = assert(require "lib.ansicolor")
 local configload = assert(require "lib.configload")
 local filesystem = assert(require "lib.filesystem")
+local database   = assert(require "lib.database")
 
 -- Description of this script
 local description = version.get_description("gpm-stack.lua")
@@ -42,6 +43,13 @@ local function grepcmd(args)
    end
 end
 
+---
+--
+local function list_installed_packages()
+   database.load_db(global_config)
+   database.list_installed()
+end
+
 --- Main driver.
 function main()
    -- Arg parser
@@ -50,6 +58,7 @@ function main()
    -- Commands
    local parser_load = parser:command("load") 
    local parser_ls   = parser:command("ls")
+   local parser_list = parser:command("list")
    local parser_log  = parser:command("log")
    
    -- Some general arguments
@@ -65,7 +74,9 @@ function main()
    -- ls specific
    parser_ls:flag("-a --all"   , "List all available stacks."):overwrite(false)
    parser_ls:flag("-l --loaded", "List currently loaded stacks."):overwrite(false)
-   
+      
+   -- list specific
+
    -- show specific
    parser_log:option("-g --grep"   , "Grep in log file for string."):overwrite(false):args("*")
    
@@ -91,6 +102,8 @@ function main()
          if args.grep then
             grepcmd(args)
          end
+      elseif args.list then
+         list_installed_packages()
       end
       
    end, function(e)

@@ -1,5 +1,6 @@
-local path = assert(require "lib.path")
-local util = assert(require "lib.util")
+local path    = assert(require "lib.path")
+local util    = assert(require "lib.util")
+local logging = assert(require "lib.logging")
 
 local M = {}
 
@@ -65,6 +66,16 @@ local function create_package_db_entry(package)
    }
 end
 
+--- Check if two db entries are the same
+--
+-- @param entry1  First entry.
+-- @param entry2  Second entry.
+--
+-- @return   Returns true if the two entries are the same, otherwise false.
+local function is_same_db_entry(entry1, entry2)
+   return util.deepcompare(entry1, entry2)
+end
+
 --- Check if two db_entries are the same
 --
 -- @param entry1  First entry.
@@ -91,7 +102,7 @@ end
 -- @param config    The config.
 --
 -- @return   Returns path of db file.
-local function get_db_path(config)
+local function get_db_path(config, subdb)
    local db_path = ""
    if config.db.path then
       if path.is_abs_path(config.db.path) then
@@ -102,6 +113,9 @@ local function get_db_path(config)
    else
       db_path = config.stack_path .. "/db"
    end
+   
+   db_path = db_path .. "." .. subdb
+
    return db_path
 end
 
@@ -119,26 +133,38 @@ end
 --- Load the database to memory
 --
 -- @param config   The config.
-local function load_db(config)
+local function load_db(config, sub_db_paths)
    if not config.db then
       return
+   end
+   
+   -- Set default db files to load
+   if not sub_db_paths then
+      sub_db_paths = {"package", "childstack"}
    end
 
    db = {}
    
-   -- Open db file
-   local db_path = get_db_path(config)
-   local db_file = io.open(db_path, "r")
+   -- Loop over sub databases
+   for _, subdb in pairs(sub_db_paths) do
+      if not db[subdb] then
+         db[subdb] = {}
+      end
 
-   if db_file then
-      -- Read and parse lines:
-      -- gpk: gcc; pkv: 6.3.0; prereq: nil
-      for line in db_file:lines() do
-         -- Create db entry for line
-         local db_entry = create_db_entry(line)
+      -- Open db file
+      local db_path = get_db_path(config, subdb)
+      local db_file = io.open(db_path, "r")
 
-         -- Insert entry into db
-         table.insert(db, #db + 1, db_entry)
+      if db_file then
+         -- Read and parse lines:
+         -- e.g. <gpk: gcc; pkv: 6.3.0; prereq: nil>
+         for line in db_file:lines() do
+            -- Create db entry for line
+            local db_entry = create_db_entry(line)
+
+            -- Insert entry into db
+            table.insert(db[subdb], #db[subdb] + 1, db_entry)
+         end
       end
    end
 end
@@ -146,48 +172,78 @@ end
 --- Save the database to disk
 --
 -- @param config   The config.
-local function save_db(config)
+local function save_db(config, sub_db_paths)
    if (not config.db) or (not db) then
       return
    end
-
-   local db_path = get_db_path(config)
-   local db_file = io.open(db_path, "w")
-
-   for _, db_entry in pairs(db) do
-      db_file:write(create_db_line(db_entry))
+   
+   if not sub_dp_paths then
+      sub_db_paths = {"package", "childstack"}
+   end
+   
+   for _, subdb in pairs(sub_db_paths) do
+      -- Open db file for writing
+      local db_path = get_db_path(config, subdb)
+      local db_file = io.open(db_path, "w")
+      
+      -- Write entries to file
+      for _, db_entry in pairs(db[subdb]) do
+         db_file:write(create_db_line(db_entry))
+      end
    end
 end
 
 --- Insert an element into the database.
 --
--- @param package   The package to insert.
-local function insert_element(package)
+-- @param subdb     The sub-database to insert into, e.g. "package".
+-- @param db_entry  The entry to insert.
+local function insert_entry(subdb, db_entry)
    if not db then
       return
    end
 
-   table.insert(db, #db + 1, create_package_db_entry(package))
+   table.insert(db[subdb], #db[subdb] + 1, db_entry)
 end
 
---- Remove an element from the database.
+--- Remove an element from the database if it exists.
 --
--- @param package    The package to remove.
-local function remove_element(package)
+-- @param subdb     The sub-database to remove from, e.g. "package".
+-- @param db_entry  The entry to remove if found.
+local function remove_entry(subdb, db_entry)
    if not db then
       return
    end
 
-   local package_entry = create_package_db_entry(package)
-
    local i = 1
-   while i <= #db do
-      if is_same_package_db_entry(db[i], package_entry) then
-         table.remove(db, i)
+   while i <= #db[subdb] do
+      if is_same_db_entry(db[subdb][i], db_entry) then
+         table.remove(db[subdb], i)
       else
          i = i + 1
       end
    end
+end
+
+--- Insert a package into the database.
+--
+-- @param package   The package to insert.
+local function insert_package(package)
+   -- Create database entry to look for
+   local package_entry = create_package_db_entry(package)
+   
+   -- Insert
+   insert_entry("package", package_entry)
+end
+
+---  Remove a package from the database.
+--
+-- @param package    The package to remove.
+local function remove_package(package)
+   -- Create database entry to look for
+   local package_entry = create_package_db_entry(package)
+   
+   -- Insert
+   remove_entry("package", package_entry)
 end
 
 --- Check if a package is already installed
@@ -204,7 +260,7 @@ local function installed(package)
    local package_entry = create_package_db_entry(package)
    
    -- Look for package in db
-   for _, db_entry in pairs(db) do
+   for _, db_entry in pairs(db["package"]) do
       if is_same_package_db_entry(db_entry, package_entry) then
          return true
       end
@@ -216,8 +272,8 @@ end
 
 --- List all installed packages
 local function list_installed()
-   for n, db_entry in pairs(db) do
-      util.print(db_entry, n)
+   for n, db_entry in pairs(db["package"]) do
+      logging.message(util.print(db_entry, n), io.stdout)
    end
 end
 
@@ -225,8 +281,8 @@ end
 M.use_db         = use_db
 M.load_db        = load_db
 M.save_db        = save_db
-M.insert_element = insert_element
-M.remove_element = remove_element
+M.insert_package = insert_package
+M.remove_package = remove_package
 M.installed      = installed
 M.list_installed = list_installed
 
