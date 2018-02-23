@@ -9,17 +9,47 @@ local db = nil
 
 --- Create db entry from string (read from file).
 --
+-- Will take a line with the following form:
+--    <key1:value1;key2:value2;...>
+-- and create a db_entry table from it.
+--
 -- @param line    The line to create db_entry from.
 --
 -- @return   Returns the creat db_entry table.
 local function create_db_entry(line)
    local db_entry = {}
+   line = string.match(line, "<(.-)>")
    local sline = util.split(line, ";")
    for _, field in pairs(sline) do
       sfield = util.split(field, ":")
       db_entry[util.trim(sfield[1])] = util.trim(sfield[2])
    end
    return db_entry
+end
+
+--- Create db line from db_entry.
+--
+-- From db_entry table will create a line with the following format:
+--    <key1:value1;key2:value2;...>
+--
+-- @param db_entry   The entry to create line for.
+--
+-- @return   Returns the created line.
+local function create_db_line(db_entry)
+   -- Create the line
+   local line = "<"
+   local first = true
+   for key, value in pairs(db_entry) do
+      if not first then
+         line = line .. ";"
+      end
+      line = line .. key .. ":" .. value
+      first = false
+   end
+   line = line .. ">\n"
+   
+   -- Return
+   return line
 end
 
 --- Create database entry
@@ -125,7 +155,7 @@ local function save_db(config)
    local db_file = io.open(db_path, "w")
 
    for _, db_entry in pairs(db) do
-      db_file:write("gpk: " .. db_entry["gpk"] .. "; pkv: " .. db_entry["pkv"] .. "; prereq: " .. db_entry["prereq"] .. "\n")
+      db_file:write(create_db_line(db_entry))
    end
 end
 
