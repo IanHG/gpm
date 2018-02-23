@@ -18,6 +18,8 @@ end
 
 -- Default config
 local global_default_config = {
+   -- Set a default name
+   stack_name = "DEFAULT",
    -- Set current directory
    current_directory = filesystem.cwd(),  
    -- Set folder of running script

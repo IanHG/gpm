@@ -18,20 +18,26 @@ local description = version.get_description("gpm-stack.lua")
 --- Print the currently loaded stacks.
 --
 local function lsloaded()
+   -- Define which logs to print to
+   local logs = {io.stdout}
+
    -- Just print a new line to get the first line down a bit... (purely for visual purposes)
-   logging.message("", io.stdout)
+   logging.message("", logs)
 
    -- Print the stack we are currently installing into
-   local installpath = os.getenv("GPM_CONFIG")
-   logging.message("Currently installing in: " .. installpath .. "\n", io.stdout)
+   logging.message("Currently installing in:"                        , logs)
+   logging.message("   Stack  : '" .. global_config.stack_name .. "'", logs)
+   logging.message("   Path   : "  .. global_config.stack_path       , logs)
+   logging.message("   Config : "  .. global_config.this_path        , logs)
+   logging.message(""                                                , logs)
 
    -- Print currently loaded stacks
-   logging.message("Currently loaded stacks: \n", io.stdout)
+   logging.message("Currently loaded stacks: ", logs)
    local stackpath = os.getenv("GPMSTACKPATH")
    for p in path.iterator(stackpath) do
-      logging.message("     " .. p, io.stdout)
+      logging.message("     " .. p, logs)
    end
-   logging.message("", io.stdout)
+   logging.message("", logs)
 end
 
 --- Grep in log file and print hits to terminal.
