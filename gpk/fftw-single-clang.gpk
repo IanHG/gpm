@@ -45,7 +45,7 @@ build = {
    command = [[
       # Build FFTW
       export LIBS="-fopenmp=libiomp5"
-      ./configure --prefix=<pkginstall> CC=clang --enable-mpi --enable-openmp --enable-threads --enable-avx2 --enable-fma --enable-single
+      ./configure --prefix=<pkginstall> CC=clang --enable-mpi --enable-openmp --enable-threads --enable-avx2 --enable-fma --enable-single --enable-shared --enable-static
       
       make -j<nprocesses>
       make check
