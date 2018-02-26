@@ -1,6 +1,6 @@
-local path    = assert(require "lib.path")
-local util    = assert(require "lib.util")
-local logging = assert(require "lib.logging")
+local path     = assert(require "lib.path")
+local util     = assert(require "lib.util")
+local logging  = assert(require "lib.logging")
 local packages = assert(require "lib.packages")
 
 local M = {}
