@@ -18,6 +18,8 @@ end
 
 -- Default config
 local global_default_config = {
+   -- Set a default name
+   stack_name = "DEFAULT",
    -- Set current directory
    current_directory = filesystem.cwd(),  
    -- Set folder of running script
@@ -143,7 +145,7 @@ local function bootstrap(args, default_config, set_global)
    return default_config
 end
 
---- Load module
+-- Load module
 M.configpath = configpath
 M.bootstrap  = bootstrap
 

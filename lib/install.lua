@@ -520,7 +520,7 @@ local function install(args)
          -- Post process
          postprocess_package(package)
 
-         database.insert_element(package)
+         database.insert_package(package)
          database.save_db(global_config)
          
          -- 
