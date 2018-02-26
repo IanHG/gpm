@@ -276,7 +276,7 @@ end
 local function generate_prepend_path(package)
    -- If .gpk provides one we just use that
    if package.lmod.prepend_path then
-      if globald_config.debug then
+      if global_config.debug then
          logging.debug("Taking prepend_path from .gpk file ( no auto-generation ).", {io.stdout} )
       end
       return package.lmod.prepend_path
