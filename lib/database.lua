@@ -8,6 +8,9 @@ local M = {}
 -- gpk: gcc, pkv: 6.3.0, prereq: ...
 local db = nil
 
+--- Default databases
+local default_dbs = {"package", "childstack"}
+
 --- Create db entry from string (read from file).
 --
 -- Will take a line with the following form:
@@ -140,7 +143,7 @@ local function load_db(config, sub_db_paths)
    
    -- Set default db files to load
    if not sub_db_paths then
-      sub_db_paths = {"package", "childstack"}
+      sub_db_paths = default_dbs
    end
 
    db = {}
@@ -178,7 +181,7 @@ local function save_db(config, sub_db_paths)
    end
    
    if not sub_dp_paths then
-      sub_db_paths = {"package", "childstack"}
+      sub_db_paths = default_dbs
    end
    
    for _, subdb in pairs(sub_db_paths) do
