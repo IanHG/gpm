@@ -312,9 +312,28 @@ local function bootstrap(args)
    return package
 end
 
+--- 
+local function prerequisite_string(package)
+   local first = true
+   local str = ""
+   
+   for t, p in pairs(package.prerequisite) do
+      if not (type(t) == "number") then
+         if not first then
+            str = str .. ","
+         end
+         str = str .. t .. "=" .. p
+         first = false
+      end
+   end
+
+   return str
+end
+
 -- Load module
-M.is_heirarchical = is_heirarchical
-M.is_valid        = is_valid
-M.bootstrap       = bootstrap
+M.is_heirarchical     = is_heirarchical
+M.is_valid            = is_valid
+M.bootstrap           = bootstrap
+M.prerequisite_string = prerequisite_string
 
 return M

@@ -1,6 +1,7 @@
-local path    = assert(require "lib.path")
-local util    = assert(require "lib.util")
-local logging = assert(require "lib.logging")
+local path     = assert(require "lib.path")
+local util     = assert(require "lib.util")
+local logging  = assert(require "lib.logging")
+local packages = assert(require "lib.packages")
 
 local M = {}
 
@@ -26,7 +27,8 @@ local function create_db_entry(line)
    local sline = util.split(line, ";")
    for _, field in pairs(sline) do
       sfield = util.split(field, ":")
-      db_entry[util.trim(sfield[1])] = util.trim(sfield[2])
+      local sfield2_trimmed = util.trim(sfield[2])
+      db_entry[util.trim(sfield[1])] = util.conditional(sfield2_trimmed == "nil", nil, sfield2_trimmed)
    end
    return db_entry
 end
@@ -47,7 +49,11 @@ local function create_db_line(db_entry)
       if not first then
          line = line .. ";"
       end
-      line = line .. key .. ":" .. value
+      if value then
+         line = line .. key .. ":" .. value
+      else
+         line = line .. key .. ":nil"
+      end
       first = false
    end
    line = line .. ">\n"
@@ -63,9 +69,9 @@ end
 -- @return   Return database entry for package
 local function create_package_db_entry(package)
    return { 
-       gpk    = util.conditional(package.definition.pkgname, package.definition.pkgname, "nil"), 
-       pkv    = util.conditional(package.definition.pkgversion, package.definition.pkgversion, "nil"), 
-       prereq = util.conditional(package.prereq, package.prereq, "nil"),
+       gpk    = util.conditional(package.definition.pkgname   , package.definition.pkgname           , "nil"), 
+       pkv    = util.conditional(package.definition.pkgversion, package.definition.pkgversion        , "nil"), 
+       prereq = util.conditional(package.prerequisite         , packages.prerequisite_string(package), "nil"),
    }
 end
 

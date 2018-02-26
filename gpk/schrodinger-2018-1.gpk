@@ -1,0 +1,66 @@
+-- Intel compilers gpk script
+
+-- Description of the gpk
+description = [[
+Schrodinger.
+]]
+
+-- Definition section
+definition = {
+   pkgname = "schrodinger",
+   pkggroup = "apps",
+   pkgfamily = "schrodinger",
+}
+
+-- Required types
+prerequisite = { }
+
+-- Build section
+build = {
+   -- source
+   source = "/comm/install/schrodinger/Schrodinger_Suites_2018-1_Linux-x86_64.tar",
+
+   -- Build command
+   command = [[
+./INSTALL -d <pkgbuild>/<pkg> -m -b -s <pkginstall>/schrodinger -t <pkginstall>/third-party -k <pkgbuild>/tmp aacg-v2.3-Linux-x86_64.tar.gz
+./INSTALL -d <pkgbuild>/<pkg> -m -b -s <pkginstall>/schrodinger -t <pkginstall>/third-party -k <pkgbuild>/tmp alldocs-v4.1-docs.tar.gz
+./INSTALL -d <pkgbuild>/<pkg> -m -b -s <pkginstall>/schrodinger -t <pkginstall>/third-party -k <pkgbuild>/tmp bioluminate-v3.0-Linux-x86_64.tar.gz
+./INSTALL -d <pkgbuild>/<pkg> -m -b -s <pkginstall>/schrodinger -t <pkginstall>/third-party -k <pkgbuild>/tmp canvas-v3.5-Linux-x86_64.tar.gz
+./INSTALL -d <pkgbuild>/<pkg> -m -b -s <pkginstall>/schrodinger -t <pkginstall>/third-party -k <pkgbuild>/tmp combiglide-v4.8-Linux-x86_64.tar.gz
+./INSTALL -d <pkgbuild>/<pkg> -m -b -s <pkginstall>/schrodinger -t <pkginstall>/third-party -k <pkgbuild>/tmp desmond-v5.3-Linux-x86_64.tar.gz
+./INSTALL -d <pkgbuild>/<pkg> -m -b -s <pkginstall>/schrodinger -t <pkginstall>/third-party -k <pkgbuild>/tmp epik-v4.3-Linux-x86_64.tar.gz
+./INSTALL -d <pkgbuild>/<pkg> -m -b -s <pkginstall>/schrodinger -t <pkginstall>/third-party -k <pkgbuild>/tmp glide-v7.8-Linux-x86_64.tar.gz
+./INSTALL -d <pkgbuild>/<pkg> -m -b -s <pkginstall>/schrodinger -t <pkginstall>/third-party -k <pkgbuild>/tmp impact-v7.8-Linux-x86_64.tar.gz
+./INSTALL -d <pkgbuild>/<pkg> -m -b -s <pkginstall>/schrodinger -t <pkginstall>/third-party -k <pkgbuild>/tmp jaguar-v9.9-Linux-x86_64.tar.gz
+./INSTALL -d <pkgbuild>/<pkg> -m -b -s <pkginstall>/schrodinger -t <pkginstall>/third-party -k <pkgbuild>/tmp knime-v4.1-Linux-x86_64.tar.gz
+./INSTALL -d <pkgbuild>/<pkg> -m -b -s <pkginstall>/schrodinger -t <pkginstall>/third-party -k <pkgbuild>/tmp macromodel-v11.9-Linux-x86_64.tar.gz
+./INSTALL -d <pkgbuild>/<pkg> -m -b -s <pkginstall>/schrodinger -t <pkginstall>/third-party -k <pkgbuild>/tmp maestro-v11.5-Linux-x86_64.tar.gz
+./INSTALL -d <pkgbuild>/<pkg> -m -b -s <pkginstall>/schrodinger -t <pkginstall>/third-party -k <pkgbuild>/tmp mcpro-v4.9-Linux-x86_64.tar.gz
+./INSTALL -d <pkgbuild>/<pkg> -m -b -s <pkginstall>/schrodinger -t <pkginstall>/third-party -k <pkgbuild>/tmp mmshare-v4.1-Linux-x86_64.tar.gz
+./INSTALL -d <pkgbuild>/<pkg> -m -b -s <pkginstall>/schrodinger -t <pkginstall>/third-party -k <pkgbuild>/tmp phase-v5.4-Linux-x86_64.tar.gz
+./INSTALL -d <pkgbuild>/<pkg> -m -b -s <pkginstall>/schrodinger -t <pkginstall>/third-party -k <pkgbuild>/tmp pldb-v4.1-Linux-x86_64.tar.gz
+./INSTALL -d <pkgbuild>/<pkg> -m -b -s <pkginstall>/schrodinger -t <pkginstall>/third-party -k <pkgbuild>/tmp psp-blast-thirdparty-Linux-x86_64.tar.gz
+./INSTALL -d <pkgbuild>/<pkg> -m -b -s <pkginstall>/schrodinger -t <pkginstall>/third-party -k <pkgbuild>/tmp psp-blastwebdb-thirdparty-database.tar.gz
+./INSTALL -d <pkgbuild>/<pkg> -m -b -s <pkginstall>/schrodinger -t <pkginstall>/third-party -k <pkgbuild>/tmp psp-hmmerpfamdb-thirdparty-database.tar.gz
+./INSTALL -d <pkgbuild>/<pkg> -m -b -s <pkginstall>/schrodinger -t <pkginstall>/third-party -k <pkgbuild>/tmp psp-hmmerpfam-thirdparty-Linux-x86_64.tar.gz
+./INSTALL -d <pkgbuild>/<pkg> -m -b -s <pkginstall>/schrodinger -t <pkginstall>/third-party -k <pkgbuild>/tmp psp-v5.1-Linux-x86_64.tar.gz
+./INSTALL -d <pkgbuild>/<pkg> -m -b -s <pkginstall>/schrodinger -t <pkginstall>/third-party -k <pkgbuild>/tmp qikprop-v5.5-Linux-x86_64.tar.gz
+   ]],
+}
+
+-- Lmod section
+lmod = {
+   help = [[This module loads Schrodinger Suite <pkgversion> suite.]],
+   setenv_abs = {
+      {"LM_LICENSE_FILE", "27008@10.19.28.229"},
+   },
+   prepend_path = {
+      {"PATH", "schrodinger"},
+      {"PATH", "third-party"},
+      {"SCHRODINGER", "schrodinger"},
+   },
+}
+
+--[[
+# vi:syntax=lua
+--]]

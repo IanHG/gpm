@@ -47,7 +47,7 @@ build = {
    -- Build command
    command = [[
       # Build FFTW
-      ./configure --prefix=<pkginstall> --enable-mpi --enable-openmp --enable-threads --enable-avx2 --enable-fma --enable-single
+      ./configure --prefix=<pkginstall> --enable-mpi --enable-openmp --enable-threads --enable-avx2 --enable-fma --enable-single --enable-shared --enable-static
       
       make -j<nprocesses>
       make check

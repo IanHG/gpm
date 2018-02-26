@@ -147,7 +147,7 @@ local function grep(search_strings, log_path)
       if str:match("*") then --and (not str:match("\*"))) then
          search_neg[#search_neg + 1] = str:gsub("*","")
       else
-         search_pos[#search_neg + 1] = str
+         search_pos[#search_pos + 1] = str
       end
    end
 

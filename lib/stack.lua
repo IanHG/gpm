@@ -83,7 +83,7 @@ local function stack(args)
       local stack, definitions = bootstrap_stack(args)
       
       -- Build the stack
-      local command = arg[0] .. " --config " .. args.config .. " "
+      local command = arg[0] .. " --config " .. global_config.this_path .. " "
       
       if args.no_build then
          command = command .. "--no-build "
