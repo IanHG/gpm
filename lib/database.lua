@@ -28,7 +28,7 @@ local function create_db_entry(line)
    for _, field in pairs(sline) do
       sfield = util.split(field, ":")
       local sfield2_trimmed = util.trim(sfield[2])
-      db_entry[util.trim(sfield[1])] = util.conditional(sfield2_trimmed == "nil", nil, sfield2_trimmed)
+      db_entry[util.trim(sfield[1])] = sfield2_trimmed
    end
    return db_entry
 end
@@ -49,6 +49,7 @@ local function create_db_line(db_entry)
       if not first then
          line = line .. ";"
       end
+      
       if value then
          line = line .. key .. ":" .. value
       else
@@ -68,11 +69,13 @@ end
 --
 -- @return   Return database entry for package
 local function create_package_db_entry(package)
-   return { 
+   local db_entry = { 
        gpk    = util.conditional(package.definition.pkgname   , package.definition.pkgname           , "nil"), 
        pkv    = util.conditional(package.definition.pkgversion, package.definition.pkgversion        , "nil"), 
-       prereq = util.conditional(package.prerequisite         , packages.prerequisite_string(package), "nil"),
+       prereq = util.conditional((package.prerequisite and (not #package.prerequisite == 0)), packages.prerequisite_string(package), "nil"),
    }
+
+   return db_entry
 end
 
 --- Check if two db entries are the same
@@ -210,7 +213,15 @@ local function insert_entry(subdb, db_entry)
    if not db then
       return
    end
-
+   
+   -- Check if entry is already in database
+   for _, entry in pairs(db[subdb]) do
+      if is_same_db_entry(entry, db_entry) then
+         return
+      end
+   end
+   
+   -- Insert element
    table.insert(db[subdb], #db[subdb] + 1, db_entry)
 end
 

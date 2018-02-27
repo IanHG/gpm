@@ -190,7 +190,11 @@ end
 --
 -- @return If conditional is true, returns if_true, else returns if_false.
 local function conditional(condition, if_true, if_false)
-   if condition then return if_true else return if_false end
+   if condition then 
+      return if_true 
+   else 
+      return if_false 
+   end
 end
 
 function deepcompare(t1,t2,ignore_mt)
