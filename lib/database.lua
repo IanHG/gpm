@@ -72,7 +72,7 @@ local function create_package_db_entry(package)
    local db_entry = { 
        gpk    = util.conditional(package.definition.pkgname   , package.definition.pkgname           , "nil"), 
        pkv    = util.conditional(package.definition.pkgversion, package.definition.pkgversion        , "nil"), 
-       prereq = util.conditional((package.prerequisite and (not #package.prerequisite == 0)), packages.prerequisite_string(package), "nil"),
+       prereq = util.conditional((package.prerequisite and (not (next(package.prerequisite) == nil))), packages.prerequisite_string(package), "nil"),
    }
 
    return db_entry
