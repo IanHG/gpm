@@ -132,10 +132,10 @@ local function bootstrap(config_path, args, default_config, set_global)
    
    -- Setup gpk_path and gps_path
    if config.gpk_path then
-      local_config.gpk_path = local_config.gpk_path .. ":" .. local_config.folder .. "../gpk"
+      local_config.gpk_path = config.gpk_path .. ":" .. local_config.folder .. "../gpk"
    end
    if config.gps_path then
-      local_config.gps_path = local_config.gps_path .. ":" .. local_config.folder .. "../gps"
+      local_config.gps_path = config.gps_path .. ":" .. local_config.folder .. "../gps"
    end
    
    -- Setup build_path and lmod_path

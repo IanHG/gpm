@@ -33,6 +33,9 @@ build = {
 -- Lmod section
 lmod = {
    help = [[This module loads Cuda v. <pkgversion>.]],
+   setenv_abs = {
+      {"CUDA_HOME", "<pkginstall>"}
+   },
 }
 
 --[[
