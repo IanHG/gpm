@@ -54,9 +54,13 @@ local function lsall()
    local db = database.get_db("childstack")
    
    -- Printout
+   local format = "%-20s %-20s"
+   logging.message(string.format(format, "Stack name", "Load command"), logs)
+   logging.message("---------------------------------------------------------------", logs)
    for _, v in pairs(db) do
       local child_config = configload.bootstrap(v.config, nil, {}, false)
-      logging.message(child_config.this_path .. " " .. child_config.stack_name, logs)
+      local load_command = "source " .. child_config.stack_path .. "/bin/modules.sh"
+      logging.message(string.format(format, child_config.stack_name, load_command), logs)
    end
 end
 
