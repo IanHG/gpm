@@ -62,6 +62,7 @@ local function lsall()
       local load_command = "source " .. child_config.stack_path .. "/bin/modules.sh"
       logging.message(string.format(format, child_config.stack_name, load_command), logs)
    end
+   logging.message("", logs)
 end
 
 --- Grep in log file and print hits to terminal.
