@@ -146,6 +146,10 @@ end
 --
 -- @param config   The config.
 local function load_db(config, sub_db_paths)
+   if not config then
+      config = global_config
+   end
+
    if not config.db then
       return
    end
@@ -203,6 +207,20 @@ local function save_db(config, sub_db_paths)
          db_file:write(create_db_line(db_entry))
       end
    end
+end
+
+--- Get sub database
+--
+-- @param subdb   The subdb to get.
+--
+-- @return   Return the requested subdb if it exist else returns empty db.
+local function get_db(subdb)
+   if db then
+      if db[subdb] then
+         return db[subdb]
+      end
+   end
+   return {}
 end
 
 --- Insert an element into the database.
@@ -298,9 +316,11 @@ local function list_installed()
 end
 
 -- Load module
+M.create_db_line = create_db_line
 M.use_db         = use_db
 M.load_db        = load_db
 M.save_db        = save_db
+M.get_db         = get_db
 M.insert_package = insert_package
 M.remove_package = remove_package
 M.installed      = installed

@@ -87,7 +87,7 @@ function main()
    
    exception.try(function()
       -- Bootstrap config
-      configload.bootstrap(args, {}, true)
+      configload.bootstrap(nil, args, {}, true)
       
       -- Log the call to the stack log
       logging.log_call(args.stack)

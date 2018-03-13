@@ -3,6 +3,31 @@ local _logging = assert(require "lib.logging")
 
 local M = {}
 
+function deepcopy(orig)
+    local orig_type = type(orig)
+    local copy
+    if orig_type == 'table' then
+        copy = {}
+        for orig_key, orig_value in next, orig, nil do
+            copy[deepcopy(orig_key)] = deepcopy(orig_value)
+        end
+        setmetatable(copy, deepcopy(getmetatable(orig)))
+    else -- number, string, boolean, etc
+        copy = orig
+    end
+    return copy
+end
+
+function copy(obj, seen)
+  if type(obj) ~= 'table' then return obj end
+  if seen and seen[obj] then return seen[obj] end
+  local s = seen or {}
+  local res = setmetatable({}, getmetatable(obj))
+  s[obj] = res
+  for k, v in pairs(obj) do res[copy(k, s)] = copy(v, s) end
+  return res
+end
+
 --- Merge two tables recursively.
 -- 
 -- If both tables have the same entry, 
@@ -18,7 +43,7 @@ local function merge(a, b)
          if type(v)=='table' and type(a[k] or false)=='table' then 
             merge(a[k],v) 
          else 
-            a[k]=v 
+            a[k] = copy(v)
          end 
       end
    end

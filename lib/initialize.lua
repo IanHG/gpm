@@ -1,12 +1,32 @@
 local lfs = assert(require "lfs")
 
-local util      = assert(require "lib.util")
-local path      = assert(require "lib.path")
-local version   = assert(require "lib.version")
-local install   = assert(require "lib.install")
-local exception = assert(require "lib.exception")
+local util       = assert(require "lib.util")
+local path       = assert(require "lib.path")
+local version    = assert(require "lib.version")
+local install    = assert(require "lib.install")
+local exception  = assert(require "lib.exception")
+local configload = assert(require "lib.configload")
+local database   = assert(require "lib.database")
 
 M = {}
+
+---
+--
+-- @return   Returns table with parent configs.
+local function get_parent_configs(config)
+   local parent_configs = nil
+
+   if config.meta_stack.parent then
+      parent_configs = {}
+      print(config.meta_stack.parent)
+      for _, v in pairs(util.split(config.meta_stack.parent, ",")) do
+         local empty = {}
+         table.insert(parent_configs, #parent_configs, configload.bootstrap(v, nil, nil, false))
+      end
+   end
+
+   return parent_configs
+end
 
 -------------------------------------
 -- Install luarocks package manager
@@ -54,7 +74,7 @@ end
 -- Install lmod
 -------------------------------------
 local function install_lmod(args)
-   do_install_lmod = not args.parentstack
+   do_install_lmod = not global_config.meta_stack.parent
    if do_install_lmod then
       args.gpk = "lmod"
       args.pkv = "7.7.13"
@@ -70,7 +90,7 @@ end
 -- Install gpm
 -------------------------------------
 local function install_gpm(args)
-   do_install_gpm = not args.parentstack
+   do_install_gpm = not global_config.meta_stack.parent
    if do_install_gpm then
       args.gpk = "gpm"
       args.pkv = version.get_version_number()
@@ -101,15 +121,14 @@ end
 
 --- Create source file for csh/tsch environments
 -- 
--- @param args
 -- @param bin_path
 -- @param source_filename
-local function write_csh_source(args, bin_path, source_filename)
+local function write_csh_source(bin_path, source_filename, parent_configs)
    -- Get modulepaths and source_path
    local modulepath_root, modulepath = create_modulepaths()
    local source_path     = path.join(bin_path, source_filename)
    local lmodsource_path = path.join(global_config.stack_path, "tools/lmod/7.7.13/lmod/lmod/init/csh")
-   local config_path     = path.join(global_config.stack_path, args.config)
+   local config_path     = path.join(global_config.stack_path, global_config.this_path)
    
    -- Open file
    local source_file = io.open(path.join(bin_path, source_filename), "w")
@@ -119,12 +138,12 @@ local function write_csh_source(args, bin_path, source_filename)
    source_file:write("\n")
    
    -- Source parentstacks
-   if args.parentstack then
-      local parentstack_split = util.split(args.parentstack, ",")
+   if parent_configs then
       source_file:write("# Source parent stacks\n")
-      for k,v in pairs(parentstack_split) do
-         source_file:write("source " .. v .. source_filename .. " $*\n")
+      for _, v in pairs(parent_configs) do
+         source_file:write("source " .. v.stack_path .. "/bin/" .. source_filename .. " $*\n")
       end
+      
       source_file:write("\n")
    end
    
@@ -184,7 +203,7 @@ local function write_csh_source(args, bin_path, source_filename)
    source_file:write("   endif\n")
    source_file:write("\n")
 
-   if args.parentstack then
+   if parent_configs then
       source_file:write("   # Setup module paths\n")
       source_file:write("   setenv MODULEPATH_ROOT $MODULEPATH_ROOT\":" .. modulepath_root .."\"\n")
       source_file:write("   setenv MODULEPATH $MODULEPATH\":" .. modulepath .. "\"\n")
@@ -229,26 +248,25 @@ end
 -------------------------------------
 -- Create shell environtment file
 -------------------------------------
-local function write_sh_source(args, bin_path, source_filename)
+local function write_sh_source(bin_path, source_filename, parent_configs)
    -- Get modulepaths
    local modulepath_root, modulepath = create_modulepaths()
    local source_path     = path.join(bin_path, source_filename)
    local lmodsource_path = path.join(global_config.stack_path, "tools/lmod/7.7.13/lmod/lmod/init/profile")
-   local config_path     = path.join(global_config.stack_path, args.config)
+   local config_path     = path.join(global_config.stack_path, global_config.this_path)
    
    -- Open file for writing
-   local bin_file = io.open(path.join(bin_path, "modules.sh"), "w")
+   local bin_file = assert(io.open(path.join(bin_path, "modules.sh"), "w"))
    
    -- Set shebang
    bin_file:write("#!/bin/sh\n")
    bin_file:write("\n")
    
    -- Source parent stacks
-   if args.parentstack then
-      local parentstack_split = util.split(args.parentstack, ",")
+   if parent_configs then
       bin_file:write("# Source parent stacks\n")
-      for k,v in pairs(parentstack_split) do
-         bin_file:write(". " .. v .. source_filename .. " \"$@\"\n")
+      for _, v in pairs(parent_configs) do
+         bin_file:write(". " .. v.stack_path .. "/bin/" .. source_filename .. " \"$@\"\n")
       end
       bin_file:write("\n")
    end
@@ -309,7 +327,7 @@ local function write_sh_source(args, bin_path, source_filename)
    bin_file:write("      echo \"Sourcing " .. source_path .. "\"\n")
    bin_file:write("   fi\n")
    
-   if args.parentstack then
+   if parent_configs then
       bin_file:write("\n")
       bin_file:write("   # Setup module paths\n")
       bin_file:write("   export MODULEPATH_ROOT=$MODULEPATH_ROOT:\"" .. modulepath_root .. "\"\n")
@@ -355,15 +373,26 @@ end
 
 --- Create shell enviroment sourcing scripts.
 -- 
--- @param args
-local function create_shell_environment(args)
+-- @param parents
+local function create_shell_environment(parent_configs)
    --
    local bin_path = path.join(global_config.stack_path, "bin")
    lfs.mkdir(bin_path)
    
    -- Write files for each shell type
-   write_sh_source (args, bin_path, "modules.sh")
-   write_csh_source(args, bin_path, "modules.csh")
+   write_sh_source (bin_path, "modules.sh" , parent_configs)
+   write_csh_source(bin_path, "modules.csh", parent_configs)
+end
+
+local function register_in_parents(parent_configs)
+   for _, v in pairs(parent_configs) do
+      local db_path = v.stack_path .. "/" .. v.db.path .. ".childstack"
+      local db_file = assert(io.open(db_path, "a"))
+
+      db_file:write(database.create_db_line({ config = global_config.this_path }))
+
+      db_file:close()
+   end
 end
 
 -------------------------------------
@@ -374,9 +403,6 @@ end
 local function initialize(args)
    -- Try
    exception.try(function() 
-      -- Bootstrap initialize
-      -- config = bootstrap_initialize(args)
-      
       -- Create a build directory
       if not lfs.attributes(global_config.base_build_directory) then
          lfs.mkdir(global_config.base_build_directory)
@@ -384,12 +410,18 @@ local function initialize(args)
 
       -- Check that required luapackages exist
       --check_luapackages(args)
+      local parent_configs = get_parent_configs(global_config)
       
       -- Install lmod if needed
       install_lmod(args)
-      
+         
+      print("CREATE SHELL")
       -- Create shell file to source new software tree
-      create_shell_environment(args)
+      create_shell_environment(parent_configs)
+
+      if global_config.meta_stack.parent and global_config.meta_stack.register then
+         register_in_parents(parent_configs)
+      end
 
       -- Create directories
       if not lfs.attributes(global_config.lmod_directory) then

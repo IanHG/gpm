@@ -40,6 +40,26 @@ local function lsloaded()
    logging.message("", logs)
 end
 
+--- Print all available stacks
+--
+local function lsall()
+   -- Define which logs to print to
+   local logs = {io.stdout}
+   
+   -- Just print a new line to get the first line down a bit... (purely for visual purposes)
+   logging.message("", logs)
+
+   -- Load childstack database
+   database.load_db(nil, {"childstack"})
+   local db = database.get_db("childstack")
+   
+   -- Printout
+   for _, v in pairs(db) do
+      local child_config = configload.bootstrap(v.config, nil, {}, false)
+      logging.message(child_config.this_path .. " " .. child_config.stack_name, logs)
+   end
+end
+
 --- Grep in log file and print hits to terminal.
 --
 local function grepcmd(args)
@@ -96,11 +116,11 @@ function main()
    
    exception.try(function()
       -- Bootstrap config
-      configload.bootstrap(args, {}, true)
+      configload.bootstrap(nil, args, {}, true)
 
       if args.ls then
          if args.all then
-            print("ALL")
+            lsall()
          elseif args.loaded then
             lsloaded()
          end
