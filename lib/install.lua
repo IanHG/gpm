@@ -419,6 +419,13 @@ local function build_lmod_modulefile(package)
       end
    end
 
+   if package.lmod.prepend_path_abs then
+      for key,value in pairs(package.lmod.prepend_path_abs) do
+         dir = util.substitute_placeholders(package.definition, value[2])
+         lmod_file:write("prepend_path('" .. value[1] .. "','" .. dir .. "')\n")
+      end
+   end
+
    -- Close file after wirting it
    lmod_file:close()
 
