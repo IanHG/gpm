@@ -41,12 +41,16 @@ local function merge(a, b)
    if type(a) == 'table' and type(b) == 'table' then
       for k,v in pairs(b) do 
          if type(v)=='table' and type(a[k] or false)=='table' then 
-            merge(a[k],v) 
+            merge(a[k], v)
+         elseif (a[k] or false) then
+            -- Key was present in a, so we nothing as a is primary table
          else 
+            -- Key was not present in a so we copy from b
             a[k] = copy(v)
          end 
       end
    end
+
    return a
 end
 

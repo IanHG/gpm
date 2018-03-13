@@ -111,6 +111,7 @@ local function bootstrap(config_path, args, default_config, set_global)
    local_config = util.merge(local_config, default_config)
    local_config = util.merge(local_config, global_default_config)
    
+   
    -- Set this_path
    local_config.this_path = util.conditional(path.is_abs_path(config_path), config_path, local_config.current_directory .. "/" .. config_path)
 
@@ -121,7 +122,6 @@ local function bootstrap(config_path, args, default_config, set_global)
    -- Setup stack_path
    if (not local_config.stack_path) then
       local stack_path, _, _ = path.split_filename(args.config)
-      print(stack_path)
       local_config.stack_path = path.remove_dir_end(stack_path)
    end
 
@@ -170,12 +170,8 @@ local function bootstrap(config_path, args, default_config, set_global)
    
    -- If requested set the global config
    if set_global then
-      print("SETTING GLOBAL CONFIG : " .. local_config.this_path)
       global_config = local_config
    end
-   
-   print("PARENT LOL")
-   print(global_config.meta_stack.parent)
    
    -- Return the created config (return can be ignored if setting global config).
    return local_config
