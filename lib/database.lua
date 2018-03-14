@@ -7,7 +7,7 @@ local M = {}
 
 -- Database with entries e.g.:
 -- gpk: gcc, pkv: 6.3.0, prereq: ...
-local db = nil
+local global_db = nil
 
 --- Default databases
 local default_dbs = {"package", "childstack"}
@@ -135,7 +135,7 @@ end
 --
 -- @return     Returns whether to use the database or not.
 local function use_db()
-   if db then
+   if global_db then
       return true
    else
       return false
@@ -158,13 +158,15 @@ local function load_db(config, sub_db_paths)
    if not sub_db_paths then
       sub_db_paths = default_dbs
    end
-
-   db = {}
+   
+   if not global_db then
+      global_db = {}
+   end
    
    -- Loop over sub databases
    for _, subdb in pairs(sub_db_paths) do
-      if not db[subdb] then
-         db[subdb] = {}
+      if not global_db[subdb] then
+         global_db[subdb] = {}
       end
 
       -- Open db file
@@ -179,7 +181,7 @@ local function load_db(config, sub_db_paths)
             local db_entry = create_db_entry(line)
 
             -- Insert entry into db
-            table.insert(db[subdb], #db[subdb] + 1, db_entry)
+            table.insert(global_db[subdb], #global_db[subdb] + 1, db_entry)
          end
       end
    end
@@ -189,7 +191,7 @@ end
 --
 -- @param config   The config.
 local function save_db(config, sub_db_paths)
-   if (not config.db) or (not db) then
+   if (not config.db) or (not global_db) then
       return
    end
    
@@ -203,7 +205,7 @@ local function save_db(config, sub_db_paths)
       local db_file = io.open(db_path, "w")
       
       -- Write entries to file
-      for _, db_entry in pairs(db[subdb]) do
+      for _, db_entry in pairs(global_db[subdb]) do
          db_file:write(create_db_line(db_entry))
       end
    end
@@ -215,9 +217,9 @@ end
 --
 -- @return   Return the requested subdb if it exist else returns empty db.
 local function get_db(subdb)
-   if db then
-      if db[subdb] then
-         return db[subdb]
+   if global_db then
+      if global_db[subdb] then
+         return global_db[subdb]
       end
    end
    return {}
@@ -228,19 +230,19 @@ end
 -- @param subdb     The sub-database to insert into, e.g. "package".
 -- @param db_entry  The entry to insert.
 local function insert_entry(subdb, db_entry)
-   if not db then
+   if not global_db then
       return
    end
    
    -- Check if entry is already in database
-   for _, entry in pairs(db[subdb]) do
+   for _, entry in pairs(global_db[subdb]) do
       if is_same_db_entry(entry, db_entry) then
          return
       end
    end
    
    -- Insert element
-   table.insert(db[subdb], #db[subdb] + 1, db_entry)
+   table.insert(global_db[subdb], #global_db[subdb] + 1, db_entry)
 end
 
 --- Remove an element from the database if it exists.
@@ -248,14 +250,14 @@ end
 -- @param subdb     The sub-database to remove from, e.g. "package".
 -- @param db_entry  The entry to remove if found.
 local function remove_entry(subdb, db_entry)
-   if not db then
+   if not global_db then
       return
    end
 
    local i = 1
-   while i <= #db[subdb] do
-      if is_same_db_entry(db[subdb][i], db_entry) then
-         table.remove(db[subdb], i)
+   while i <= #global_db[subdb] do
+      if is_same_db_entry(global_db[subdb][i], db_entry) then
+         table.remove(global_db[subdb], i)
       else
          i = i + 1
       end
@@ -290,7 +292,7 @@ end
 --
 -- @return   Returns true if already installed, otherwise false.
 local function installed(package)
-   if not db then
+   if not global_db then
       return false
    end
 
@@ -298,7 +300,7 @@ local function installed(package)
    local package_entry = create_package_db_entry(package)
    
    -- Look for package in db
-   for _, db_entry in pairs(db["package"]) do
+   for _, db_entry in pairs(global_db["package"]) do
       if is_same_package_db_entry(db_entry, package_entry) then
          return true
       end
@@ -310,7 +312,7 @@ end
 
 --- List all installed packages
 local function list_installed()
-   for n, db_entry in pairs(db["package"]) do
+   for n, db_entry in pairs(global_db["package"]) do
       logging.message(util.print(db_entry, n), io.stdout)
    end
 end

@@ -48,9 +48,30 @@ local function lsall()
    
    -- Just print a new line to get the first line down a bit... (purely for visual purposes)
    logging.message("", logs)
+   
+   -- Define local function for recursive loading of database
+   function recursive_load_db(config)
+      -- Load childstack database
+      database.load_db(config, {"childstack"})
+      
+      -- Recursively check for parents
+      if config.meta_stack then
+         if config.meta_stack.parent then
+            if type(config.meta_stack.parent) == "table" then
+               for _, v in pairs(config.meta_stack.parent) do
+                  recursive_load_db(configload.bootstrap(v, nil, {}, false))
+               end
+            else
+               recursive_load_db(configload.bootstrap(config.meta_stack.parent, nil, {}, false))
+            end
+         end
+      end
+   end
+   
+   -- Call recursive load
+   recursive_load_db(global_config)
 
-   -- Load childstack database
-   database.load_db(nil, {"childstack"})
+   -- Get the childstack database
    local db = database.get_db("childstack")
    
    -- Printout
