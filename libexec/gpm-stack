@@ -149,6 +149,8 @@ function main()
             lsall()
          elseif args.loaded then
             lsloaded()
+         else
+            lsloaded()
          end
       elseif args.log then
          if args.grep then
