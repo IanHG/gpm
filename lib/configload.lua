@@ -43,6 +43,8 @@ local global_default_config = {
 global_config = {
 }
 
+local bootstrap
+
 --- Search for config path.
 --
 -- Will first check commandline args, then check the ENV variable GPM_CONFIG.
@@ -53,22 +55,35 @@ global_config = {
 -- @return Returns config path to search.
 local function configpath(args)
    -- Init path variable
-   local path = ""
+   local config_path = ""
 
    -- Make sure we have a config path
    if args.config then
-      path = args.config
+      config_path = args.config
    else
       -- If none was given we check for the environtment one.
-      path = os.getenv("GPM_CONFIG")
-      if not path then
+      local env_config_paths = os.getenv("GPM_CONFIG")
+      if env_config_paths then
+         for env_config_path in path.iterator(env_config_paths) do
+            if args.token then
+               local env_config = bootstrap(env_config_path, nil, {}, false)
+               if env_config.stack_token == args.token then
+                  return env_config_path
+               end
+            else
+               return env_config_path
+            end
+         end
+
+         error("Token not found.")
+      else
          -- If enviroment config wasn't found, we check current directory
-         args.config = path.join(filesystem.cwd(), "config.lua")
+         config_path = path.join(filesystem.cwd(), "config.lua")
       end
    end
    
    -- Return path to check
-   return path
+   return config_path
 end
 
 --- Boostrap config dictionary.
@@ -81,7 +96,8 @@ end
 -- @param set_global       Set the global config?
 --
 -- @return{Dictionary} Returns definition og build.
-local function bootstrap(config_path, args, default_config, set_global)
+--local function bootstrap(config_path, args, default_config, set_global)
+bootstrap = function (config_path, args, default_config, set_global)
    -- Set default
    if not args then
       args = {}
@@ -118,6 +134,10 @@ local function bootstrap(config_path, args, default_config, set_global)
    --
    -- Setup defaults
    --
+   if (not local_config.stack_token) then
+      local token = string.lower(util.split(local_config.stack_name)[1])
+      local_config.stack_token = token
+   end
 
    -- Setup stack_path
    if (not local_config.stack_path) then

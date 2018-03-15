@@ -36,6 +36,7 @@ function main()
       print(version.get_version())
       os.exit(0)
    end)
+   parser:option("-t --token"   , "Set a stack token."):overwrite(false)
 
    -- Initialize specific
    parser_initialize:option("--parentstack", "Paths to source as GPM parent stacks. Give as comma-separated list."):overwrite(false)

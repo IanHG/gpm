@@ -66,6 +66,8 @@ local function lsall()
             end
          end
       end
+
+      database.insert_entry("childstack", {config = config.this_path})
    end
    
    -- Call recursive load
@@ -75,13 +77,13 @@ local function lsall()
    local db = database.get_db("childstack")
    
    -- Printout
-   local format = "%-20s %-20s"
-   logging.message(string.format(format, "Stack name", "Load command"), logs)
+   local format = "%-20s %-20s %-20s"
+   logging.message(string.format(format, "Stack name", "Token", "Load command"), logs)
    logging.message("---------------------------------------------------------------", logs)
    for _, v in pairs(db) do
       local child_config = configload.bootstrap(v.config, nil, {}, false)
       local load_command = "source " .. child_config.stack_path .. "/bin/modules.sh"
-      logging.message(string.format(format, child_config.stack_name, load_command), logs)
+      logging.message(string.format(format, child_config.stack_name, child_config.stack_token, load_command), logs)
    end
    logging.message("", logs)
 end
@@ -106,6 +108,7 @@ end
 function main()
    -- Arg parser
    local parser = argparse(description.script_name, description.name .. ":\n" .. description.desc)
+   parser:option("-t --token"   , "Set a stack token."):overwrite(false)
    
    -- Commands
    local parser_load = parser:command("load") 
