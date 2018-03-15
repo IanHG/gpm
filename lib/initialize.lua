@@ -128,7 +128,7 @@ local function write_csh_source(bin_path, source_filename, parent_configs)
    local modulepath_root, modulepath = create_modulepaths()
    local source_path     = path.join(bin_path, source_filename)
    local lmodsource_path = path.join(global_config.stack_path, "tools/lmod/7.7.13/lmod/lmod/init/csh")
-   local config_path     = path.join(global_config.stack_path, global_config.this_path)
+   local config_path     = global_config.this_path
    
    -- Open file
    local source_file = io.open(path.join(bin_path, source_filename), "w")
@@ -231,9 +231,10 @@ local function write_csh_source(bin_path, source_filename, parent_configs)
       source_file:write("   # Export stack path\n")
       source_file:write("   setenv GPM_USE_LD_RUN_PATH \n")
       source_file:write("\n")
-      source_file:write("   # Export some GPM\n")
-      source_file:write("   setenv GPM_CONFIG \"" .. config_path .. "\"\n")
    end
+   
+   source_file:write("   # Export some GPM\n")
+   source_file:write("   setenv GPM_CONFIG \"" .. config_path .. "\"\n")
 
    source_file:write("else\n")
    source_file:write("   if ($SILENT == 0) then\n")
@@ -253,7 +254,7 @@ local function write_sh_source(bin_path, source_filename, parent_configs)
    local modulepath_root, modulepath = create_modulepaths()
    local source_path     = path.join(bin_path, source_filename)
    local lmodsource_path = path.join(global_config.stack_path, "tools/lmod/7.7.13/lmod/lmod/init/profile")
-   local config_path     = path.join(global_config.stack_path, global_config.this_path)
+   local config_path     = global_config.this_path
    
    -- Open file for writing
    local bin_file = assert(io.open(path.join(bin_path, "modules.sh"), "w"))
