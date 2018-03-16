@@ -166,6 +166,10 @@ bootstrap = function (config_path, args, default_config, set_global)
       local_config.lmod_directory = local_config.stack_path .. "/modulefiles" 
    end
 
+   if (not local_config.lmod) or (not local_config.lmod.version) then
+      local_config.lmod.version = "7.7.13"
+   end
+
    -- Setup meta stack data
    if args.parentstack then
       if filesystem.exists(args.parentstack) then
