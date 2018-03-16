@@ -77,7 +77,7 @@ local function install_lmod(args)
    do_install_lmod = not global_config.meta_stack.parent
    if do_install_lmod then
       args.gpk = "lmod"
-      args.pkv = "7.7.13"
+      args.pkv = global_config.lmod.version
       args.nomodulesource = true
       args.is_lmod = true
       args.no_lmod = true
@@ -127,7 +127,7 @@ local function write_csh_source(bin_path, source_filename, parent_configs)
    -- Get modulepaths and source_path
    local modulepath_root, modulepath = create_modulepaths()
    local source_path     = path.join(bin_path, source_filename)
-   local lmodsource_path = path.join(global_config.stack_path, "tools/lmod/7.7.13/lmod/lmod/init/csh")
+   local lmodsource_path = path.join(global_config.stack_path, "tools/lmod/" .. global_config.lmod.version .. "/lmod/lmod/init/csh")
    local config_path     = global_config.this_path
    
    -- Open file
@@ -256,7 +256,7 @@ local function write_sh_source(bin_path, source_filename, parent_configs)
    -- Get modulepaths
    local modulepath_root, modulepath = create_modulepaths()
    local source_path     = path.join(bin_path, source_filename)
-   local lmodsource_path = path.join(global_config.stack_path, "tools/lmod/7.7.13/lmod/lmod/init/profile")
+   local lmodsource_path = path.join(global_config.stack_path, "tools/lmod/" .. global_config.lmod.version .. "/lmod/lmod/init/profile")
    local config_path     = global_config.this_path
    
    -- Open file for writing
