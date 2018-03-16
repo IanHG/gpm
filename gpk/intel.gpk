@@ -20,7 +20,7 @@ build = {
    files = {
       -- Licence file
       {"license.lic", [[
-SERVER in1 001e6837d0fd 28518
+SERVER in2 001e689b4688 28518
 USE_SERVER
       ]]},
       -- Silent cfg install file

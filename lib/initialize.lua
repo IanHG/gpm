@@ -420,7 +420,7 @@ local function initialize(args)
       -- Create shell file to source new software tree
       create_shell_environment(parent_configs)
 
-      if global_config.meta_stack.parent and global_config.meta_stack.register then
+      if ((global_config.meta_stack.parent) and (global_config.meta_stack.register)) then
          register_in_parents(parent_configs)
       end
 
