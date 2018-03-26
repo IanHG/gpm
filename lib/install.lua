@@ -96,6 +96,11 @@ local function make_package_ready_for_install(package)
    local source = util.substitute_placeholders(package.definition, package.build.source)
    print("SOURCE : " .. source)
    local source_path, source_file, source_ext = split_filename(source)
+   print("EXT: " .. source_ext)
+   if source_ext == "git" then
+      package.build.source_type = "git"
+   end
+
    local source_file_strip = string.gsub(source_file, "%." .. source_ext, "")
    local destination = package.definition.pkg .. "." .. source_ext
    package.build.source_destination = destination

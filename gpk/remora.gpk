@@ -1,0 +1,54 @@
+-- CMake gpk script
+
+-- Description of the gpk
+description = [[
+REMORA: REsource MOnitoring for Remote Applications
+
+Remora is a tool to monitor runtime resource utilization:
+
+    Memory
+    CPU utilization
+    IO usage (Lustre, DVS)
+    NUMA memory
+    Network topology
+    MPI statistics
+    CPU Power and Temperature data
+
+To use the tool, modify your batch script and include 'remora' before your script, executable, or MPI launcher.
+
+https://github.com/TACC/remora
+]]
+
+-- Definition section
+definition = {
+   pkgname = "remora",
+   pkggroup = "tools",
+   pkgfamily = "remora",
+}
+
+-- Required types
+prerequisite = {}
+
+-- Build section
+build = {
+   -- Source of package
+   source = "git@github.com:TACC/remora.git",
+   -- Build command
+   command = [[
+      git checkout v<pkgversion>
+      export REMORA_INSTALL_PREFIX=<pkginstall>
+      ./install.sh
+   ]]
+}
+
+-- Lmod section
+lmod = {
+   help = [[This module loads Remora v. <pkgversion>.]],
+   setenv = {
+      {"REMORA_BIN", "bin"},
+   },
+}
+
+--[[
+# vi:syntax=lua
+--]]
