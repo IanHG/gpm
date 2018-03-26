@@ -165,9 +165,16 @@ bootstrap = function (config_path, args, default_config, set_global)
    if not local_config.lmod_directory then 
       local_config.lmod_directory = local_config.stack_path .. "/modulefiles" 
    end
-
+   
+   -- Lmod block
    if (not local_config.lmod) then
       local_config.lmod = {}
+   end
+
+   if (not local_config.lmod.cache_path) then
+      local_config.lmod.cache_path = local_config.stack_path .. "/modulesdata"
+   elseif path.is_rel_path(local_config.lmod.cache_path) then
+      local_config.lmod.cache_path = local_config.stack_path .. "/" .. local_config.lmod.cache_path
    end
 
    if (not local_config.lmod) or (not local_config.lmod.version) then

@@ -11,6 +11,15 @@ local function is_abs_path(path)
    return (string.find(path, "^[/]")) and true
 end
 
+--- Check if path is relative.
+--
+-- @param {string} path   The path to check
+--
+-- @return {boolean}  Returns true if path is relative, false otherwise.
+local function is_rel_path(path)
+   return (not is_abs_path(path))
+end
+
 --- Check if a path has dir end.
 -- 
 -- @param {string} path   The path to check.
@@ -91,6 +100,7 @@ end
 
 -- Load functions for module
 M.is_abs_path    = is_abs_path
+M.is_rel_path    = is_rel_path
 M.has_dir_end    = has_dir_end
 M.remove_dir_end = remove_dir_end
 M.join           = join

@@ -7,6 +7,7 @@ local exception  = assert(require "lib.exception")
 local logging    = assert(require "lib.logging")
 local packages   = assert(require "lib.packages")
 local database   = assert(require "lib.database")
+local lmod       = assert(require "lib.lmod")
 
 local M = {}
 
@@ -480,6 +481,7 @@ local function postprocess_package(package)
    end
 end
 
+
 -------------------------------------
 -- Wrapper for installing a package.
 --
@@ -526,6 +528,9 @@ local function install(args)
 
          -- Post process
          postprocess_package(package)
+
+         --
+         lmod.update_lmod_cache(package.log)
 
          database.insert_package(package)
          database.save_db(global_config)

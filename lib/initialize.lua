@@ -7,6 +7,7 @@ local install    = assert(require "lib.install")
 local exception  = assert(require "lib.exception")
 local configload = assert(require "lib.configload")
 local database   = assert(require "lib.database")
+local lmod       = assert(require "lib.lmod")
 
 M = {}
 
@@ -103,21 +104,6 @@ local function install_gpm(args)
    end
 end
 
---- Create modulepaths and return these.
---
--- @return{string,string}   Returns modulepath_root and modulepath strings.
-local function create_modulepaths()
-   local modulepath_root = global_config.lmod_directory
-   local modulepath = ""
-   for k,v in pairs(global_config.groups) do
-      modulepath = modulepath .. path.join(modulepath_root, v) .. ":"
-   end
-   if modulepath[-1] == ":" then
-      modulepath = modulepath.sub(1, -2)
-   end
-
-   return modulepath_root, modulepath
-end
 
 --- Create source file for csh/tsch environments
 -- 
@@ -125,7 +111,7 @@ end
 -- @param source_filename
 local function write_csh_source(bin_path, source_filename, parent_configs)
    -- Get modulepaths and source_path
-   local modulepath_root, modulepath = create_modulepaths()
+   local modulepath_root, modulepath = lmod.generate_module_paths()
    local source_path     = path.join(bin_path, source_filename)
    local lmodsource_path = path.join(global_config.stack_path, "tools/lmod/" .. global_config.lmod.version .. "/lmod/lmod/init/csh")
    local config_path     = global_config.this_path
@@ -254,10 +240,11 @@ end
 -------------------------------------
 local function write_sh_source(bin_path, source_filename, parent_configs)
    -- Get modulepaths
-   local modulepath_root, modulepath = create_modulepaths()
+   local modulepath_root, modulepath = lmod.generate_module_paths()
    local source_path     = path.join(bin_path, source_filename)
    local lmodsource_path = path.join(global_config.stack_path, "tools/lmod/" .. global_config.lmod.version .. "/lmod/lmod/init/profile")
    local config_path     = global_config.this_path
+   local lmodrc_path     = global_config.stack_path .. path.sep .. "lmodrc.lua"
    
    -- Open file for writing
    local bin_file = assert(io.open(path.join(bin_path, "modules.sh"), "w"))
@@ -343,6 +330,8 @@ local function write_sh_source(bin_path, source_filename, parent_configs)
       bin_file:write("   # Export some GPM\n")
       bin_file:write("   export GPM_CONFIG=\"" .. config_path .. "\":$GPM_CONFIG\n")
       bin_file:write("\n")
+      bin_file:write("   export LMOD_RC=\"" .. lmodrc_path .. "\":$LMOD_RC\n")
+      bin_file:write("\n")
    else
       bin_file:write("   # Unset paths\n")
       bin_file:write("   unset MODULEPATH_ROOT\n")
@@ -366,6 +355,8 @@ local function write_sh_source(bin_path, source_filename, parent_configs)
       bin_file:write("\n")
       bin_file:write("   # Export some GPM\n")
       bin_file:write("   export GPM_CONFIG=\"" .. config_path .. "\"\n")
+      bin_file:write("\n")
+      bin_file:write("   export LMOD_RC=\"" .. lmodrc_path .. "\"\n")
       bin_file:write("\n")
    end
 
@@ -392,6 +383,9 @@ local function create_shell_environment(parent_configs)
    write_csh_source(bin_path, "modules.csh", parent_configs)
 end
 
+--- If initializing a childstack, register the stack with the parent stack.
+--
+-- @param parent_configs    A list of parent configuration.
 local function register_in_parents(parent_configs)
    for _, v in pairs(parent_configs) do
       local db_path = v.stack_path .. "/" .. v.db.path .. ".childstack"
@@ -401,6 +395,31 @@ local function register_in_parents(parent_configs)
 
       db_file:close()
    end
+end
+
+--- 
+--
+local function write_lmodrc()
+   local lmodrc_path = global_config.stack_path .. "/lmodrc.lua"
+
+   -- Open file for writing
+   local lmodrc_file = assert(io.open(lmodrc_path, "w"))
+   
+   local cache_path      = global_config.lmod.cache_path
+   local cache_dir       = cache_path .. path.sep .. "cache"
+   local cache_timestamp = cache_path .. path.sep .. "system.txt"
+   
+   -- Write file
+   lmodrc_file:write("# -*- lua -*-\n")
+   lmodrc_file:write("scDescriptT = {\n")
+   lmodrc_file:write("   {\n")
+   lmodrc_file:write("      [\"dir\"] = \"" .. cache_dir .. "\",\n")
+   lmodrc_file:write("      [\"timestamp\"] = \"" .. cache_timestamp .. "\",\n")
+   lmodrc_file:write("   },\n")
+   lmodrc_file:write("}\n")
+   
+   -- Close file
+   lmodrc_file:close()
 end
 
 -------------------------------------
@@ -440,6 +459,8 @@ local function initialize(args)
          lfs.mkdir(path.join(global_config.stack_path, v))
          lfs.mkdir(path.join(global_config.lmod_directory, v))
       end
+
+      write_lmodrc()
 
       -- Create module file for gpm
       install_gpm(args)

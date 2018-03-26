@@ -7,6 +7,7 @@ local exception  = assert(require "lib.exception")
 local logging    = assert(require "lib.logging")
 local packages   = assert(require "lib.packages")
 local database   = assert(require "lib.database")
+local lmod       = assert(require "lib.lmod")
 
 -- Create module
 local M = {}
@@ -68,9 +69,12 @@ local function remove(args)
       if (util.conditional(database.use_db(), database.installed(package), true)) or args.force then
          -- Remove the package
          remove_package(package)
+         
+         lmod.update_lmod_cache({io.stdout})
       else
          logging.message("Package not installed.", io.stdout)
       end
+
       
       -- Fix the database
       database.remove_package(package)
