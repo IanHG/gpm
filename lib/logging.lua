@@ -82,12 +82,14 @@ end
 -- @param log   A single output stream or a set of output streams
 -- @param raw   Print raw message, or add newline to the end
 local function debug(msg, log, raw)
-   if log then
-      -- Create message
-      msg = create_message(msg, ansicolor.bold .. ansicolor.blue .. " >>> " .. ansicolor.default, ansicolor.reset, raw)
-      
-      -- Then write to log
-      write_to_log(msg, log)
+   if global_config.debug then
+      if log then
+         -- Create message
+         msg = create_message(msg, ansicolor.bold .. ansicolor.blue .. " >>> " .. ansicolor.default, ansicolor.reset, raw)
+         
+         -- Then write to log
+         write_to_log(msg, log)
+      end
    end
 end
 

@@ -24,6 +24,10 @@ local function locate_gpk_file(args, config)
       local filename = args.gpk .. ".gpk"
       local function locate_gpk_impl()
          for gpk_path in path.iterator(config.gpk_path) do
+            if(global_config.debug) then
+               logging.debug("Checking path : " .. gpk_path, io.stdout)
+            end
+
             -- Check for abs path
             if not path.is_abs_path(gpk_path) then
                gpk_path = path.join(config.stack_path, gpk_path)

@@ -115,6 +115,7 @@ local function write_csh_source(bin_path, source_filename, parent_configs)
    local source_path     = path.join(bin_path, source_filename)
    local lmodsource_path = path.join(global_config.stack_path, "tools/lmod/" .. global_config.lmod.version .. "/lmod/lmod/init/csh")
    local config_path     = global_config.this_path
+   local lmodrc_path     = global_config.stack_path .. path.sep .. "lmodrc.lua"
    
    -- Open file
    local source_file = io.open(path.join(bin_path, source_filename), "w")
@@ -199,6 +200,9 @@ local function write_csh_source(bin_path, source_filename, parent_configs)
       source_file:write("\n")
       source_file:write("   # Export some GPM\n")
       source_file:write("   setenv GPM_CONFIG \"" .. config_path .. "\":$GPM_CONFIG\n")
+      source_file:write("\n")
+      source_file:write("   # Export LMOD_RC\n")
+      source_file:write("   setenv GPM_CONFIG \"" .. lmodrc_path .. "\":$GPM_CONFIG\n")
    else
       source_file:write("   # Unset paths\n")
       source_file:write("   unset MODULEPATH_ROOT\n")
@@ -222,6 +226,9 @@ local function write_csh_source(bin_path, source_filename, parent_configs)
       source_file:write("\n")
       source_file:write("   # Export some GPM\n")
       source_file:write("   setenv GPM_CONFIG \"" .. config_path .. "\"\n")
+      source_file:write("\n")
+      source_file:write("   # Export LMOD_RC\n")
+      source_file:write("   setenv LMOD_RC \"" .. lmodrc_path .. "\"\n")
    end
    
 
@@ -330,6 +337,7 @@ local function write_sh_source(bin_path, source_filename, parent_configs)
       bin_file:write("   # Export some GPM\n")
       bin_file:write("   export GPM_CONFIG=\"" .. config_path .. "\":$GPM_CONFIG\n")
       bin_file:write("\n")
+      bin_file:write("   # Export LMOD_RC\n")
       bin_file:write("   export LMOD_RC=\"" .. lmodrc_path .. "\":$LMOD_RC\n")
       bin_file:write("\n")
    else
@@ -356,6 +364,7 @@ local function write_sh_source(bin_path, source_filename, parent_configs)
       bin_file:write("   # Export some GPM\n")
       bin_file:write("   export GPM_CONFIG=\"" .. config_path .. "\"\n")
       bin_file:write("\n")
+      bin_file:write("   # Export LMOD_RC\n")
       bin_file:write("   export LMOD_RC=\"" .. lmodrc_path .. "\"\n")
       bin_file:write("\n")
    end
