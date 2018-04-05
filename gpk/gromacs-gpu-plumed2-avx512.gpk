@@ -32,7 +32,7 @@ build = {
       
       export CC=icc
       export CXX=icpc
-      cmake -DCMAKE_INSTALL_PREFIX=<pkginstall> -DGMX_SIMD=AVX_512 -DGMX_MPI=ON -DGMX_GPU=ON -DGMX_BUILD_OWN_FFTW=ON ../
+      cmake -DCUDA_TOOLKIT_ROOT_DIR=$CUDA_HOME -DGPU_DEPLOYMENT_KIT_ROOT_DIR=$CUDA_HOME -DCMAKE_INSTALL_PREFIX=<pkginstall> -DGMX_SIMD=AVX_512 -DGMX_MPI=ON -DGMX_GPU=ON -DGMX_OPENMP=ON -DGMX_BUILD_OWN_FFTW=ON -DGMX_USE_NVML=ON ../
       
       make -j<nprocesses>
       make install
