@@ -36,6 +36,10 @@ lmod = {
    setenv_abs = {
       {"CUDA_HOME", "<pkginstall>"}
    },
+   setenv = {
+      {"CUDA_LIB_PATH", "lib64/stubs"},
+      {"CUDA_BIN_PATH", "bin"},
+   },
 }
 
 --[[

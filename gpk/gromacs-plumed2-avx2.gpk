@@ -22,7 +22,7 @@ build = {
    -- Build command
    command = [[
       # Apply plumed
-      plumed patch -p --runtime -e gromacs-5.1.4
+      plumed patch -p --runtime -e gromacs-<pkgversion>
 
       # Build gromacs
       mkdir build
@@ -30,7 +30,7 @@ build = {
       
       export CC=icc
       export CXX=icpc
-      cmake -DCMAKE_INSTALL_PREFIX=<pkginstall> -DGMX_SIMD=AVX_256 -DGMX_MPI=ON -DGMX_GPU=OFF -DGMX_BUILD_OWN_FFTW=ON ../
+      cmake -DCMAKE_INSTALL_PREFIX=<pkginstall> -DGMX_SIMD=AVX_256 -DGMX_MPI=ON -DGMX_GPU=OFF -DGMX_BUILD_OWN_FFTW=ON -DGMX_OPENMP=ON ../
       
       make -j<nprocesses>
       make install

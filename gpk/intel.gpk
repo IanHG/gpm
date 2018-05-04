@@ -72,7 +72,8 @@ ACTIVATION_LICENSE_FILE=<pkgbuild>/license.lic
 #CLUSTER_INSTALL_MACHINES_FILE=filepat
 
 # Intel(R) Software Improvement Program opt-in, valid values are: {yes, no}
-PHONEHOME_SEND_USAGE_DATA=no
+#PHONEHOME_SEND_USAGE_DATA=no
+INTEL_SW_IMPROVEMENT_PROGRAM_CONSENT=no
 
 # Perform validation of digital signatures of RPM files, valid values are: {yes, no}
 SIGNING_ENABLED=yes
@@ -84,7 +85,8 @@ ARCH_SELECTED=ALL
    -- Build command
    command = [[
       mkdir <pkgbuild>/<pkg>_tmp
-      <pkgbuild>/<pkg>/install.sh --silent <pkgbuild>/silent.cfg --user-mode --tmp-dir <pkgbuild>/<pkg>_tmp --SHARED_BUILD
+      #<pkgbuild>/<pkg>/install.sh --silent <pkgbuild>/silent.cfg --user-mode --tmp-dir <pkgbuild>/<pkg>_tmp --SHARED_BUILD
+      <pkgbuild>/<pkg>/install.sh --silent <pkgbuild>/silent.cfg --user-mode --tmp-dir <pkgbuild>/<pkg>_tmp
       cp <pkgbuild>/license.lic <pkginstall>/compilers_and_libraries_<pkgversion>/linux/bin/intel64/.
    ]]
 }

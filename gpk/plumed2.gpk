@@ -21,7 +21,7 @@ build = {
    source_type = "git",
    -- Build command
    command = [[
-      #git checkout v<pkgversion>
+      git checkout v<pkgversion>
 
       # make configure
       ./configure --prefix=<pkginstall> --enable-mpi --enable-gsl --enable-fftw

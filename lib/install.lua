@@ -109,7 +109,7 @@ local function make_package_ready_for_install(package)
    
    if package.build.source_type == "git" then
       if (not filesystem.exists(path.join(package.build_directory, package.definition.pkg))) then
-         line = "git clone " .. source .. " " .. package.definition.pkg
+         line = "git clone --recursive " .. source .. " " .. package.definition.pkg
          util.execute_command(line, package.log)
       end
    else
@@ -452,7 +452,8 @@ local function setup_lmod_for_lmod(package)
    local modulefile_directory = package.lmod.modulefile_directory
    filesystem.mkdir(modulefile_directory, "", true)
    
-   local lmod_filename     = path.join(package.definition.pkginstall .. "/lmod/" .. package.definition.pkgversion .. "/modulefiles/Core/lmod/", package.definition.pkgversion .. ".lua")
+   --local lmod_filename     = path.join(package.definition.pkginstall .. "/lmod/" .. package.definition.pkgversion .. "/modulefiles/Core/lmod/", package.definition.pkgversion .. ".lua")
+   local lmod_filename     = package.definition.pkginstall .. "/lmod/" .. package.definition.pkgversion .. "/modulefiles/Core/lmod.lua"
    local lmod_filename_new = path.join(modulefile_directory, package.definition.pkgversion .. ".lua")
    print("LMOD : ")
    print("old : " .. lmod_filename)
@@ -463,7 +464,8 @@ local function setup_lmod_for_lmod(package)
    local settarg_modulefile_directory = package.lmod.modulefile_directory:gsub("lmod", "settarg")
    filesystem.mkdir(settarg_modulefile_directory, "", true)
    
-   local settarg_filename     = path.join(package.definition.pkginstall .. "/lmod/" .. package.definition.pkgversion .. "/modulefiles/Core/settarg/", package.definition.pkgversion .. ".lua")
+   --local settarg_filename     = path.join(package.definition.pkginstall .. "/lmod/" .. package.definition.pkgversion .. "/modulefiles/Core/settarg/", package.definition.pkgversion .. ".lua")
+   local settarg_filename     = package.definition.pkginstall .. "/lmod/" .. package.definition.pkgversion .. "/modulefiles/Core/settarg.lua"
    local settarg_filename_new = path.join(settarg_modulefile_directory, package.definition.pkgversion .. ".lua")
    print("SET ARG : ")
    print("old : " .. settarg_filename)

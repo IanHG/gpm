@@ -26,7 +26,7 @@ build = {
       
       export CC=icc
       export CXX=icpc
-      cmake -DCMAKE_INSTALL_PREFIX=<pkginstall> -DGMX_SIMD=SSE4.1 -DGMX_MPI=ON -DGMX_GPU=OFF -DGMX_BUILD_OWN_FFTW=ON ../
+      cmake -DCMAKE_INSTALL_PREFIX=<pkginstall> -DGMX_SIMD=SSE4.1 -DGMX_MPI=ON -DGMX_GPU=OFF -DGMX_BUILD_OWN_FFTW=ON -DGMX_OPENMP=ON ../
       
       make -j<nprocesses>
       make install

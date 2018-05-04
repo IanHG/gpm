@@ -24,6 +24,7 @@ build = {
       # Apply plumed
       which plumed
       pwd
+      plumed patch --list-engines
       plumed patch -p --runtime -e gromacs-<pkgversion>
 
       # Build gromacs
@@ -32,7 +33,8 @@ build = {
       
       export CC=icc
       export CXX=icpc
-      cmake -DCUDA_TOOLKIT_ROOT_DIR=$CUDA_HOME -DGPU_DEPLOYMENT_KIT_ROOT_DIR=$CUDA_HOME -DCMAKE_INSTALL_PREFIX=<pkginstall> -DGMX_SIMD=AVX_512 -DGMX_MPI=ON -DGMX_GPU=ON -DGMX_OPENMP=ON -DGMX_BUILD_OWN_FFTW=ON -DGMX_USE_NVML=ON ../
+      #cmake -DCUDA_TOOLKIT_ROOT_DIR=$CUDA_HOME -DGPU_DEPLOYMENT_KIT_ROOT_DIR=$CUDA_HOME -DCMAKE_INSTALL_PREFIX=<pkginstall> -DGMX_SIMD=AVX_512 -DGMX_MPI=ON -DGMX_GPU=ON -DGMX_OPENMP=ON -DGMX_BUILD_OWN_FFTW=ON -DGMX_USE_NVML=ON ../
+      cmake -DCUDA_TOOLKIT_ROOT_DIR=$CUDA_HOME -DGPU_DEPLOYMENT_KIT_ROOT_DIR=$CUDA_HOME -DCMAKE_INSTALL_PREFIX=<pkginstall> -DGMX_SIMD=AVX_256 -DGMX_MPI=ON -DGMX_GPU=ON -DGMX_OPENMP=ON -DGMX_BUILD_OWN_FFTW=ON -DGMX_CUDA_TARGET_COMPUTE=60 ../
       
       make -j<nprocesses>
       make install
