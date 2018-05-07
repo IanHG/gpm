@@ -448,13 +448,13 @@ local function initialize(args)
       --check_luapackages(args)
       local parent_configs = get_parent_configs(global_config)
       
-      -- Install lmod if needed
-      install_lmod(args)
-         
       print("CREATE SHELL")
       -- Create shell file to source new software tree
       create_shell_environment(parent_configs)
-
+      
+      -- Install lmod if needed
+      install_lmod(args)
+         
       if ((global_config.meta_stack.parent) and (global_config.meta_stack.register)) then
          register_in_parents(parent_configs)
       end

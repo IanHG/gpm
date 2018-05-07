@@ -1,0 +1,54 @@
+-- Singularity gpk script
+
+-- Description of the gpk
+description = [[
+ Molden is a package for displaying Molecular Density from the Ab Initio packages GAMESS-UK , GAMESS-US and GAUSSIAN and the Semi-Empirical packages Mopac/Ampac, it also supports a number of other programs via the Molden Format. Molden reads all the required information from the GAMESS / GAUSSIAN outputfile. Molden is capable of displaying Molecular Orbitals, the electron density and the Molecular minus Atomic density. Either the spherically averaged atomic density or the oriented ground state atomic density can be subtracted for a number of standard basis sets. Molden supports contour plots, 3-d grid plots with hidden lines and a combination of both. It can write a variety of graphics instructions; postscript, XWindows, VRML, povray, OpenGL, tekronix4014, hpgl, hp2392 and Figure. Both Xwindows and OpenGL versions of Molden are also capable of importing and displaying of chemx, PDB, and a variety of mopac/ampac files and lots of other formats. Molden also can animate reaction paths and molecular vibrations. It can calculate and display the true or Multipole Derived Electrostatic Potential and atomic charges can be fitted to the Electrostatic Potential calculated on a Connolly surface. Molden also features an stand alone forcefield program ambfor, which can optimise geometries with the combined Amber (protein) and GAFF (small molecules) force fields. Atom typing can be done automatically and interactively from within Molden, as well as firing optimisation jobs. Molden has a powerful Z-matrix editor which give full control over the geometry and allows you to build molecules from scratch, including polypeptides. Molden was also submitted to the QCPE (dead?) (QCPE619), allthough the Xwindows version is considerably running behind on the current one.
+
+ ------------------------------ 
+
+http://www.cmbi.ru.nl/molden/
+]]
+
+-- Definition section
+definition = {
+   pkgname = "molden",
+   pkggroup = "apps",
+   pkgfamily = "molden",
+}
+
+-- Required types
+prerequisite = {}
+
+-- Build section
+build = {
+   -- Source of package
+   --source = "https://github.com/git/git",
+   source = "ftp://ftp.cmbi.ru.nl/pub/molgraph/molden/molden<pkgversion>.tar.gz",
+   -- Build command
+   command = [[
+      # Molden makefiles needs a shine up :) (from here: http://verahill.blogspot.dk/2012/09/molden-on-debian-testing.html)
+      sed -i "s/LIBSG \= \-L\/usr\/X11R6\/lib \-lGLU \-lGL \-lXmu \-lX11 \-lm/LIBSG \= \-L\/usr\/X11R6\/lib \-lGLU \-lGL \-lX11 \-lm/g" makefile
+      sed -i "s/\@ makedepend \$(INCLUDE) \-f makedep \$(DEPEND)/\@ \$(CC) \$(INCLUDE) \-M \$(DEPEND) \> makedep/g" surf/Makefile
+      
+      # Build molden 
+      make -j<nprocesses>
+      
+      # Install files
+      mkdir -p <pkginstall>/bin
+      cp molden <pkginstall>/bin/.
+      cp gmolden <pkginstall>/bin/.
+      cp ambfor/ambfor <pkginstall>/bin/.
+      cp ambfor/ambmd <pkginstall>/bin/.
+      cp ambfor/tompi <pkginstall>/bin/.
+      cp surf/surf <pkginstall>/bin/.
+   ]],
+}
+
+-- Lmod section
+lmod = {
+   help = [[This module loads Molden v. <pkgversion>.]],
+}
+
+--[[
+# vi:syntax=lua
+--]]
