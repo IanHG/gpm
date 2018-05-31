@@ -30,6 +30,15 @@ build = {
 -- Lmod section
 lmod = {
    help = [[This module loads Dalton v. <pkgversion>.]],
+
+   prepend_path = {
+      {"PATH", "dalton"},
+      {"PATH", "dalton/tools"},
+   },
+   setenv = {
+      {'DALTON_BASIS', 'dalton/basis'},
+      {'BASDIR'      , 'dalton/basis'},
+   },
 }
 
 --[[

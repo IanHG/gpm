@@ -1,0 +1,38 @@
+-- Singularity gpk script
+
+-- Description of the gpk
+description = [[
+]]
+
+-- Definition section
+definition = {
+   pkgname = "cfour-openmpi",
+   pkggroup = "apps",
+   pkgfamily = "cfour",
+}
+
+-- Required types
+prerequisite = {}
+
+-- Build section
+build = {
+   -- Build command
+   command = [[
+      ./configure --prefix=<pkginstall> --enable-mpi=openmpi
+      make -j<nprocesses>
+      make install
+   ]],
+}
+
+-- Lmod section
+lmod = {
+   help = [[This module loads CFOUR v. <pkgversion>.]],
+
+   setenv = {
+      {"CFOUR_BASIS", "basis"},
+   },
+}
+
+--[[
+# vi:syntax=lua
+--]]

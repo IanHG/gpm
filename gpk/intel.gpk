@@ -86,7 +86,7 @@ ARCH_SELECTED=ALL
    command = [[
       mkdir <pkgbuild>/<pkg>_tmp
       #<pkgbuild>/<pkg>/install.sh --silent <pkgbuild>/silent.cfg --user-mode --tmp-dir <pkgbuild>/<pkg>_tmp --SHARED_BUILD
-      <pkgbuild>/<pkg>/install.sh --silent <pkgbuild>/silent.cfg --user-mode --tmp-dir <pkgbuild>/<pkg>_tmp
+      <pkgbuild>/<pkg>/install.sh --silent <pkgbuild>/silent.cfg --user-mode --tmp-dir <pkgbuild>/<pkg>_tmp --SHARED_INSTALL
       cp <pkgbuild>/license.lic <pkginstall>/compilers_and_libraries_<pkgversion>/linux/bin/intel64/.
    ]]
 }
