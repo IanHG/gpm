@@ -1,0 +1,78 @@
+-- Load globally installed packages
+local argparse = assert(require "argparse")
+
+-- Load local packages
+local exception  = assert(require "lib.exception")
+local path       = assert(require "lib.path")
+local version    = assert(require "lib.version")
+local util       = assert(require "lib.util")
+local logging    = assert(require "lib.logging")
+local ansicolor  = assert(require "lib.ansicolor")
+local configload = assert(require "lib.configload")
+local filesystem = assert(require "lib.filesystem")
+local database   = assert(require "lib.database")
+local isa        = assert(require "lib.isa")
+
+-- Description of this script
+local description = version.get_description("gpm-stack.lua")
+
+--- Show architecture
+--
+local function show_arch()
+   local isa_local = isa.deduce_isa()
+   isa_local:print()
+end
+
+--- Main driver.
+function main()
+   -- Arg parser
+   local parser = argparse(description.script_name, description.name .. ":\n" .. description.desc)
+   
+   -- Commands
+   local parser_arch = parser:command("arch") 
+   
+   -- Some general arguments
+   parser:option("-c --config", "Provide config file."):overwrite(false)
+   parser:option("-t --token"   , "Set a stack token."):overwrite(false)
+   parser:flag("--debug", "Print debug information (mostly for developers).")
+   parser:flag("-v --version", "Print '" .. version.get_version() .. "' and exit."):action(function()
+      print(version.get_version())
+      os.exit(0)
+   end)
+   
+   -- arch specific
+   --parser_ls:flag("-a --all"   , "List all available stacks."):overwrite(false)
+      
+   -- Parse arguments
+   args = parser:parse()
+   
+   if args.debug then
+      logging.debug("Lua version : " .. _VERSION, io.stdout)
+      logging.debug(util.print(args, "args"), io.stdout)
+   end
+   
+   exception.try(function()
+      -- Bootstrap config
+      configload.bootstrap(nil, args, {}, true)
+
+      if args.arch then
+         show_arch()
+      end
+      
+   end, function(e)
+      -- Print exception
+      exception.message(e)
+         
+      -- Print usage
+      print("\n" .. parser:get_usage())
+
+      -- Exit with non zero status
+      os.exit(1)
+   end)
+   
+   
+end
+
+--[[
+# vi:syntax=lua
+--]]
