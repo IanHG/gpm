@@ -162,7 +162,7 @@ function gpus_class:__init()
    self.gpus   = {}
 end
 
-function gpus_class::has_gpus()
+function gpus_class:has_gpus()
    return (self.ngpus > 0)
 end
 
