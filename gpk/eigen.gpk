@@ -1,0 +1,39 @@
+-- Singularity gpk script
+
+-- Description of the gpk
+description = [[
+]]
+
+-- Definition section
+definition = {
+   pkgname = "eigen",
+   pkggroup = "tools",
+   pkgfamily = "eigen",
+}
+
+-- Required types
+prerequisite = {}
+
+-- Build section
+build = {
+   -- Source of package
+   --source = "https://github.com/git/git",
+   source = "http://bitbucket.org/eigen/eigen/get/<pkgversion>.tar.bz2",
+   -- Build command
+   command = [[
+      mkdir build
+      cd build
+      
+      cmake -DCMAKE_INSTALL_PREFIX=<pkginstall> ../
+      make install
+   ]],
+}
+
+-- Lmod section
+lmod = {
+   help = [[This module loads Eigen v. <pkgversion>.]],
+}
+
+--[[
+# vi:syntax=lua
+--]]

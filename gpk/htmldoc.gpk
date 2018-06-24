@@ -1,0 +1,40 @@
+-- Singularity gpk script
+
+-- Description of the gpk
+description = [[
+HTMLDOC is a program that reads HTML and Markdown source files or web pages and generates corresponding EPUB, HTML, PostScript, or PDF files with an optional table of contents.
+
+https://github.com/michaelrsweet/htmldoc
+]]
+
+-- Definition section
+definition = {
+   pkgname = "htmldoc",
+   pkggroup = "tools",
+   pkgfamily = "htmldoc",
+}
+
+-- Required types
+prerequisite = {}
+
+-- Build section
+build = {
+   -- Source of package
+   source = "https://github.com/michaelrsweet/htmldoc/archive/v<pkgversion>.tar.gz",
+   -- Build command
+   command = [[
+      # make configure
+      ./configure --prefix=<pkginstall>
+      make -j<nprocesses>
+      make install
+   ]],
+}
+
+-- Lmod section
+lmod = {
+   help = [[This module loads HTMLDOC v. <pkgversion>.]],
+}
+
+--[[
+# vi:syntax=lua
+--]]

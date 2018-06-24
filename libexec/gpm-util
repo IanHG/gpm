@@ -21,6 +21,10 @@ local description = version.get_description("gpm-stack.lua")
 local function show_arch()
    local isa_local = isa.deduce_isa()
    isa_local:print()
+
+   local gpus_local = isa.deduce_gpus()
+   gpus_local:print()
+
 end
 
 --- Main driver.

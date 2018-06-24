@@ -104,14 +104,16 @@ local function mkdir(path, mode, recursively)
    if (not path) then
       return false
    end
-
-   does_exist = exists(path)
+   
+   -- Check for existance of path
+   local does_exist = exists(path)
 
    if does_exist then
       if not isdir(path) then
          return nil, "Cannot create directory: File exists."
       end
    else
+      -- If we are creating recursively, we recurse
       if recursively then
          base_path = string.gsub(_path.remove_dir_end(path), "/[^/]*$", "")
          if not exists(base_path) then
@@ -120,7 +122,9 @@ local function mkdir(path, mode, recursively)
       end
    end
 
-   return _lfs.mkdir(path)
+   -- Create directory
+   local status = _lfs.mkdir(path)
+   return status
 end
 
 --- Remove a directory.
@@ -181,16 +185,34 @@ end
 --
 -- @return 
 local function chdir(path)
-   return lfs.chdir(path)
+   return _lfs.chdir(path)
 end
 
 --- Get current working directory
 --
 -- @return Returns cwd.
 local function cwd()
-   return lfs.currentdir()
+   return _lfs.currentdir()
 end
 
+--- Chmod of file
+--
+-- @param path
+-- @param mode
+--
+-- @return
+local function chmod(path, mode)
+   assert(false) -- not implemented :D
+   local mode_bit 
+
+   if type(mode) == "table" then
+   
+   elseif type(mode) == "string" then
+
+   end
+
+   return _posix.sys.stat.chmod(path, mode)
+end
 
 --- Load module
 M.exists    = exists
@@ -205,5 +227,6 @@ M.mkdir     = mkdir
 M.rmdir     = rmdir
 M.chdir     = chdir
 M.cwd       = cwd
+M.chmod     = chmod
 
 return M

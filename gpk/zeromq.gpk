@@ -1,0 +1,36 @@
+-- Singularity gpk script
+
+-- Description of the gpk
+description = [[
+]]
+
+-- Definition section
+definition = {
+   pkgname = "zeromq",
+   pkggroup = "tools",
+   pkgfamily = "zeromq",
+}
+
+-- Required types
+prerequisite = {}
+
+-- Build section
+build = {
+   -- Source of package
+   source = "https://github.com/zeromq/libzmq/releases/download/v<pkgversion>/zeromq-<pkgversion>.tar.gz",
+   -- Build command
+   command = [[
+      ./configure --prefix=<pkginstall> --disable-Werror
+      make -j<nprocesses>
+      make install
+   ]],
+}
+
+-- Lmod section
+lmod = {
+   help = [[This module loads ZeroMQ v. <pkgversion>.]],
+}
+
+--[[
+# vi:syntax=lua
+--]]
