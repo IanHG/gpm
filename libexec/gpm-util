@@ -25,6 +25,9 @@ local function show_arch()
    local gpus_local = isa.deduce_gpus()
    gpus_local:print()
 
+   local mem_local = isa.deduce_mem()
+   mem_local:print()
+
 end
 
 --- Main driver.
