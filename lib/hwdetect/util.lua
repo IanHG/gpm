@@ -71,11 +71,21 @@ local function key_value_pair(s)
    return t[1], t[2]
 end
 
+--- Convert bool to string for pretty printing.
+local function booltostr(b)
+   if b then
+      return "true"
+   else
+      return "false"
+   end
+end
+
 -- Load module
 M.isempty              = isempty
 M.split                = split
 M.trim                 = trim
 M.key_value_pair       = key_value_pair
 M.create_uid_generator = create_uid_generator
+M.booltostr            = booltostr
 
 return M

@@ -32,6 +32,7 @@ local function show_arch()
    hw_info.cpu_info:print()
    hw_info.gpu_info:print()
    hw_info.mem_info:print()
+   hw_info.net_info:print()
 
 end
 
