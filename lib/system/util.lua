@@ -1,10 +1,13 @@
 local M = {}
 
 -- Some string helper functions
+
+-- Check if string is empty.
 local function isempty(s)
    return s == nil or s == ''
 end
 
+-- Special split function that takes number of occurences to split.
 local function split(inputstr, sep, noccur)
    if inputstr == nil then
       return {}

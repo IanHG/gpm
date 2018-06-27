@@ -19,14 +19,19 @@ local description = version.get_description("gpm-stack.lua")
 --- Show architecture
 --
 local function show_arch()
-   local cpu_local = hwsystem.detect_cpu()
-   cpu_local:print()
+   --local cpu_local = hwsystem.detect_cpu()
+   --cpu_local:print()
 
-   local gpu_local = hwsystem.detect_gpu()
-   gpu_local:print()
+   --local gpu_local = hwsystem.detect_gpu()
+   --gpu_local:print()
 
-   local mem_local = hwsystem.detect_mem()
-   mem_local:print()
+   --local mem_local = hwsystem.detect_mem()
+   --mem_local:print()
+
+   local hw_info = hwsystem.detect_hw()
+   hw_info.cpu_info:print()
+   hw_info.gpu_info:print()
+   hw_info.mem_info:print()
 
 end
 
