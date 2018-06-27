@@ -1,9 +1,9 @@
 local M = {}
 
 local _class = assert(require "lib.class")
-local _cpu   = assert(require "lib.system.cpu")
-local _gpu   = assert(require "lib.system.gpu")
-local _mem   = assert(require "lib.system.mem")
+local _cpu   = assert(require "lib.hwdetect.cpu")
+local _gpu   = assert(require "lib.hwdetect.gpu")
+local _mem   = assert(require "lib.hwdetect.mem")
 
 local hw_info_class = _class.create_class()
 

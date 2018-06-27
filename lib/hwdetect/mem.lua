@@ -1,7 +1,7 @@
 local M = {}
 
 local class = assert(require "lib.class")
-local util  = assert(require "lib.system.util")
+local util  = assert(require "lib.hwdetect.util")
 
 local mem_class = class.create_class()
 

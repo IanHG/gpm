@@ -1,7 +1,7 @@
 local M = {}
 
 local class = assert(require "lib.class")
-local util  = assert(require "lib.system.util")
+local util  = assert(require "lib.hwdetect.util")
 
 -- Vector instruction set dictionary
 local function generate_vector_instruction_set_dictionary()
