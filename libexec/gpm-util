@@ -11,7 +11,7 @@ local ansicolor  = assert(require "lib.ansicolor")
 local configload = assert(require "lib.configload")
 local filesystem = assert(require "lib.filesystem")
 local database   = assert(require "lib.database")
-local isa        = assert(require "lib.isa")
+local hwsystem   = assert(require "lib.system.system")
 
 -- Description of this script
 local description = version.get_description("gpm-stack.lua")
@@ -19,13 +19,13 @@ local description = version.get_description("gpm-stack.lua")
 --- Show architecture
 --
 local function show_arch()
-   local isa_local = isa.deduce_isa()
-   isa_local:print()
+   local cpu_local = hwsystem.detect_cpu()
+   cpu_local:print()
 
-   local gpus_local = isa.deduce_gpus()
-   gpus_local:print()
+   local gpu_local = hwsystem.detect_gpu()
+   gpu_local:print()
 
-   local mem_local = isa.deduce_mem()
+   local mem_local = hwsystem.detect_mem()
    mem_local:print()
 
 end
