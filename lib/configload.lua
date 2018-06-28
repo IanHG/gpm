@@ -61,7 +61,7 @@ local function configpath(args)
    if args.config then
       config_path = args.config
    else
-      -- If none was given we check for the environtment one.
+      -- If none was given we check for the environment one.
       local env_config_paths = os.getenv("GPM_CONFIG")
       if env_config_paths then
          for env_config_path in path.iterator(env_config_paths) do

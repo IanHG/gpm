@@ -41,6 +41,10 @@ local function trim(s)
    return n and s:match(".*%S", n) or ""
 end
 
+local function getfilename(path)
+   return path:match("^.+/(.+)$")
+end
+
 --- Create uid generator
 --
 -- @return   Returns Unique ID (uid) generator function.
@@ -80,6 +84,17 @@ local function booltostr(b)
    end
 end
 
+--- Make key from trimmed string.
+-- This amounts to making everything lowercase and substituting space (" ") for underscore ("_").
+-- 
+-- @param str    The str to make into a key.
+--
+-- @return       Returns key from str.
+local function key(str)
+   local key = string.lower(str):gsub(" ", "_")
+   return key
+end
+
 -- Load module
 M.isempty              = isempty
 M.split                = split
@@ -87,5 +102,7 @@ M.trim                 = trim
 M.key_value_pair       = key_value_pair
 M.create_uid_generator = create_uid_generator
 M.booltostr            = booltostr
+M.getfilename          = getfilename
+M.key                  = key
 
 return M

@@ -18,7 +18,7 @@ function mem_class:print()
    print("   MEM_FREE      : " .. self.mem_free)
 end
 
----
+--- Detect memory
 --
 local function detect_mem()
    local mem_local = mem_class:create({})
