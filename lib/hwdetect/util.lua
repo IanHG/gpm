@@ -2,9 +2,25 @@ local M = {}
 
 -- Some string helper functions
 
--- Check if string is empty.
+-- Check if string or table is empty.
 local function isempty(s)
-   return s == nil or s == ''
+   if not s then
+      return true
+   end
+
+   if type(s) == "string" then
+      -- string
+      return s == nil or s == ''
+   elseif type(s) == "table" then
+      -- table
+      if next(s) == nil then
+         return true
+      else
+         return false
+      end
+   else
+      return false
+   end
 end
 
 -- Special split function that takes number of occurences to split.

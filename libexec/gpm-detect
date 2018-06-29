@@ -11,17 +11,62 @@ local ansicolor  = assert(require "lib.ansicolor")
 local configload = assert(require "lib.configload")
 local filesystem = assert(require "lib.filesystem")
 local database   = assert(require "lib.database")
-local lmod       = assert(require "lib.lmod")
 local hwdetect   = assert(require "lib.hwdetect.hwdetect")
 
 -- Description of this script
 local description = version.get_description("gpm-stack.lua")
 
+--- Show architecture
 --
-local function command_lmod(args, logs)
-   if args.update_cache then
-      lmod.update_lmod_cache(logs)
+local function show_arch()
+   --local cpu_local = hwsystem.detect_cpu()
+   --cpu_local:print()
+
+   --local gpu_local = hwsystem.detect_gpu()
+   --gpu_local:print()
+
+   --local mem_local = hwsystem.detect_mem()
+   --mem_local:print()
+
+   local hw_info = hwdetect.detect_hw()
+   hw_info.cpu_info:print()
+   hw_info.gpu_info:print()
+   hw_info.mem_info:print()
+   hw_info.net_info:print()
+
+end
+
+--- Net
+local function command_net(args)
+   local net_info = hwdetect.net.create_net_info()
+   
+   if args.fast then
+      hwdetect.net.detect_fast(net_info)
+
+      if args.ib then
+         print(net_info.mellanox_infiniband_detected)
+      else
+         if not util.isempty(args.port) then
+            for k, v in pairs(args.port) do
+               local port = "Port " .. tostring(v)
+               if net_info.ib.ports[port] then
+                  print("  IB " .. port)
+                  for kinner, vinner in pairs(net_info.ib.ports[port]) do
+                     print("      " .. kinner .. " : " .. vinner)
+                  end
+               end
+            end
+         else
+            net_info:print()
+         end
+      end
+   else
+      hwdetect.net.detect_interfaces(net_info)
+      
+      net_info:print()
    end
+
+   --net_info:print()
 end
 
 --- Main driver.
@@ -30,7 +75,8 @@ function main()
    local parser = argparse(description.script_name, description.name .. ":\n" .. description.desc)
    
    -- Commands
-   local parser_lmod = parser:command("lmod", "Manipulate Lmod.") 
+   local parser_arch = parser:command("arch") 
+   local parser_net  = parser:command("net")
    
    -- Some general arguments
    parser:option("-c --config", "Provide config file."):overwrite(false)
@@ -44,8 +90,11 @@ function main()
    -- arch specific
    --parser_arch:flag("-a --all"   , "List all available stacks."):overwrite(false)
    
-   -- lmod specific
-   parser_lmod:flag  ("--update-cache",   "Update Lmod cache for current stack.")
+   -- net specific
+   parser_net:require_command(false)
+   local parser_net_fast = parser_net:command("fast", "Detect fast network.")
+   parser_net_fast:flag  ("--ib",   "Check for infiniband.")
+   parser_net_fast:option("--port", "Print only for specific ports (default print for all ports)."):count("*")
       
    -- Parse arguments
    args = parser:parse()
@@ -55,14 +104,14 @@ function main()
       logging.debug(util.print(args, "args"), io.stdout)
    end
    
-   local logs = {io.stdout}
-   
    exception.try(function()
       -- Bootstrap config
       configload.bootstrap(nil, args, {}, true)
 
-      if args.lmod then
-         command_lmod(args, logs)
+      if args.arch then
+         show_arch()
+      elseif args.net then
+         command_net(args)
       end
    end, function(e)
       -- Print exception

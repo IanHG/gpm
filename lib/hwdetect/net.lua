@@ -13,14 +13,16 @@ function net_iface_class:__init()
 end
 
 function net_iface_class:print()
-   print("Interface : " .. self.name)
+   io.write(string.format("%-10s", self.name))
+   io.write(string.format(":"))
    if self.carrier == 1 then
-      print("   Is UP with state : " .. self.operstate)
+      io.write("   Is UP with state : " .. self.operstate)
    elseif self.carrier == 0 then
-      print("   Is DOWN with state : " .. self.operstate)
+      io.write("   Is DOWN with state : " .. self.operstate)
    else
-      print("   Unknown carrier flag.")
+      io.write("   Unknown carrier flag.")
    end
+   io.write("\n")
 end
 
 local net_ib_class = class.create_class()
@@ -38,6 +40,7 @@ function net_ib_class:error(status, str)
 end
 
 function net_ib_class:print()
+   -- print all
    for k, v in pairs(self.ports) do
       print("  IB " .. k)
       for kinner, vinner in pairs(self.ports[k]) do
@@ -49,13 +52,16 @@ end
 local net_info_class = class.create_class()
 
 function net_info_class:__init()
+   self.status = 0
+   self.serror = nil
+
    self.ifaces = {}
    self.mellanox_infiniband_detected = false
    self.ib     = nil
 end
 
 function net_info_class:print()
-   print("Infiniband : " .. util.booltostr(self.mellanox_infiniband_detected))
+   --print("Infiniband : " .. util.booltostr(self.mellanox_infiniband_detected))
 
    for k, v in pairs(self.ifaces) do
       self.ifaces[k]:print()
@@ -138,7 +144,7 @@ end
 -- a fast network is available.
 --
 -- @param net_info     On output will hold fast network specs.
-local function detect_fast_net(net_info)
+local function detect_fast_network(net_info)
    local mellanox_infiniband = false
    
    local pipe0 = io.popen("lspci")
@@ -218,13 +224,15 @@ local function detect_net()
 
    detect_network_interfaces(net_info)
    
-   detect_fast_net(net_info)
+   detect_fast_network(net_info)
   
    return net_info
 end
 
 -- Load module
-M.create_net_info = create_net_info
-M.detect_net      = detect_net
+M.create_net_info   = create_net_info
+M.detect_net        = detect_net
+M.detect_interfaces = detect_network_interfaces
+M.detect_fast       = detect_fast_network
 
 return M

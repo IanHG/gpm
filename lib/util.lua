@@ -1,5 +1,6 @@
 local _execcmd = assert(require "lib.execcmd")
 local _logging = assert(require "lib.logging")
+local hwdetect_util = assert(require "lib.hwdetect.util")
 
 local M = {}
 
@@ -247,6 +248,7 @@ function deepcompare(t1,t2,ignore_mt)
 end
 
 
+
 -- Load module functions
 M.print = table_print
 M.merge = merge
@@ -258,5 +260,6 @@ M.ordered_table = ordered_table
 M.ordered = ordered
 M.conditional = conditional
 M.deepcompare = deepcompare
+M.isempty = hwdetect_util.isempty
 
 return M
