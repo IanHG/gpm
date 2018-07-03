@@ -2,6 +2,16 @@ local logging    = assert(require "lib.logging")
 local path       = assert(require "lib.path")
 local util       = assert(require "lib.util")
 local filesystem = assert(require "lib.filesystem")
+local class      = assert(require "lib.class")
+
+local package_class = class.create_class()
+
+function package_class:__init()
+end
+
+function package_class:is_git_source()
+   return (self.build.source_type == "git")
+end
 
 local M = {}
 
@@ -51,6 +61,41 @@ local function locate_gpk_file(args, config)
    
    -- Return found path
    return filepath
+end
+
+--- Load .gpk file into the program.
+-- 
+-- @param filepath    Path to file.
+-- @param package     Package object.
+local function load_gpk_file(filepath, package)
+   local f, msg = assert(loadfile(filepath))
+   if f then
+      f()
+   else
+      error("Error loading package. Reason : '" .. msg .. "'.")
+   end
+   
+   logging.message("GPK : " .. filepath, io.stdout)
+   
+   package.description = description
+   package.definition = definition
+   if build then
+      package.build = build
+      if args.source then
+         package.build.source = args.source
+      end
+   end
+   if lmod then
+      package.lmod = lmod
+   else
+      package.lmod = {}
+   end
+
+   if post then
+      package.post = post
+   else
+      package.post = {}
+   end
 end
 
 ---
@@ -149,39 +194,12 @@ local function bootstrap(args)
    end
    
    -- Create local package table
-   local package = {}
+   local package = package_class:create()
    
    -- Load the gpk file
    local filepath = assert(locate_gpk_file(args, global_config))
+   load_gpk_file(filepath, package)
    
-   local f, msg = assert(loadfile(filepath))
-   if f then
-      f()
-   else
-      error("Error loading package. Reason : '" .. msg .. "'.")
-   end
-   
-   logging.message("GPK : " .. filepath, io.stdout)
-   
-   package.description = description
-   package.definition = definition
-   if build then
-      package.build = build
-      if args.source then
-         package.build.source = args.source
-      end
-   end
-   if lmod then
-      package.lmod = lmod
-   else
-      package.lmod = {}
-   end
-
-   if post then
-      package.post = post
-   else
-      package.post = {}
-   end
    
    -- Setup some version numbers and other needed variables
    package.definition.pkgversion = args.pkv
@@ -304,6 +322,7 @@ local function bootstrap(args)
 
    -- check package validity
    check, reason = is_valid(package)
+
    if not check then
       error("Package not valid: " .. reason)
    end

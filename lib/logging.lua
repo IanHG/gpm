@@ -8,27 +8,34 @@ M = {}
 --
 -- @param msg
 -- @param prefix
--- @param raw
+-- @param format
 --
 -- @return Returns the created message.
-local function create_message(msg, prefix, postfix, raw)
+local function create_message(msg, prefix, postfix, format)
    -- Create message
-   if not msg then
+   
+   -- Make sure variable msg is a string
+   if msg == nil then
       msg = ""
    else
       msg = tostring(msg)
    end
-   if not raw then
+
+   -- Create message with correct format
+   if ((not format) or (format == "fancy")) then
       msg = msg:gsub("\n", "\n" .. prefix)
       msg = prefix .. msg .. postfix .. "\n"
+   elseif (format == "newline") then
+      msg = msg .. "\n"
    end
+
    return msg
 end
 
 --- Print a message to one or several logs.
 --
--- @param msg
--- @param log
+-- @param msg    The message to log.
+-- @param log    A single log or a set of logs.
 local function write_to_log(msg, log)
    -- Print  message to logs
    if type(log) == "table" then
@@ -46,11 +53,11 @@ end
 --
 -- @param msg   The message
 -- @param log   A single output stream or a set of output streams
--- @param raw   Print raw message, or add newline to the end
-local function message(msg, log, raw)
+-- @param format   Print raw message, or add newline to the end
+local function message(msg, log, format)
    if log then
       -- Create message
-      msg = create_message(msg, ansicolor.bold .. ansicolor.green .. " --> " .. ansicolor.default, ansicolor.reset, raw)
+      msg = create_message(msg, ansicolor.bold .. ansicolor.green .. " --> " .. ansicolor.default, ansicolor.reset, format)
       
       -- Then write to log
       write_to_log(msg, log)
@@ -63,11 +70,11 @@ end
 --
 -- @param msg   The message
 -- @param log   A single output stream or a set of output streams
--- @param raw   Print raw message, or add newline to the end
-local function alert(msg, log, raw)
+-- @param format   Print format message, or add newline to the end
+local function alert(msg, log, format)
    if log then
       -- Create message
-      msg = create_message(msg, ansicolor.bold .. ansicolor.red .. " !!! " .. ansicolor.default, ansicolor.reset, raw)
+      msg = create_message(msg, ansicolor.bold .. ansicolor.red .. " !!! " .. ansicolor.default, ansicolor.reset, format)
       
       -- Then write to log
       write_to_log(msg, log)
@@ -80,12 +87,12 @@ end
 --
 -- @param msg   The message
 -- @param log   A single output stream or a set of output streams
--- @param raw   Print raw message, or add newline to the end
-local function debug(msg, log, raw)
+-- @param format   Print raw message, or add newline to the end
+local function debug(msg, log, format)
    if global_config.debug then
       if log then
          -- Create message
-         msg = create_message(msg, ansicolor.bold .. ansicolor.blue .. " >>> " .. ansicolor.default, ansicolor.reset, raw)
+         msg = create_message(msg, ansicolor.bold .. ansicolor.blue .. " >>> " .. ansicolor.default, ansicolor.reset, format)
          
          -- Then write to log
          write_to_log(msg, log)

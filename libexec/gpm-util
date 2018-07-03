@@ -15,7 +15,7 @@ local lmod       = assert(require "lib.lmod")
 local hwdetect   = assert(require "lib.hwdetect.hwdetect")
 
 -- Description of this script
-local description = version.get_description("gpm-stack.lua")
+local description = version.get_description("gpm-util")
 
 --
 local function command_lmod(args, logs)

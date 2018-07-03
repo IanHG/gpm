@@ -16,7 +16,7 @@ local logging     = assert(require "lib.logging")
 local ansicolor   = assert(require "lib.ansicolor")
 
 -- Description of this script
-local description = version.get_description("gpm-package.lua")
+local description = version.get_description("gpm-package")
 
 --- Main driver for gpm-package script.
 function main()
