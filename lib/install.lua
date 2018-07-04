@@ -5,9 +5,11 @@ local path       = assert(require "lib.path")
 local filesystem = assert(require "lib.filesystem")
 local exception  = assert(require "lib.exception")
 local logging    = assert(require "lib.logging")
+local logger     = logging.logger
 local packages   = assert(require "lib.packages")
 local database   = assert(require "lib.database")
 local lmod       = assert(require "lib.lmod")
+local downloader = assert(require "lib.downloader")
 
 local M = {}
 
@@ -17,8 +19,9 @@ local M = {}
 -- @param package   The package we are installing.
 local function open_log_file(package)
    logpath = path.join(package.build_directory, package.definition.pkg .. ".log")
-   package.logfile = io.open(logpath, "w")
-   package.log = {package.logfile, io.stdout}
+   logger:open_logfile("package", logpath)
+   --package.logfile = io.open(logpath, "w")
+   --package.log = {package.logfile, io.stdout}
 end
 
 --- Close log file after package has been
@@ -26,7 +29,8 @@ end
 --
 -- @param package   The package we are installing.
 local function close_log_file(package)
-   package.logfile:close()
+   logger:close_logfile("package")
+   --package.logfile:close()
 end
 
 --- Create file with name and content.
@@ -95,47 +99,28 @@ local function make_package_ready_for_install(package)
    
    -- Get/download the package
    local source = util.substitute_placeholders(package.definition, package.build.source)
-   print("SOURCE : " .. source)
    local source_path, source_file, source_ext = split_filename(source)
-   print("EXT: " .. source_ext)
    if source_ext == "git" then
       package.build.source_type = "git"
    end
 
    local source_file_strip = string.gsub(source_file, "%." .. source_ext, "")
-   local destination = package.definition.pkg .. "." .. source_ext
-   package.build.source_destination = destination
-   print(source_file_strip)
-   print("SOURCE 2 : " .. source)
-   
+   local destination 
    if package.build.source_type == "git" then
-      if (not filesystem.exists(path.join(package.build_directory, package.definition.pkg))) then
-         line = "git clone --recursive " .. source .. " " .. package.definition.pkg
-         util.execute_command(line, package.log)
-      end
+      destination = package.definition.pkg
    else
-      -- if ftp or http download with wget
-      print("source:")
-      print(source) 
-      local status = 0
-      if package.forcedownload then
-         filesystem.remove(path.join(package.build_directory, destination))
-      end
-      if not lfs.attributes(path.join(package.build_directory, destination), 'mode') then
-         is_http_or_ftp = string.match(source, "http://") or string.match(source, "https://") or string.match(source, "ftp://")
-         print(is_http_or_ftp)
-         if is_http_or_ftp then
-            line = "wget --progress=dot -O " .. destination .. " " .. source
-            status = util.execute_command(line, package.log)
-         else -- we assume local file
-            line = "cp " .. source .. " " .. destination
-            status = util.execute_command(line, package.log)
-         end
-      end
-      if status ~= 0 then
-         filesystem.remove(path.join(package.build_directory, destination))
-         error("Could not retrive source...")
-      end
+      destination = package.definition.pkg .. "." .. source_ext
+   end
+
+   package.build.source_destination = destination
+
+   downloader:download(source, destination)
+   
+   if package.build.source_type ~= "git" then
+      --if (not filesystem.exists(path.join(package.build_directory, package.definition.pkg))) then
+      --   line = "git clone --recursive " .. source .. " " .. package.definition.pkg
+      --   util.execute_command(line)
+      --end
       
       -- Unpak package
       -- If tar file untar
@@ -148,23 +133,20 @@ local function make_package_ready_for_install(package)
          local is_tar_xz = string.match(source_file, "tar.xz")
          local is_tar    = string.match(source_file, "tar")
          local is_zip = string.match(source_file, "zip")
+         local tar_line = nil
          if is_tar_gz then
-            line = "tar -zxvf " .. destination .. " --transform 's/" .. source_file_strip .. "/" .. package.definition.pkg .. "/'"
-            util.execute_command(line, package.log)
+            tar_line = "tar -zxvf " .. destination .. " --transform 's/" .. source_file_strip .. "/" .. package.definition.pkg .. "/'"
          elseif is_tar_xz then
-            line = "tar -xvf " .. destination .. " --transform 's/" .. source_file_strip .. "/" .. package.definition.pkg .. "/'"
-            util.execute_command(line, package.log)
+            tar_line = "tar -xvf " .. destination .. " --transform 's/" .. source_file_strip .. "/" .. package.definition.pkg .. "/'"
          elseif is_tar_bz then
             --line = "tar -jxvf " .. destination
-            line = "tar -jxvf " .. destination .. " --transform 's/" .. source_file_strip .. "/" .. package.definition.pkg .. "/'"
-            util.execute_command(line, package.log)
+            tar_line = "tar -jxvf " .. destination .. " --transform 's/" .. source_file_strip .. "/" .. package.definition.pkg .. "/'"
          elseif is_tar then
-            line = "tar -xvf " .. destination .. " --transform 's/" .. source_file_strip .. "/" .. package.definition.pkg .. "/'"
-            util.execute_command(line, package.log)
+            tar_line = "tar -xvf " .. destination .. " --transform 's/" .. source_file_strip .. "/" .. package.definition.pkg .. "/'"
          elseif is_zip then
-            line = "unzip " .. destination
-            util.execute_command(line, package.log)
+            tar_line = "unzip " .. destination
          end
+         util.execute_command(tar_line)
       end
    end
    
@@ -194,7 +176,6 @@ local function build_package(package)
          for key,value in util.ordered(package.moduleload) do
             ml = ml .. "ml " .. value .. " && "
          end
-         print("ML LINE " .. ml)
       end
 
       -- Download package
@@ -207,9 +188,9 @@ local function build_package(package)
          line = util.substitute_placeholders(package.definition, util.trim(line))
          if not (line == ""  or line == "\n") then
             if ml then
-               util.execute_command(ml .. line, package.log)
+               util.execute_command(ml .. line)
             else
-               util.execute_command(line, package.log)
+               util.execute_command(line)
             end
          end
       end
@@ -284,7 +265,7 @@ local function generate_prepend_path(package)
    -- If .gpk provides one we just use that
    if package.lmod.prepend_path then
       if global_config.debug then
-         logging.debug("Taking prepend_path from .gpk file ( no auto-generation ).", {io.stdout} )
+         logger:debug("Taking prepend_path from .gpk file ( no auto-generation ).", nil, {io.stdout})
       end
       return package.lmod.prepend_path
    end
@@ -456,9 +437,6 @@ local function setup_lmod_for_lmod(package)
    --local lmod_filename     = path.join(package.definition.pkginstall .. "/lmod/" .. package.definition.pkgversion .. "/modulefiles/Core/lmod/", package.definition.pkgversion .. ".lua")
    local lmod_filename     = package.definition.pkginstall .. "/lmod/" .. package.definition.pkgversion .. "/modulefiles/Core/lmod.lua"
    local lmod_filename_new = path.join(modulefile_directory, package.definition.pkgversion .. ".lua")
-   print("LMOD : ")
-   print("old : " .. lmod_filename)
-   print("new : " .. lmod_filename_new)
    filesystem.copy(lmod_filename, lmod_filename_new)
    
    -- Create settarg modules directory
@@ -468,9 +446,6 @@ local function setup_lmod_for_lmod(package)
    --local settarg_filename     = path.join(package.definition.pkginstall .. "/lmod/" .. package.definition.pkgversion .. "/modulefiles/Core/settarg/", package.definition.pkgversion .. ".lua")
    local settarg_filename     = package.definition.pkginstall .. "/lmod/" .. package.definition.pkgversion .. "/modulefiles/Core/settarg.lua"
    local settarg_filename_new = path.join(settarg_modulefile_directory, package.definition.pkgversion .. ".lua")
-   print("SET ARG : ")
-   print("old : " .. settarg_filename)
-   print("new : " .. settarg_filename_new)
    filesystem.copy(settarg_filename, settarg_filename_new)
 end
 
@@ -485,7 +460,7 @@ local function postprocess_package(package)
       end
       local cmd = ml .. package.post.command
       cmd = util.substitute_placeholders(package.definition, util.trim(cmd))
-      util.execute_command(cmd, package.log)
+      util.execute_command(cmd)
    end
 end
 
@@ -498,20 +473,21 @@ end
 local function install(args)
    exception.try(function() 
       -- Bootstrap build
-      logging.message("BOOTSTRAP PACKAGE", io.stdout)
+      logger:message("BOOTSTRAP PACKAGE")
       local package = packages.bootstrap(args)
       database.load_db(global_config)
       
       if args.debug then
-         logging.debug(util.print(package, "package"), io.stdout)
+         logger:debug(util.print(package, "package"))
       end
       
       -- If package is not installed we install it
       if (util.conditional(database.use_db(), not database.installed(package), true)) or args.force then
 
          -- Create build dir
-         logging.message("BUILD DIR", io.stdout)
-         logging.message(package.build_directory, io.stdout)
+         logger:message("BUILD DIR")
+         logger:message(package.build_directory)
+         
          filesystem.rmdir(package.build_directory, false)
          filesystem.mkdir(package.build_directory, {}, true)
          filesystem.chdir(package.build_directory)
@@ -538,13 +514,13 @@ local function install(args)
          postprocess_package(package)
 
          --
-         lmod.update_lmod_cache(package.log)
+         lmod.update_lmod_cache(package)
 
          database.insert_package(package)
          database.save_db(global_config)
          
          -- 
-         logging.message("Succesfully installed '" .. package.definition.pkg .. "'", package.log)
+         logger:message("Succesfully installed '" .. package.definition.pkg .. "'")
 
          -- Close log file
          close_log_file(package)
@@ -567,14 +543,14 @@ local function install(args)
             end
          end
       else
-         logging.message("Package already installed!", io.stdout)
+         logger:message("Package already installed!")
       end
    end, function(e)
       --local status, msg = filesystem.rmdir(package.build_directory, true)
       --if not status then
       --   print("Could not purge build directory after ERROR. Reason : '" .. msg .. "'.") 
       --end
-      logging.alert("There was a PROBLEM installing the package", io.stdout)
+      logger:alert("There was a PROBLEM installing the package")
       error(e)
    end)
 end

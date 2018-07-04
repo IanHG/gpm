@@ -1,6 +1,7 @@
 local M = {}
 
 local class = assert(require "class")
+local util  = assert(require "util")
 
 local function pack(...)
    return { ... }
@@ -19,6 +20,9 @@ local function dofile_into_environment(filename, env)
     return result
 end
 
+--- Class to implement a simple symbol table,
+-- which can be used for string substitution.
+--
 local gpackage_symbol_table_class = class.create_class()
 
 function gpackage_symbol_table_class:__init()
@@ -32,7 +36,7 @@ function gpackage_symbol_table_class:__init()
 end
 
 function gpackage_symbol_table_class:add_symbol(symb, ssymb)
-   if not (type(symb) == "string") then
+   if not (type(symb) == "string") or util.isempty(symb) then
       assert(false)
    end
    if not (type(ssymb) == "string") then
@@ -71,6 +75,10 @@ function gpackage_symbol_table_class:print()
    end
 end
 
+--- Base class for the different gpackage classes.
+-- Implemenents some general function for creating the
+-- setter functions to be passed to the extern package.
+--
 local gpackage_creator_class = class.create_class()
 
 function gpackage_creator_class:__init()
@@ -110,6 +118,9 @@ function gpackage_creator_class:element_setter(var, num)
    end
 end
 
+--- Lmod
+--
+--
 local gpackage_lmod_class = class.create_class(gpackage_creator_class)
 
 function gpackage_lmod_class:__init()
@@ -149,6 +160,9 @@ function gpackage_lmod_class:print()
    end
 end
 
+---
+--
+--
 local gpackage_class = class.create_class(gpackage_creator_class)
 
 function gpackage_class:__init()
@@ -165,6 +179,7 @@ function gpackage_class:__init()
    -- Build
    self.autotool    = false
    self.cmake       = false
+   self.files       = { }
    
    -- 
    self.symbol_table = gpackage_symbol_table_class:create()
@@ -183,6 +198,7 @@ function gpackage_class:__init()
       -- Build
       autotools   = self:autotools_setter(),
       cmake       = self:cmake_setter(),
+      file        = self:element_setter("files", 2)
       
       -- Lmod
       lmod = self.lmod.ftable,
@@ -261,6 +277,9 @@ function gpackage_class:print()
    self.symbol_table:print()
 end
 
+--- Load .gpk file into gpackage object.
+-- 
+-- @param path   The path of the .gpk.
 local function load_gpackage(path)
    local gpack = gpackage_class:create()
    gpack:load(path)
@@ -270,6 +289,8 @@ local function load_gpackage(path)
    return gpack
 end
 
+--- Create the module
 M.load_gpackage = load_gpackage
 
+-- return module
 return M

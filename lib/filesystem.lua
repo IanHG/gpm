@@ -100,7 +100,6 @@ end
 --
 -- @return     Return whether succesful or not, and a message if not.
 local function mkdir(path, mode, recursively)
-   print("PATH " .. path)
    if (not path) then
       return false
    end

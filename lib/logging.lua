@@ -1,4 +1,5 @@
 local ansicolor = assert(require "lib.ansicolor")
+local class     = assert(require "lib.class")
 
 M = {}
 
@@ -208,8 +209,8 @@ local function log_call(stack)
          msg = msg .. ansicolor.blue " ... " .. ansicolor.default .. "Running\n"
       end
       
-      message(msg , {logfile}, true)
-      message(msg , {io.stdout})
+      message(msg , {logfile}, "fancy")
+      --message(msg , {io.stdout})
 
       logfile:close()
    end
@@ -251,10 +252,77 @@ local function log_call_end(success, stack)
    end
 end
 
+--- Create class for logging.
+local logger_class = class.create_class()
+
+function logger_class:__init()
+   self.logs   = { }
+   self.format = "fancy"
+end
+
+function logger_class:add_log(name, log)
+   self.logs[name] = log
+end
+
+function logger_class:open_logfile(name, path)
+   local log = io.open(path, "w")
+   if not log then
+      assert(false)
+   end
+   self.logs[name] = log
+end
+
+function logger_class:close_logfile(name)
+   self.logs[name]:close()
+   self.logs[name] = nil
+end
+
+function logger_class:write(msg)
+   for k, v in pairs(self.logs) do
+      v:write(msg)
+   end
+end
+
+function logger_class:message(msg, format, logs)
+   if not format then
+      format = self.format
+   end
+   if not logs then
+      logs = self.logs
+   end
+
+   message(msg, logs, format)
+end
+
+function logger_class:alert(msg, format, logs)
+   if not format then
+      format = self.format
+   end
+   if not logs then
+      logs = self.logs
+   end
+
+   alert(msg, logs, format)
+end
+
+function logger_class:debug(msg, format, logs)
+   if global_config.debug then
+      if not format then
+         format = self.format
+      end
+      if not logs then
+         logs = self.logs
+      end
+
+      debug(msg, logs, format)
+   end
+end
+
 -- Load module
 M.message      = message
 M.alert        = alert
 M.debug        = debug
+M.logger       = logger_class:create()
 M.grep         = grep
 M.log_call     = log_call
 M.log_call_end = log_call_end

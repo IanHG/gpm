@@ -58,7 +58,6 @@ end
 --
 local function split_filename(strFilename)
    -- Returns the Path, Filename, and Extension as 3 values
-   print("WTF: " .. strFilename)
    if lfs.attributes(strFilename, "mode") == "directory" then
       local strPath = strFilename:gsub("[\\/]$","")
       return strPath.."\\","",""

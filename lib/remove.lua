@@ -5,6 +5,7 @@ local path       = assert(require "lib.path")
 local filesystem = assert(require "lib.filesystem")
 local exception  = assert(require "lib.exception")
 local logging    = assert(require "lib.logging")
+local logger     = logging.logger
 local packages   = assert(require "lib.packages")
 local database   = assert(require "lib.database")
 local lmod       = assert(require "lib.lmod")
@@ -54,7 +55,7 @@ local function remove(args)
    exception.try(function()
       --
       if args.debug then
-         logging.debug("Removing package", io.stdout)
+         logger:debug("Removing package")
       end
 
       -- Hack, we dont need source to uninstall
@@ -70,9 +71,9 @@ local function remove(args)
          -- Remove the package
          remove_package(package)
          
-         lmod.update_lmod_cache({io.stdout})
+         lmod.update_lmod_cache()
       else
-         logging.message("Package not installed.", io.stdout)
+         logger:message("Package not installed.")
       end
 
       

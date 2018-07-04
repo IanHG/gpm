@@ -1,4 +1,5 @@
 local logging    = assert(require "lib.logging")
+local logger     = logging.logger
 local path       = assert(require "lib.path")
 local util       = assert(require "lib.util")
 local filesystem = assert(require "lib.filesystem")
@@ -35,7 +36,7 @@ local function locate_gpk_file(args, config)
       local function locate_gpk_impl()
          for gpk_path in path.iterator(config.gpk_path) do
             if(global_config.debug) then
-               logging.debug("Checking path : " .. gpk_path, io.stdout)
+               logger:debug("Checking path : " .. gpk_path)
             end
 
             -- Check for abs path
@@ -75,7 +76,7 @@ local function load_gpk_file(filepath, package)
       error("Error loading package. Reason : '" .. msg .. "'.")
    end
    
-   logging.message("GPK : " .. filepath, io.stdout)
+   logger:message("GPK : " .. filepath)
    
    package.description = description
    package.definition = definition
@@ -190,7 +191,7 @@ end
 local function bootstrap(args)
    -- Do some debug printout if requested
    if args.debug then
-      logging.debug("Bootstrapping package", io.stdout)
+      logger:debug("Bootstrapping package")
    end
    
    -- Create local package table
@@ -328,7 +329,7 @@ local function bootstrap(args)
    end
 
    if args.debug then
-      logging.debug("Done bootstrapping package", io.stdout)
+      logger:debug("Done bootstrapping package")
    end
 
    -- return package

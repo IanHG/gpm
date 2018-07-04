@@ -34,7 +34,7 @@ end
 --- Update the lmod cache.
 --
 -- @param log    An optional log.
-local function update_lmod_cache(log)
+local function update_lmod_cache()
    -- Get some lmod directories
    local cache_dir, cache_timestamp = generate_cache_paths()
    local modulepath_root, modulepath = generate_module_paths()
@@ -44,7 +44,7 @@ local function update_lmod_cache(log)
    cmd       = cmd .. "ml lmod && update_lmod_system_cache_files -d " .. cache_dir .. " -t " .. cache_timestamp .. " " .. modulepath
    
    -- Run command
-   util.execute_command(cmd, log)
+   util.execute_command(cmd)
 end
 
 -- Load module

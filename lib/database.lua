@@ -1,6 +1,7 @@
 local path     = assert(require "lib.path")
 local util     = assert(require "lib.util")
 local logging  = assert(require "lib.logging")
+local logger   = logging.logger
 local packages = assert(require "lib.packages")
 
 local M = {}
@@ -313,7 +314,7 @@ end
 --- List all installed packages
 local function list_installed()
    for n, db_entry in pairs(global_db["package"]) do
-      logging.message(util.print(db_entry, n), io.stdout)
+      logger:message(util.print(db_entry, n))
    end
 end
 

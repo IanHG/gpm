@@ -13,6 +13,7 @@ local initializer = assert(require "lib.initialize")
 local remove      = assert(require "lib.remove")
 local util        = assert(require "lib.util")
 local logging     = assert(require "lib.logging")
+local logger      = logging.logger
 local ansicolor   = assert(require "lib.ansicolor")
 
 -- Description of this script
@@ -32,6 +33,7 @@ function main()
    -- Some general arguments
    parser:option("-c --config", "Provide config file."):overwrite(false)
    parser:flag("--debug", "Print debug information (mostly for developers).")
+   parser:flag("--quiet", "Do not print anything to stdout.")
    parser:flag("-v --version", "Print '" .. version.get_version() .. "' and exit."):action(function()
       print(version.get_version())
       os.exit(0)
@@ -84,6 +86,10 @@ function main()
    args = parser:parse()
    if args.debug then
       logging.debug(util.print(args, "args"), io.stdout)
+   end
+
+   if not args.quiet then
+      logger:add_log("stdout", io.stdout)
    end
    
    exception.try(function()

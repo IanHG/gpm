@@ -6,6 +6,7 @@ local filesystem = assert(require "lib.filesystem")
 local util       = assert(require "lib.util")
 local path       = assert(require "lib.path")
 local logging    = assert(require "lib.logging")
+local logger     = logging.logger
 
 -- Helper function to find folder of current script.
 local function folder_of_this()
@@ -110,7 +111,7 @@ bootstrap = function (config_path, args, default_config, set_global)
 
    -- Do some debug output if requested
    if args.debug then
-      logging.debug("Bootstrapping config.", io.stdout)
+      logger:debug("Bootstrapping config.")
    end
    
    -- Load config file
@@ -197,7 +198,7 @@ bootstrap = function (config_path, args, default_config, set_global)
    
    -- If requested printout some debug information
    if(args.debug) then
-      logging.debug(util.print(local_config, "config"), io.stdout)
+      logger:debug(util.print(local_config, "config"))
    end
    
    -- Unset the loaded config (which has been loaded into global space!)
@@ -221,12 +222,12 @@ local function print_config(config, log)
    if not log then
       log = io.stdout
    end
-   logging.debug(util.print(default_config, "config"), log)
+   logger:debug(util.print(default_config, "config"), nil, log)
 end
 
 -- Load module
-M.configpath = configpath
-M.bootstrap  = bootstrap
+M.configpath   = configpath
+M.bootstrap    = bootstrap
 M.print_config = print_config
 
 return M
