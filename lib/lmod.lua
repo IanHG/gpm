@@ -36,7 +36,7 @@ end
 -- @param log    An optional log.
 local function update_lmod_cache()
    -- Get some lmod directories
-   local cache_dir, cache_timestamp = generate_cache_paths()
+   local cache_dir, cache_timestamp  = generate_cache_paths()
    local modulepath_root, modulepath = generate_module_paths()
    
    -- Create command

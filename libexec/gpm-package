@@ -9,6 +9,7 @@ local configload  = assert(require "lib.configload")
 local version     = assert(require "lib.version")
 local stack       = assert(require "lib.stack")
 local install     = assert(require "lib.install")
+local installer   = assert(require "lib.installer")
 local initializer = assert(require "lib.initialize")
 local remove      = assert(require "lib.remove")
 local util        = assert(require "lib.util")
@@ -105,7 +106,8 @@ function main()
          initializer.initialize(args)
       elseif args.install then
          -- Install command
-         install.install(args)
+         --install.install(args)
+         installer.install(args)
       elseif args.remove then
          -- Remove Command
          remove.remove(args)

@@ -20,8 +20,6 @@ local M = {}
 local function open_log_file(package)
    logpath = path.join(package.build_directory, package.definition.pkg .. ".log")
    logger:open_logfile("package", logpath)
-   --package.logfile = io.open(logpath, "w")
-   --package.log = {package.logfile, io.stdout}
 end
 
 --- Close log file after package has been
@@ -30,7 +28,6 @@ end
 -- @param package   The package we are installing.
 local function close_log_file(package)
    logger:close_logfile("package")
-   --package.logfile:close()
 end
 
 --- Create file with name and content.

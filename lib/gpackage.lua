@@ -1,7 +1,11 @@
 local M = {}
 
-local class = assert(require "class")
-local util  = assert(require "util")
+local filesystem = assert(require "lib.filesystem")
+local class   = assert(require "lib.class")
+local util    = assert(require "lib.util")
+local path    = assert(require "lib.path")
+local logging = assert(require "lib.logging")
+local logger  = logging.logger
 
 local function pack(...)
    return { ... }
@@ -18,6 +22,11 @@ local function dofile_into_environment(filename, env)
     local status, result = assert(pcall(setfenv(assert(loadfile(filename)), env)))
     setmetatable(env, nil)
     return result
+end
+
+local function get_name(gpackage_path)
+   local p, f, e = path.split_filename(gpackage_path)
+   return f:gsub("." .. e, "")
 end
 
 --- Class to implement a simple symbol table,
@@ -69,9 +78,9 @@ function gpackage_symbol_table_class:substitute(str)
 end
 
 function gpackage_symbol_table_class:print()
-   print("   Symbol table : ")
+   logger:message("   Symbol table : ")
    for k, v in pairs(self.symbols) do
-      print("      " .. k .. " : " .. v)
+      logger:message("      " .. k .. " : " .. v)
    end
 end
 
@@ -82,6 +91,20 @@ end
 local gpackage_creator_class = class.create_class()
 
 function gpackage_creator_class:__init()
+end
+
+function gpackage_creator_class:true_setter(var)
+   return function()
+      self[var] = true
+      return self.ftable
+   end
+end
+
+function gpackage_creator_class:false_setter(var)
+   return function()
+      self[var] = false
+      return self.ftable
+   end
 end
 
 function gpackage_creator_class:string_setter(...)
@@ -114,6 +137,7 @@ function gpackage_creator_class:element_setter(var, num)
       assert(#t_inner == num)
 
       table.insert(self[var], t_inner)
+
       return self.ftable
    end
 end
@@ -124,22 +148,26 @@ end
 local gpackage_lmod_class = class.create_class(gpackage_creator_class)
 
 function gpackage_lmod_class:__init()
-   self.help   = ""
-   self.family = nil
+   self.help   = [[]]
+   self.family = {}
    self.group  = "core"
+   self.heirarchical = false
    
+   -- Some env stuff
    self.setenv           = {}
    self.setenv_abs       = {}
    self.prepend_path     = {}
    self.prepend_path_abs = {}
    self.alias            = {}
+   self.autopath         = true
 
    -- Function table for loading package
    self.ftable = {
       -- General
-      help         = self:string_setter("help"),
-      family       = self:string_setter("family"),
-      group        = self:string_setter("group"),
+      help         = self:string_setter ("help"),
+      family       = self:element_setter("family", 1),
+      group        = self:string_setter ("group"),
+      heirarchical = self:true_setter   ("heirarchical"),
 
       -- Path
       setenv           = self:element_setter("setenv"          , 2),
@@ -147,16 +175,17 @@ function gpackage_lmod_class:__init()
       prepend_path     = self:element_setter("prepend_path"    , 2),
       prepend_path_abs = self:element_setter("prepend_path_abs", 2),
       alias            = self:element_setter("alias"           , 2),
+      noautopath       = self:false_setter("autopath")
    }
 end
 
 function gpackage_lmod_class:print()
-   print("Lmod : ")
-   print("   Help : " .. self.help)
+   logger:message("Lmod : ")
+   logger:message("   Help : " .. self.help)
    
-   print("   Prepend PATH : ")
+   logger:message("   Prepend PATH : ")
    for k, v in pairs(self.prepend_path) do
-      print("      " .. v[1] .. " : " .. v[2])
+      logger:message("      " .. v[1] .. " : " .. v[2])
    end
 end
 
@@ -166,8 +195,6 @@ end
 local gpackage_class = class.create_class(gpackage_creator_class)
 
 function gpackage_class:__init()
-   --assert(type(name) == "string")
-
    -- General stuff
    self.name        = ""
    self.homepage    = nil
@@ -175,11 +202,16 @@ function gpackage_class:__init()
    self.version     = nil
    self.signature   = nil
    self.description = ""
+   self.nameversion = ""
 
    -- Build
-   self.autotool    = false
+   self.autotools   = false
    self.cmake       = false
-   self.files       = { }
+   self.files       = {}
+   self.post        = {}
+
+   -- Dependencies
+   self.dependencies = {}
    
    -- 
    self.symbol_table = gpackage_symbol_table_class:create()
@@ -189,6 +221,8 @@ function gpackage_class:__init()
    
    -- Function table for loading package
    self.ftable = {
+      -- Util
+      print       = print,
       -- General
       homepage    = self:string_setter("homepage"),
       url         = self:string_setter("url"),
@@ -198,7 +232,8 @@ function gpackage_class:__init()
       -- Build
       autotools   = self:autotools_setter(),
       cmake       = self:cmake_setter(),
-      file        = self:element_setter("files", 2)
+      file        = self:element_setter("files", 2),
+      post        = self:element_setter("post", 1),
       
       -- Lmod
       lmod = self.lmod.ftable,
@@ -229,18 +264,23 @@ function gpackage_class:cmake_setter()
    end
 end
 
-function gpackage_class:load(path)
-   assert(type(path) == "string")
-   self.path = path
-   self.name = "libelf"
+function gpackage_class:load(gpackage_path)
+   assert(type(gpackage_path) == "string")
+   self.path = gpackage_path
+   self.name = get_name(gpackage_path)
    
    local env  = self.ftable
    local file = dofile_into_environment(self.path, env)
    
+   print(self.name)
+
    if env[self.name] then
       env[self.name]()
+   else
+      logger:alert("Could not load.")
    end
    
+   print(self.version)
    self.symbol_table:add_symbol("version", self.version)
 
    for k, v in pairs(self) do
@@ -254,21 +294,28 @@ function gpackage_class:load(path)
          self.lmod[k] = self.symbol_table:substitute(v)
       end
    end
+
+   self.nameversion = self.name .. "-" .. self.version
 end
 
+function gpackage_class:is_git()
+   return self.url:match("git$")
+end
+
+
 function gpackage_class:print()
-   print("Name      : " .. self.name)
-   print("Homepage  : " .. self.homepage)
-   print("Url       : " .. self.url)
-   print("Version   : " .. self.version)
+   logger:message("Name      : " .. self.name)
+   logger:message("Homepage  : " .. self.homepage)
+   logger:message("Url       : " .. self.url)
+   logger:message("Version   : " .. self.version)
 
    if self.signature then
-      print("Signature : " .. self.signature)
+      logger:message("Signature : " .. self.signature)
    end
 
    if self.autotools then
       for k, v in pairs(self.autotools_args) do
-         print("   Autotools arg : " .. v)
+         logger:message("   Autotools arg : " .. v)
       end
    end
    
@@ -277,10 +324,56 @@ function gpackage_class:print()
    self.symbol_table:print()
 end
 
+local function locate_gpack(name, config)
+   if not config then
+      config = global_config
+   end
+
+   -- Initialize to nil
+   local filepath = nil
+
+   -- Try to locate gpk file
+   --if args.gpk then
+      local filename = name
+      local function locate_gpk_impl()
+         for gpk_path in path.iterator(config.gpk_path) do
+            if(global_config.debug) then
+               logger:debug("Checking path : " .. gpk_path)
+            end
+
+            -- Check for abs path
+            if not path.is_abs_path(gpk_path) then
+               gpk_path = path.join(config.stack_path, gpk_path)
+            end
+            
+            -- Create filename
+            local filepath = path.join(gpk_path, filename)
+            
+            -- Check for existance
+            if filesystem.exists(filepath) then
+               return filepath
+            end
+         end
+      end
+      filepath = locate_gpk_impl()
+   --elseif args.gpkf then
+   --   filepath = args.gpkf
+   --else
+   --   error("Must provide either -gpk or -gpkf option.")
+   --end
+   
+   -- Return found path
+   return filepath
+end
+
 --- Load .gpk file into gpackage object.
 -- 
 -- @param path   The path of the .gpk.
-local function load_gpackage(path)
+local function load_gpackage(name)
+   local path = locate_gpack(name)
+
+   logger:message("Found gpack : '" .. path .. "'.")
+
    local gpack = gpackage_class:create()
    gpack:load(path)
    

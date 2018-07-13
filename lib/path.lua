@@ -45,7 +45,15 @@ end
 -- @param {string} pathr   Right path.
 --
 -- @return {string}   Return joined path.
-local function join(pathl, pathr)   
+local function join(pathl, pathr) 
+   if type(pathl) ~= "string" then
+      assert(false)
+   end
+
+   if type(pathr) ~= "string" then
+      assert(false)
+   end
+
    if has_dir_end(pathl) then
       return pathl .. pathr
    else

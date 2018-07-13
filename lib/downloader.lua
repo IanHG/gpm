@@ -1,10 +1,14 @@
 local M = {}
 
 --- Load libraries
+local luautil    = assert(require "lib.luautil")
 local class      = assert(require "lib.class")
 local util       = assert(require "lib.util")
 local settings   = assert(require "lib.settings")
 local filesystem = assert(require "lib.filesystem")
+local logging    = assert(require "lib.logging")
+local logger     = logging.logger
+local http       = luautil.require("socket.http")
 
 --- Determine the type of url ("git", "http", or "local")
 local function determine_url_type(url)
@@ -37,10 +41,12 @@ function downloader_class:__init()
    self.signature   = ""
    self.url_type    = nil -- "git", "http", or "local"
    self.destination = ""
-   
-   -- Some settings 
-   self.http_method = "wget"
+
    self.force       = false
+   
+   -- Some internal settings 
+   self.has_luasocket_http   = http and true or false
+   self.external_http_method = "wget"
 end
 
 --- Create command for downloading using git
@@ -50,9 +56,9 @@ end
 
 --- Create command for downloading with http
 function downloader_class:http_download_command()
-   if self.http_method == "wget" then
+   if self.external_http_method == "wget" then
       return "wget --progress=dot -O " .. self.destination .. " " .. self.url
-   elseif self.http_method == "curl" then
+   elseif self.external_http_method == "curl" then
       -- not implemented yet
       print("curl download not implemented yet")
       assert(false)
@@ -67,21 +73,22 @@ function downloader_class:local_download_command()
    return "cp " .. self.url .. " " .. self.destination
 end
 
---- Download url
-function downloader_class:download(url, dest)
-   self.url         = url
-   self.url_type    = determine_url_type(self.url)
-   self.destination = dest
-
-   -- If file exist, we remove if forced, else return
-   if filesystem.exists(self.destination) then
-      if self.force then         
-         filesystem.remove(self.destination)
-      else
-         return
-      end
+--- Use LuaSocket to download file, instead of external program
+function downloader_class:download_internal()
+   local body, code = http.request(self.url)
+   
+   if not body then 
+      error(code) 
    end
    
+   -- save the content to a file
+   local f = assert(io.open(self.destination, 'wb')) -- open in "binary" mode
+   f:write(body)
+   f:close()
+end
+
+--- Use external program to download file
+function downloader_class:download_external()
    -- Create "download" command
    local cmd = nil
 
@@ -104,6 +111,39 @@ function downloader_class:download(url, dest)
 
    if status ~= 0 then
       assert(false)
+   end
+end
+
+--- Download url
+function downloader_class:download(url, dest, force)
+   logger:message("Downloading : '" .. url .. "' to destination '" .. dest .. "'.")
+
+   self.url         = url
+   self.url_type    = determine_url_type(self.url)
+   self.destination = dest
+
+   if force ~= nil then
+      self.force = force
+   end
+
+   -- If file exist, we remove if forced, else return
+   if filesystem.exists(self.destination) then
+      if self.force then         
+         filesystem.remove(self.destination)
+      else
+         return
+      end
+   end
+   
+   -- 
+   if self.url_type == "git" then
+      self:download_external()
+   else
+      if self.has_luasocket_http then
+         self:download_internal()
+      else
+         self:download_external()
+      end
    end
 end
 
