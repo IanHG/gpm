@@ -44,7 +44,10 @@ local function update_lmod_cache()
    cmd       = cmd .. "ml lmod && update_lmod_system_cache_files -d " .. cache_dir .. " -t " .. cache_timestamp .. " " .. modulepath
    
    -- Run command
-   util.execute_command(cmd)
+   local status = util.execute_command(cmd)
+   if status ~= 0 then
+      logger:alert("Could not update lmod-cache.")
+   end
 end
 
 -- Load module

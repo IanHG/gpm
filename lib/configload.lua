@@ -25,6 +25,8 @@ local global_default_config = {
    current_directory = filesystem.cwd(),  
    -- Set folder of running script
    folder = folder_of_this(),
+   --
+   stack_path = folder_of_this(),
    ---- Set default .gpk path
    --gpk_path = folder_of_this() .. "../gpk",
    gpk_path = "",
@@ -124,7 +126,13 @@ bootstrap = function (config_path, args, default_config, set_global)
    if not config_path then
       config_path = configpath(args)
    end
-   assert(loadfile(config_path))()
+   
+   --print(config_path)
+   if (type(config_path) == "string") and (not util.isempty(config_path)) then
+      assert(loadfile(config_path))()
+   else
+      config = {}
+   end
    
    if config then
       local_config = util.merge(local_config, config)
@@ -136,7 +144,9 @@ bootstrap = function (config_path, args, default_config, set_global)
    
    
    -- Set this_path
-   local_config.this_path = util.conditional(path.is_abs_path(config_path), config_path, local_config.current_directory .. "/" .. config_path)
+   if (type(config_path) == "string") and (not util.isempty(config_path)) then
+      local_config.this_path = util.conditional(path.is_abs_path(config_path), config_path, local_config.current_directory .. "/" .. config_path)
+   end
 
    --
    -- Setup defaults
@@ -148,7 +158,7 @@ bootstrap = function (config_path, args, default_config, set_global)
 
    -- Setup stack_path
    if (not local_config.stack_path) then
-      local stack_path, _, _ = path.split_filename(args.config)
+      local stack_path, _, _  = path.split_filename(args.config)
       local_config.stack_path = path.remove_dir_end(stack_path)
    end
 

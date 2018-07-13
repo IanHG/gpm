@@ -7,21 +7,84 @@ local path       = assert(require "lib.path")
 local version    = assert(require "lib.version")
 local util       = assert(require "lib.util")
 local logging    = assert(require "lib.logging")
+local logger     = logging.logger
 local ansicolor  = assert(require "lib.ansicolor")
 local configload = assert(require "lib.configload")
 local filesystem = assert(require "lib.filesystem")
 local database   = assert(require "lib.database")
 local lmod       = assert(require "lib.lmod")
-local hwdetect   = assert(require "lib.hwdetect.hwdetect")
+local gpackage   = assert(require "lib.gpackage")
 
 -- Description of this script
 local description = version.get_description("gpm-util")
 
 --
-local function command_lmod(args, logs)
+local function command_lmod(args)
    if args.update_cache then
-      lmod.update_lmod_cache(logs)
+      lmod.update_lmod_cache()
    end
+end
+
+local function command_config_create(args)
+   local function basic_config_template()
+      return [[
+-- GPM config file
+config = {
+   nprocesses = %nprocesses%,
+
+   -- Main directory
+   stack_name = %stack_name%,
+   stack_token= "main",
+   stack_path = %stack_path%
+
+   -- Setup some paths
+   log_path = "stack.log",
+   gpk_path = "gpk",
+   gps_path = "gps",
+
+   --
+   meta_stack = {
+      allow_registration = true,
+   },
+   
+   -- Database stuff
+   db = {
+      path = "db",
+   },
+   
+   --
+   lmod = {
+      version = %lmod_version%,
+      cache_path = "modulesdata",
+   },
+}
+   ]]
+   end
+   
+   -- Create a config template
+   local config_template = basic_config_template()
+   local symbol_table    = gpackage.create_symbol_table()
+   symbol_table:add_symbol("stack_path"  , "\"" .. folder_of_this .. "\"")
+   symbol_table:add_symbol("stack_name"  , "\"" .. "Main stack"   .. "\"")
+   symbol_table:add_symbol("lmod_version", "\"" .. "7.7.38"       .. "\"")
+   symbol_table:add_symbol("nprocesses"  , "4")
+
+   config_template = symbol_table:substitute(config_template)
+   
+   -- Write the template to file
+   local config_file = assert(io.open(path.join(global_config.current_directory, "config.lua"), 'w'))
+   config_file:write(config_template)
+   config_file:close()
+end
+
+local function command_config(args)
+   if args.create then
+      -- create a config file
+      command_config_create(args)
+   end
+end
+
+local function command_init(args)
 end
 
 --- Main driver.
@@ -30,7 +93,9 @@ function main()
    local parser = argparse(description.script_name, description.name .. ":\n" .. description.desc)
    
    -- Commands
-   local parser_lmod = parser:command("lmod", "Manipulate Lmod.") 
+   local parser_config = parser:command("config", "Manipulate config file.")
+   local parser_init   = parser:command("init"  , "Initialize stack.")
+   local parser_lmod   = parser:command("lmod"  , "Manipulate Lmod.") 
    
    -- Some general arguments
    parser:option("-c --config", "Provide config file."):overwrite(false)
@@ -41,28 +106,31 @@ function main()
       os.exit(0)
    end)
    
-   -- arch specific
-   --parser_arch:flag("-a --all"   , "List all available stacks."):overwrite(false)
+   -- config specific
+   local parser_config_create = parser_config:command("create", "Create a basic config in current directory.")
+   local parser_config_update = parser_config:command("update", "Update config.")
    
    -- lmod specific
-   parser_lmod:flag  ("--update-cache",   "Update Lmod cache for current stack.")
+   parser_lmod:flag("--update-cache",   "Update Lmod cache for current stack.")
       
    -- Parse arguments
    args = parser:parse()
    
    if args.debug then
-      logging.debug("Lua version : " .. _VERSION, io.stdout)
-      logging.debug(util.print(args, "args"), io.stdout)
+      logger:debug("Lua version : " .. _VERSION)
+      logger:debug(util.print(args, "args")    )
    end
-   
-   local logs = {io.stdout}
    
    exception.try(function()
       -- Bootstrap config
       configload.bootstrap(nil, args, {}, true)
 
       if args.lmod then
-         command_lmod(args, logs)
+         command_lmod(args)
+      elseif args.config then
+         command_config(args)
+      elseif args.init then
+         command_init(args)
       end
    end, function(e)
       -- Print exception

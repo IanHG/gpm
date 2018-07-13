@@ -453,9 +453,15 @@ local function create_locator()
    return gl
 end
 
+local function create_symbol_table()
+   local st = gpackage_symbol_table_class:create()
+   return st
+end
+
 --- Create the module
-M.load_gpackage  = load_gpackage
-M.create_locator = create_locator
+M.load_gpackage       = load_gpackage
+M.create_locator      = create_locator
+M.create_symbol_table = create_symbol_table
 
 -- return module
 return M
