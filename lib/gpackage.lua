@@ -143,6 +143,18 @@ function gpackage_creator_class:element_setter(var, num)
    end
 end
 
+function gpackage_creator_class:print_setter()
+   return function(...)
+      local t_inner = pack( ... )
+
+      for i = 1, #t_inner do
+         logger:message(t_inner[i], self.log_format)
+      end
+
+      return self.ftable
+   end
+end
+
 --- Lmod
 --
 --
@@ -196,6 +208,9 @@ end
 local gpackage_class = class.create_class(gpackage_creator_class)
 
 function gpackage_class:__init()
+   -- Util
+   self.log_format = "newline"
+
    -- General stuff
    self.name        = ""
    self.homepage    = nil
@@ -223,7 +238,9 @@ function gpackage_class:__init()
    -- Function table for loading package
    self.ftable = {
       -- Util
-      print       = print,
+      print       = self:print_setter(),
+      format      = self:string_setter("log_format"),
+
       -- General
       homepage    = self:string_setter("homepage"),
       url         = self:string_setter("url"),
@@ -273,15 +290,12 @@ function gpackage_class:load(gpackage_path)
    local env  = self.ftable
    local file = dofile_into_environment(self.path, env)
    
-   print(self.name)
-
    if env[self.name] then
       env[self.name]()
    else
       logger:alert("Could not load.")
    end
    
-   print(self.version)
    self.symbol_table:add_symbol("version", self.version)
 
    for k, v in pairs(self) do
@@ -364,7 +378,6 @@ function gpackage_locator_class:try_download()
    local source      = path.join("https://raw.githubusercontent.com/IanHG/gpm-gpackages/master", self.name .. ".lua")
    local destination = path.join(self.config.gpk_path, self.name .. ".lua")
  
-   -- SOURCE AND DEST!!
    logger:message(" Source       gpack : '" .. source      .. "'.")
    logger:message(" Destionation gpack : '" .. destination .. "'.")
    

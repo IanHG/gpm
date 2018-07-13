@@ -7,12 +7,12 @@ local path       = assert(require "lib.path")
 local version    = assert(require "lib.version")
 local util       = assert(require "lib.util")
 local logging    = assert(require "lib.logging")
+local logger     = logging.logger
 local ansicolor  = assert(require "lib.ansicolor")
 local configload = assert(require "lib.configload")
 local filesystem = assert(require "lib.filesystem")
 local database   = assert(require "lib.database")
 local hwdetect   = assert(require "lib.hwdetect.hwdetect")
-local settings   = assert(require "lib.settings")
 
 -- Description of this script
 local description = version.get_description("gpm-detect")
@@ -45,10 +45,10 @@ local function command_net(args)
 
       if args.ib then
          if net_info.mellanox_infiniband_detected then
-            logging.message(net_info.mellanox_infiniband_detected, settings.log, settings.format)
+            logger:message(net_info.mellanox_infiniband_detected)
             os.exit(0)
          else
-            logging.message(net_info.mellanox_infiniband_detected, settings.log, settings.format)
+            logger:message(net_info.mellanox_infiniband_detected)
             os.exit(1)
          end
       else
@@ -57,15 +57,15 @@ local function command_net(args)
                local port = "Port " .. tostring(v)
                if net_info.ib then
                   if net_info.ib.ports[port] then
-                     logging.message("  IB " .. port, settings.log, "newline")
+                     logger:message("  IB " .. port)
                      for kinner, vinner in pairs(net_info.ib.ports[port]) do
-                        logging.message("      " .. kinner .. " : " .. vinner, settings.log, setting.format)
+                        logger:message("      " .. kinner .. " : " .. vinner)
                      end
                      os.exit(0)
                   end
                end
 
-               logging.alert(port .. " not detected.", settings.log, settings.format)
+               logger:alert(port .. " not detected.")
                os.exit(1)
             end
          else
@@ -114,8 +114,8 @@ function main()
    args = parser:parse()
    
    if args.debug then
-      logging.debug("Lua version : " .. _VERSION, io.stdout)
-      logging.debug(util.print(args, "args")    , io.stdout)
+      logger:debug("Lua version : " .. _VERSION, "fancy", io.stdout)
+      logger:debug(util.print(args, "args")    , "fancy", io.stdout)
    end
 
    settings.initialize(args)

@@ -4,7 +4,6 @@ local M = {}
 local luautil    = assert(require "lib.luautil")
 local class      = assert(require "lib.class")
 local util       = assert(require "lib.util")
-local settings   = assert(require "lib.settings")
 local filesystem = assert(require "lib.filesystem")
 local logging    = assert(require "lib.logging")
 local logger     = logging.logger
