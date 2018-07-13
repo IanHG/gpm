@@ -267,6 +267,8 @@ end
 function logger_class:open_logfile(name, path)
    local log = io.open(path, "w")
    if not log then
+      print(name)
+      print(path)
       assert(false)
    end
    self.logs[name] = log

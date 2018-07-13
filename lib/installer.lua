@@ -411,6 +411,8 @@ function installer_class:initialize()
    self.build.install_path = generate_install_path(self.gpack)
 
    -- Change directory to build_path
+   filesystem.rmdir(self.build.build_path, false)
+   filesystem.mkdir(self.build.build_path, {}, true)
    filesystem.chdir(self.build.build_path)
    
    -- Open package log file
@@ -472,11 +474,6 @@ function installer_class:unpack()
    end
 end
 
-function installer_class:create_build()
-   filesystem.rmdir(self.build.build_path, false)
-   filesystem.mkdir(self.build.build_path, {}, true)
-end
-
 function installer_class:create_files()
    for _, v in pairs(self.gpack.files) do
       logger:message("Creating file '" .. v[1] .. "'.")
@@ -507,8 +504,26 @@ function installer_class:build_gpack()
       local status_configure    = util.execute_command(configure_command)
       local status_make         = util.execute_command(make_command)
       local status_make_install = util.execute_command(make_install_command)
+   elseif self.gpack.cmake then
+      local cmake_build_path = path.join(self.build.unpack_path, "build")
+      filesystem.mkdir(cmake_build_path)
+      filesystem.chdir(cmake_build_path)
+
+      local ml_cmd        = generate_ml_command(self.gpack)
+      local cmake_command = ml_cmd .. "cmake ../. -DCMAKE_INSTALL_PREFIX=" .. self.build.install_path
+      for k, v in pairs(self.gpack.cmake_args) do
+         cmake_command = cmake_command .. " " .. v
+      end
+      local make_command         = ml_cmd .. "make -j" .. global_config.nprocesses
+      local make_install_command = ml_cmd .. "make install"
+
+      local status_cmake        = util.execute_command(cmake_command)
+      local status_make         = util.execute_command(make_command)
+      local status_make_install = util.execute_command(make_install_command)
+
+      filesystem.chdir(self.build.unpack_path)
    else
-      error("Only autoconf implemented")
+      error("Unknown configure method. Use either autotool() or cmake().")
    end
 end
 
@@ -530,7 +545,6 @@ function installer_class:install(gpack)
 
    self:initialize()
    
-   self:create_build()
    self:create_files()
    
    if self.gpack:is_git() then

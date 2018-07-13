@@ -275,9 +275,15 @@ function gpackage_class:autotools_setter()
 end
 
 function gpackage_class:cmake_setter()
-   return function()
+   return function(version, ...)
       assert(not self.autotools)
       self.cmake = true
+      self.cmake_version = version
+      local p = pack( ... )
+      for k, v in pairs(p) do
+         assert(type(v) == "string")
+      end
+      self.cmake_args = p
       return self.ftable
    end
 end
