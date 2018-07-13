@@ -25,10 +25,12 @@ local global_default_config = {
    current_directory = filesystem.cwd(),  
    -- Set folder of running script
    folder = folder_of_this(),
-   -- Set default .gpk path
-   gpk_path = folder_of_this() .. "../gpk",
-   -- Set default .gps path
-   gps_path = folder_of_this() .. "../gps",
+   ---- Set default .gpk path
+   --gpk_path = folder_of_this() .. "../gpk",
+   gpk_path = "",
+   ---- Set default .gps path
+   --gps_path = folder_of_this() .. "../gps",
+   gps_path = "",
    -- As of now we must give the hierarchical keyword, so we just default to empty
    heirarchical = {},
 
@@ -99,6 +101,10 @@ end
 -- @return{Dictionary} Returns definition og build.
 --local function bootstrap(config_path, args, default_config, set_global)
 bootstrap = function (config_path, args, default_config, set_global)
+   if args.debug then
+      logger:debug("Starting to bootstrap config.")
+   end
+
    -- Set default
    if not args then
       args = {}
@@ -153,10 +159,10 @@ bootstrap = function (config_path, args, default_config, set_global)
    
    -- Setup gpk_path and gps_path
    if config.gpk_path then
-      local_config.gpk_path = config.gpk_path .. ":" .. local_config.folder .. "../gpk"
+      local_config.gpk_path = util.conditional(path.is_abs_path(config.gpk_path), config.gpk_path, path.join(config.stack_path, config.gpk_path))
    end
    if config.gps_path then
-      local_config.gps_path = config.gps_path .. ":" .. local_config.folder .. "../gps"
+      local_config.gps_path = config.gps_path
    end
    
    -- Setup build_path and lmod_path
@@ -198,6 +204,7 @@ bootstrap = function (config_path, args, default_config, set_global)
    
    -- If requested printout some debug information
    if(args.debug) then
+      logger:debug("Done reading config...")
       logger:debug(util.print(local_config, "config"))
    end
    

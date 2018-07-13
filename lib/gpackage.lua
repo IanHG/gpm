@@ -6,6 +6,7 @@ local util    = assert(require "lib.util")
 local path    = assert(require "lib.path")
 local logging = assert(require "lib.logging")
 local logger  = logging.logger
+local downloader = assert(require "lib.downloader")
 
 local function pack(...)
    return { ... }
@@ -324,43 +325,82 @@ function gpackage_class:print()
    self.symbol_table:print()
 end
 
-local function locate_gpack(name, config)
+
+--- Locator class
+local gpackage_locator_class = class.create_class()
+
+function gpackage_locator_class:__init()
+   self.name   = ""
+   self.config = nil
+end
+
+-- Try to find package locally
+function gpackage_locator_class:try_local()
+   -- Try to locate gpk file
+   for gpk_path in path.iterator(self.config.gpk_path) do
+      if(global_config.debug) then
+         logger:debug("Checking path : " .. gpk_path)
+      end
+
+      -- Check for abs path
+      if not path.is_abs_path(gpk_path) then
+         gpk_path = path.join(self.config.stack_path, gpk_path)
+      end
+      
+      -- Create filename
+      local filepath = path.join(gpk_path, self.name .. ".lua")
+      
+      -- Check for existance
+      if filesystem.exists(filepath) then
+         return filepath
+      end
+   end
+
+   return nil
+end
+
+-- Try to download package
+function gpackage_locator_class:try_download()
+   local source      = path.join("https://raw.githubusercontent.com/IanHG/gpm-gpackages/master", self.name .. ".lua")
+   local destination = path.join(self.config.gpk_path, self.name .. ".lua")
+ 
+   -- SOURCE AND DEST!!
+   logger:message(" Source       gpack : '" .. source      .. "'.")
+   logger:message(" Destionation gpack : '" .. destination .. "'.")
+   
+   local dl = downloader:create()
+   dl.has_luasocket_http = false
+   dl:download(source, destination)
+   
+   if filesystem.exists(destination) then
+      return destination
+   end
+
+   return nil
+end
+
+--
+function gpackage_locator_class:locate(name, config)
    if not config then
       config = global_config
    end
 
-   -- Initialize to nil
-   local filepath = nil
+   assert(name)
 
-   -- Try to locate gpk file
-   --if args.gpk then
-      local filename = name
-      local function locate_gpk_impl()
-         for gpk_path in path.iterator(config.gpk_path) do
-            if(global_config.debug) then
-               logger:debug("Checking path : " .. gpk_path)
-            end
+   self.name   = name
+   self.config = config
 
-            -- Check for abs path
-            if not path.is_abs_path(gpk_path) then
-               gpk_path = path.join(config.stack_path, gpk_path)
-            end
-            
-            -- Create filename
-            local filepath = path.join(gpk_path, filename)
-            
-            -- Check for existance
-            if filesystem.exists(filepath) then
-               return filepath
-            end
-         end
-      end
-      filepath = locate_gpk_impl()
-   --elseif args.gpkf then
-   --   filepath = args.gpkf
-   --else
-   --   error("Must provide either -gpk or -gpkf option.")
-   --end
+   -- Try to find package locally
+   local filepath = self:try_local()
+   if filepath ~= nil then
+      return filepath
+   end
+
+   -- Else we try to download from repo
+   filepath = self:try_download()
+   if filepath == nil then
+      logger:alert("No Gpackage with name '" .. self.name .. "' was found.")
+   end
    
    -- Return found path
    return filepath
@@ -370,8 +410,14 @@ end
 -- 
 -- @param path   The path of the .gpk.
 local function load_gpackage(name)
-   local path = locate_gpack(name)
+   local gpackage_locator = gpackage_locator_class:create()
+   local path             = gpackage_locator:locate(name)
 
+   if path == nil then
+      logger:alert("Could not load Gpackage.")
+      assert(false)
+   end
+   
    logger:message("Found gpack : '" .. path .. "'.")
 
    local gpack = gpackage_class:create()

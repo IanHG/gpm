@@ -383,6 +383,7 @@ local installer_class = class.create_class()
 
 function installer_class:__init()
    self.lmod_installer = lmod_installer_class:create()
+   self.downloader     = downloader:create()
    self.gpack          = nil
 
    self.options = {
@@ -485,9 +486,9 @@ end
 
 function installer_class:download(is_git)
    if is_git then
-      downloader:download(self.gpack.url, self.build.unpack_path)
+      self.downloader:download(self.gpack.url, self.build.unpack_path)
    else
-      downloader:download(self.gpack.url, self.build.source_path)
+      self.downloader:download(self.gpack.url, self.build.source_path)
    end
 end
 
@@ -557,7 +558,7 @@ local function install(args)
    exception.try(function() 
       -- Bootstrap build
       logger:message("BOOTSTRAP PACKAGE")
-      args.gpack = args.gpk .. ".lua"
+      args.gpack = args.gpk
 
       local gpack = gpackage.load_gpackage(args.gpack)
       

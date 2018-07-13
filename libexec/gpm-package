@@ -85,8 +85,9 @@ function main()
    
    -- Parse arguments
    args = parser:parse()
+
    if args.debug then
-      logging.debug(util.print(args, "args"), io.stdout)
+      logger:debug(util.print(args, "args"), io.stdout)
    end
 
    if not args.quiet then

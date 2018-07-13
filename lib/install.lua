@@ -110,8 +110,9 @@ local function make_package_ready_for_install(package)
    end
 
    package.build.source_destination = destination
-
-   downloader:download(source, destination)
+   
+   local dl = downloader:create()
+   dl:download(source, destination)
    
    if package.build.source_type ~= "git" then
       --if (not filesystem.exists(path.join(package.build_directory, package.definition.pkg))) then

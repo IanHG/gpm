@@ -90,7 +90,7 @@ end
 -- @param log   A single output stream or a set of output streams
 -- @param format   Print raw message, or add newline to the end
 local function debug(msg, log, format)
-   if global_config.debug then
+   --if global_config.debug then
       if log then
          -- Create message
          msg = create_message(msg, ansicolor.bold .. ansicolor.blue .. " >>> " .. ansicolor.default, ansicolor.reset, format)
@@ -98,7 +98,7 @@ local function debug(msg, log, format)
          -- Then write to log
          write_to_log(msg, log)
       end
-   end
+   --end
 end
 
 --- Match line with a list of strings.
@@ -306,7 +306,7 @@ function logger_class:alert(msg, format, logs)
 end
 
 function logger_class:debug(msg, format, logs)
-   if global_config.debug then
+   --if global_config.debug then
       if not format then
          format = self.format
       end
@@ -315,7 +315,7 @@ function logger_class:debug(msg, format, logs)
       end
 
       debug(msg, logs, format)
-   end
+   --end
 end
 
 -- Load module
