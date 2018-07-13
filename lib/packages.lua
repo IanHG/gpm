@@ -4,6 +4,7 @@ local path       = assert(require "lib.path")
 local util       = assert(require "lib.util")
 local filesystem = assert(require "lib.filesystem")
 local class      = assert(require "lib.class")
+local gpackage   = assert(require "lib.gpackage")
 
 local package_class = class.create_class()
 
@@ -32,28 +33,31 @@ local function locate_gpk_file(args, config)
 
    -- Try to locate gpk file
    if args.gpk then
-      local filename = args.gpk .. ".gpk"
-      local function locate_gpk_impl()
-         for gpk_path in path.iterator(config.gpk_path) do
-            if(global_config.debug) then
-               logger:debug("Checking path : " .. gpk_path)
-            end
+      local gl = gpackage.create_locator()
+      gl.ext = ".gpk"
+      filepath = gl:locate(args.gpk)
+      ----local filename = args.gpk .. ".gpk"
+      --local function locate_gpk_impl()
+      --   for gpk_path in path.iterator(config.gpk_path) do
+      --      if(global_config.debug) then
+      --         logger:debug("Checking path : " .. gpk_path)
+      --      end
 
-            -- Check for abs path
-            if not path.is_abs_path(gpk_path) then
-               gpk_path = path.join(config.stack_path, gpk_path)
-            end
-            
-            -- Create filename
-            local filepath = path.join(gpk_path, filename)
-            
-            -- Check for existance
-            if filesystem.exists(filepath) then
-               return filepath
-            end
-         end
-      end
-      filepath = locate_gpk_impl()
+      --      -- Check for abs path
+      --      if not path.is_abs_path(gpk_path) then
+      --         gpk_path = path.join(config.stack_path, gpk_path)
+      --      end
+      --      
+      --      -- Create filename
+      --      local filepath = path.join(gpk_path, filename)
+      --      
+      --      -- Check for existance
+      --      if filesystem.exists(filepath) then
+      --         return filepath
+      --      end
+      --   end
+      --end
+      --filepath = locate_gpk_impl()
    elseif args.gpkf then
       filepath = args.gpkf
    else
@@ -336,23 +340,6 @@ local function bootstrap(args)
    return package
 end
 
---- 
-local function prerequisite_string(package)
-   local first = true
-   local str = ""
-   
-   for t, p in pairs(package.prerequisite) do
-      if not (type(t) == "number") then
-         if not first then
-            str = str .. ","
-         end
-         str = str .. t .. "=" .. p
-         first = false
-      end
-   end
-
-   return str
-end
 
 -- Load module
 M.is_heirarchical     = is_heirarchical

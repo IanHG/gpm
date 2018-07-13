@@ -352,6 +352,7 @@ local gpackage_locator_class = class.create_class()
 function gpackage_locator_class:__init()
    self.name   = ""
    self.config = nil
+   self.ext    = ".lua"
 end
 
 -- Try to find package locally
@@ -368,7 +369,7 @@ function gpackage_locator_class:try_local()
       end
       
       -- Create filename
-      local filepath = path.join(gpk_path, self.name .. ".lua")
+      local filepath = path.join(gpk_path, self.name .. self.ext)
       
       -- Check for existance
       if filesystem.exists(filepath) then
@@ -381,8 +382,8 @@ end
 
 -- Try to download package
 function gpackage_locator_class:try_download()
-   local source      = path.join("https://raw.githubusercontent.com/IanHG/gpm-gpackages/master", self.name .. ".lua")
-   local destination = path.join(self.config.gpk_path, self.name .. ".lua")
+   local source      = path.join("https://raw.githubusercontent.com/IanHG/gpm-gpackages/master", self.name .. self.ext)
+   local destination = path.join(self.config.gpk_path, self.name .. self.ext)
  
    logger:message(" Source       gpack : '" .. source      .. "'.")
    logger:message(" Destionation gpack : '" .. destination .. "'.")
@@ -447,8 +448,14 @@ local function load_gpackage(name)
    return gpack
 end
 
+local function create_locator()
+   local  gl = gpackage_locator_class:create()
+   return gl
+end
+
 --- Create the module
-M.load_gpackage = load_gpackage
+M.load_gpackage  = load_gpackage
+M.create_locator = create_locator
 
 -- return module
 return M

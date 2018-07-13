@@ -6,7 +6,6 @@ local filesystem = assert(require "lib.filesystem")
 local exception  = assert(require "lib.exception")
 local logging    = assert(require "lib.logging")
 local logger     = logging.logger
-local packages   = assert(require "lib.packages")
 local database   = assert(require "lib.database")
 local lmod       = assert(require "lib.lmod")
 local downloader = assert(require "lib.downloader")

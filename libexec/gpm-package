@@ -62,6 +62,7 @@ function main()
    parser_install:flag("--delete-source", "Delete the source files after build.")
    parser_install:flag("--keep-build-directory" , "Keep actual build directory.")
    parser_install:flag("--purgebuild" , "Purge by completely removing main build directory after build is complete.")
+   parser_install:flag("--old" , "Use old install script (.gpk format).")
 
    -- Remove specific
    parser_remove:mutex(
@@ -107,8 +108,11 @@ function main()
          initializer.initialize(args)
       elseif args.install then
          -- Install command
-         --install.install(args)
-         installer.install(args)
+         if args.old then
+            install.install(args)
+         else
+            installer.install(args)
+         end
       elseif args.remove then
          -- Remove Command
          remove.remove(args)
