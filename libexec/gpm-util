@@ -8,12 +8,12 @@ local version    = assert(require "lib.version")
 local util       = assert(require "lib.util")
 local logging    = assert(require "lib.logging")
 local logger     = logging.logger
-local ansicolor  = assert(require "lib.ansicolor")
 local configload = assert(require "lib.configload")
 local filesystem = assert(require "lib.filesystem")
 local database   = assert(require "lib.database")
 local lmod       = assert(require "lib.lmod")
 local gpackage   = assert(require "lib.gpackage")
+local initializer = assert(require "lib.initialize")
 
 -- Description of this script
 local description = version.get_description("gpm-util")
@@ -35,7 +35,7 @@ config = {
    -- Main directory
    stack_name = %stack_name%,
    stack_token= "main",
-   stack_path = %stack_path%
+   stack_path = %stack_path%,
 
    -- Setup some paths
    log_path = "stack.log",
@@ -57,14 +57,19 @@ config = {
       version = %lmod_version%,
       cache_path = "modulesdata",
    },
+
+   --
+   groups = {"core", "tools", "apps"},
 }
    ]]
    end
+
+   logger:message("Creating config file.")
    
    -- Create a config template
    local config_template = basic_config_template()
    local symbol_table    = gpackage.create_symbol_table()
-   symbol_table:add_symbol("stack_path"  , "\"" .. folder_of_this .. "\"")
+   symbol_table:add_symbol("stack_path"  , "\"" .. global_config.current_directory .. "\"")
    symbol_table:add_symbol("stack_name"  , "\"" .. "Main stack"   .. "\"")
    symbol_table:add_symbol("lmod_version", "\"" .. "7.7.38"       .. "\"")
    symbol_table:add_symbol("nprocesses"  , "4")
@@ -85,6 +90,8 @@ local function command_config(args)
 end
 
 local function command_init(args)
+   print("HERE")
+   initializer.initialize(args)
 end
 
 --- Main driver.
@@ -93,28 +100,36 @@ function main()
    local parser = argparse(description.script_name, description.name .. ":\n" .. description.desc)
    
    -- Commands
-   local parser_config = parser:command("config", "Manipulate config file.")
-   local parser_init   = parser:command("init"  , "Initialize stack.")
-   local parser_lmod   = parser:command("lmod"  , "Manipulate Lmod.") 
+   local parser_conf = parser:command("conf", "Manipulate config file.")
+   local parser_init = parser:command("init", "Initialize stack.")
+   local parser_lmod = parser:command("lmod", "Manipulate Lmod.") 
    
    -- Some general arguments
    parser:option("-c --config", "Provide config file."):overwrite(false)
    parser:option("-t --token"   , "Set a stack token."):overwrite(false)
    parser:flag("--debug", "Print debug information (mostly for developers).")
+   parser:flag("--quiet", "Do not print anything to stdout.")
    parser:flag("-v --version", "Print '" .. version.get_version() .. "' and exit."):action(function()
       print(version.get_version())
       os.exit(0)
    end)
    
    -- config specific
-   local parser_config_create = parser_config:command("create", "Create a basic config in current directory.")
-   local parser_config_update = parser_config:command("update", "Update config.")
+   local parser_conf_create = parser_conf:command("create", "Create a basic config in current directory.")
+   local parser_conf_update = parser_conf:command("update", "Update config.")
+   
+   -- init specific
+   parser_init:option("--parentstack", "Paths to source as GPM parent stacks. Give as comma-separated list."):overwrite(false)
    
    -- lmod specific
    parser_lmod:flag("--update-cache",   "Update Lmod cache for current stack.")
       
    -- Parse arguments
    args = parser:parse()
+
+   if not args.quiet then
+      logger:add_log("stdout", io.stdout)
+   end
    
    if args.debug then
       logger:debug("Lua version : " .. _VERSION)
@@ -127,7 +142,7 @@ function main()
 
       if args.lmod then
          command_lmod(args)
-      elseif args.config then
+      elseif args.conf then
          command_config(args)
       elseif args.init then
          command_init(args)

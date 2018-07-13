@@ -382,7 +382,7 @@ end
 
 -- Try to download package
 function gpackage_locator_class:try_download()
-   local source      = path.join("https://raw.githubusercontent.com/IanHG/gpm-gpackages/master", self.name .. self.ext)
+   local source      = path.join(global_config.repo  , self.name .. self.ext)
    local destination = path.join(self.config.gpk_path, self.name .. self.ext)
  
    logger:message(" Source       gpack : '" .. source      .. "'.")

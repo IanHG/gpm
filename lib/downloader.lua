@@ -147,7 +147,7 @@ function downloader_class:download(url, dest, force)
 end
 
 local function create()
-   local dl = downloader_class:create()
+   local  dl = downloader_class:create()
    return dl
 end
 
