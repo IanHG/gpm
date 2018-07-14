@@ -20,7 +20,13 @@ local description = version.get_description("gpm-util")
 
 -- Load template
 local function load_template(ttype, name)
-   local f = assert(io.open(path.join(global_config.template_path, path.join(ttype, name .. ".lua"))))
+   local f = io.open(path.join(global_config.template_path, path.join(ttype, name .. ".lua")))
+   
+   if f == nil then
+      logger:alert("Did not find template file '" .. name .. "' while searchin '" .. global_config.template_path .. "'.")
+      assert(false)
+   end
+   
    local template = f:read("*all")
    return template
 end
@@ -68,16 +74,35 @@ end
 local function command_gpack_create(args)
    logger:message("Creating gpack file.")
    
+   local template_name = ""
+   if args.template then
+      template_name = args.template
+   else
+      template_name = "basic"
+   end
+
    -- Create a config template
-   local gpack_template = load_template("gpack", "basic")
+   local gpack_template = load_template("gpack", template_name)
    local symbol_table   = gpackage.create_symbol_table()
    symbol_table.sbeg = "<"
    symbol_table.send = ">"
 
-   config_template = symbol_table:substitute(gpack_template)
+   for k, v in pairs(args.symbol) do
+      local s = util.split(v, "=")
+      symbol_table:add_symbol(s[1], s[2])
+   end
+
+   gpack_template = symbol_table:substitute(gpack_template)
    
    -- Write the template to file
-   local gpack_file = assert(io.open(path.join(global_config.current_directory, "basic.lua"), 'w'))
+   local filename = ""
+   if args.name then
+      filename = args.name .. ".lua"
+   else
+      filename = template_name .. ".lua"
+   end
+
+   local gpack_file = assert(io.open(path.join(global_config.current_directory, filename), 'w'))
    gpack_file:write(gpack_template)
    gpack_file:close()
 end
@@ -104,6 +129,7 @@ function main()
    parser:option("-t --token"   , "Set a stack token."):overwrite(false)
    parser:flag("--debug", "Print debug information (mostly for developers).")
    parser:flag("--quiet", "Do not print anything to stdout.")
+   parser:option("--format", "Set printout format.", "fancy")
    parser:flag("-v --version", "Print '" .. version.get_version() .. "' and exit."):action(function()
       print(version.get_version())
       os.exit(0)
@@ -121,6 +147,9 @@ function main()
 
    -- gpack specific
    local parser_gpack_create = parser_gpack:command("create", "Create a 'gpack' template file.")
+   parser_gpack:option("-n --name"    , "Set name of Gpack."):overwrite(false)
+   parser_gpack:option("-t --template", "Set template to be used."):overwrite(false)
+   parser_gpack:option("-s --symbol"  , "Add symbol to be substituted."):count("*")
       
    -- Parse arguments
    args = parser:parse()
@@ -128,6 +157,8 @@ function main()
    if not args.quiet then
       logger:add_log("stdout", io.stdout)
    end
+
+   logger.format = args.format
    
    if args.debug then
       logger:debug("Lua version : " .. _VERSION)

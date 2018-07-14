@@ -1,4 +1,4 @@
-function <gpack-name>()
+function <name>()
    homepage    ("<homepage>")
    .url        ("<url>")
    .version    ("%version%")
@@ -14,6 +14,6 @@ function <gpack-name>()
       .group ("<group>")
 
    symbol
-      .add("name"   , "<gpack-name>")
+      .add("name"   , "<name>")
       .add("version", "<version>")
 end
