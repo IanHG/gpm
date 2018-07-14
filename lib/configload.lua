@@ -33,6 +33,8 @@ local global_default_config = {
    ---- Set default .gps path
    --gps_path = folder_of_this() .. "../gps",
    gps_path = "",
+
+   template_path = folder_of_this() .. "../templates",
    --
    repo = "https://raw.githubusercontent.com/IanHG/gpm-gpackages/master",
    -- As of now we must give the hierarchical keyword, so we just default to empty

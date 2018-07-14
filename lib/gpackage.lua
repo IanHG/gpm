@@ -68,7 +68,7 @@ end
 
 function gpackage_symbol_table_class:substitute(str)
    local function escape(k)
-      return k:gsub("%%", "%%%%"):gsub("<", "%%%%"):gsub(">", "%%%%")
+      return k:gsub("%%", "%%%%")
    end
 
    for k, v in pairs(self.symbols) do

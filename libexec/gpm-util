@@ -18,6 +18,13 @@ local initializer = assert(require "lib.initialize")
 -- Description of this script
 local description = version.get_description("gpm-util")
 
+-- Load template
+local function load_template(ttype, name)
+   local f = assert(io.open(path.join(global_config.template_path, path.join(ttype, name .. ".lua"))))
+   local template = f:read("*all")
+   return template
+end
+
 --
 local function command_lmod(args)
    if args.update_cache then
@@ -26,49 +33,13 @@ local function command_lmod(args)
 end
 
 local function command_config_create(args)
-   local function basic_config_template()
-      return [[
--- GPM config file
-config = {
-   nprocesses = %nprocesses%,
-
-   -- Main directory
-   stack_name = %stack_name%,
-   stack_token= "main",
-   stack_path = %stack_path%,
-
-   -- Setup some paths
-   log_path = "stack.log",
-   gpk_path = "gpk",
-   gps_path = "gps",
-
-   --
-   meta_stack = {
-      allow_registration = true,
-   },
-   
-   -- Database stuff
-   db = {
-      path = "db",
-   },
-   
-   --
-   lmod = {
-      version = %lmod_version%,
-      cache_path = "modulesdata",
-   },
-
-   --
-   groups = {"core", "tools", "apps"},
-}
-   ]]
-   end
-
    logger:message("Creating config file.")
    
    -- Create a config template
-   local config_template = basic_config_template()
+   local config_template = load_template("config", "basic")
    local symbol_table    = gpackage.create_symbol_table()
+   symbol_table.sbeg = "<"
+   symbol_table.send = ">"
    symbol_table:add_symbol("stack_path"  , "\"" .. global_config.current_directory .. "\"")
    symbol_table:add_symbol("stack_name"  , "\"" .. "Main stack"   .. "\"")
    symbol_table:add_symbol("lmod_version", "\"" .. "7.7.38"       .. "\"")
@@ -94,15 +65,39 @@ local function command_init(args)
    initializer.initialize(args)
 end
 
+local function command_gpack_create(args)
+   logger:message("Creating gpack file.")
+   
+   -- Create a config template
+   local gpack_template = load_template("gpack", "basic")
+   local symbol_table   = gpackage.create_symbol_table()
+   symbol_table.sbeg = "<"
+   symbol_table.send = ">"
+
+   config_template = symbol_table:substitute(gpack_template)
+   
+   -- Write the template to file
+   local gpack_file = assert(io.open(path.join(global_config.current_directory, "basic.lua"), 'w'))
+   gpack_file:write(gpack_template)
+   gpack_file:close()
+end
+
+local function command_gpack(args)
+   if args.create then
+      command_gpack_create(args)
+   end
+end
+
 --- Main driver.
 function main()
    -- Arg parser
    local parser = argparse(description.script_name, description.name .. ":\n" .. description.desc)
    
    -- Commands
-   local parser_conf = parser:command("conf", "Manipulate config file.")
-   local parser_init = parser:command("init", "Initialize stack.")
-   local parser_lmod = parser:command("lmod", "Manipulate Lmod.") 
+   local parser_conf  = parser:command("conf" , "Manipulate config file.")
+   local parser_init  = parser:command("init" , "Initialize stack.")
+   local parser_lmod  = parser:command("lmod" , "Manipulate Lmod.") 
+   local parser_gpack = parser:command("gpack", "Manipulate 'gpack' files.") 
    
    -- Some general arguments
    parser:option("-c --config", "Provide config file."):overwrite(false)
@@ -123,6 +118,9 @@ function main()
    
    -- lmod specific
    parser_lmod:flag("--update-cache",   "Update Lmod cache for current stack.")
+
+   -- gpack specific
+   local parser_gpack_create = parser_gpack:command("create", "Create a 'gpack' template file.")
       
    -- Parse arguments
    args = parser:parse()
@@ -146,6 +144,8 @@ function main()
          command_config(args)
       elseif args.init then
          command_init(args)
+      elseif args.gpack then
+         command_gpack(args)
       end
    end, function(e)
       -- Print exception
