@@ -323,6 +323,18 @@ function gpackage_class:is_git()
    return self.url:match("git$")
 end
 
+-- Check validity of gpackage
+function gpackage_class:is_valid()
+   if util.isempty(self.name) then
+      logger:alert("No name in Gpack.")
+      assert(false)
+   end
+
+   if util.isempty(self.url) then
+      logger:alert("No url given in Gpack.")
+      assert(false)
+   end
+end
 
 function gpackage_class:print()
    logger:message("Name      : " .. self.name)
@@ -444,6 +456,8 @@ local function load_gpackage(name)
    gpack:load(path)
    
    gpack:print()
+   
+   gpack:is_valid()
 
    return gpack
 end

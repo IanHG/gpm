@@ -209,8 +209,7 @@ local function log_call(stack)
          msg = msg .. ansicolor.blue " ... " .. ansicolor.default .. "Running\n"
       end
       
-      message(msg , {logfile}, "fancy")
-      --message(msg , {io.stdout})
+      message(msg , {logfile}, "raw")
 
       logfile:close()
    end

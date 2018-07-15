@@ -1,9 +1,9 @@
 -- Load globally installed packages
 local lfs      = assert(require "lfs")
-local argparse = assert(require "argparse")
 
 -- Load local packages
 local exception   = assert(require "lib.exception")
+local argparse    = assert(require "lib.argparse")
 local path        = assert(require "lib.path")
 local configload  = assert(require "lib.configload")
 local version     = assert(require "lib.version")
@@ -23,23 +23,13 @@ local description = version.get_description("gpm-package")
 --- Main driver for gpm-package script.
 function main()
    -- Arg parser
-   local parser = argparse(description.script_name, description.name .. ":\n" .. description.desc)
+   local parser = argparse.create(description)
    
    -- Commands
    local parser_initialize = parser:command("initialize") 
    local parser_install = parser:command("install")
    local parser_remove = parser:command("remove")
    local parser_stack = parser:command("stack")
-   
-   -- Some general arguments
-   parser:option("-c --config", "Provide config file."):overwrite(false)
-   parser:flag("--debug", "Print debug information (mostly for developers).")
-   parser:flag("--quiet", "Do not print anything to stdout.")
-   parser:flag("-v --version", "Print '" .. version.get_version() .. "' and exit."):action(function()
-      print(version.get_version())
-      os.exit(0)
-   end)
-   parser:option("-t --token"   , "Set a stack token."):overwrite(false)
 
    -- Initialize specific
    parser_initialize:option("--parentstack", "Paths to source as GPM parent stacks. Give as comma-separated list."):overwrite(false)
