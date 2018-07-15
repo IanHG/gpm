@@ -1,0 +1,75 @@
+-- Load globally installed packages
+--local argparse = assert(require "argparse")
+
+-- Load local packages
+local exception  = assert(require "lib.exception")
+local path       = assert(require "lib.path")
+local version    = assert(require "lib.version")
+local argparse   = assert(require "lib.argparse")
+local util       = assert(require "lib.util")
+local logging    = assert(require "lib.logging")
+local logger     = logging.logger
+local configload = assert(require "lib.configload")
+local filesystem = assert(require "lib.filesystem")
+local database   = assert(require "lib.database")
+local lmod       = assert(require "lib.lmod")
+local gpackage   = assert(require "lib.gpackage")
+local initializer = assert(require "lib.initialize")
+local downloader = assert(require "lib.downloader")
+local filesystem = assert(require "lib.filesystem")
+
+-- Description of this script
+local description = version.get_description("gpm-log")
+
+local function command_grep(args)
+   local result = logging.grep(args.patterns, global_config.log_path)
+   for _,line in pairs(result) do
+      logger:message(line .. "\n", "raw")
+   end
+end
+
+--- Main driver.
+function main()
+   -- Arg parser
+   local parser = argparse.create(description)
+   
+   -- Commands
+   local parser_grep  = parser:command("grep" , "Grep in log file.")
+   local parser_grep_argument = parser_grep:argument("patterns", "Patterns to grep for."):args("*")
+      
+   -- Parse arguments
+   args = parser:parse()
+
+   if not args.quiet then
+      logger:add_log("stdout", io.stdout)
+   end
+
+   logger.format = args.format
+   
+   if args.debug then
+      logger:debug("Lua version : " .. _VERSION)
+      logger:debug(util.print(args, "args")    )
+   end
+   
+   exception.try(function()
+      -- Bootstrap config
+      configload.bootstrap(nil, args, {}, true)
+
+      if args.grep then
+         command_grep(args)
+      end
+   end, function(e)
+      -- Print exception
+      exception.message(e)
+         
+      -- Print usage
+      print("\n" .. parser:get_usage())
+
+      -- Exit with non zero status
+      os.exit(1)
+   end)
+end
+
+--[[
+# vi:syntax=lua
+--]]

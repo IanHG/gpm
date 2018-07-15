@@ -1,10 +1,11 @@
 -- Load globally installed packages
-local argparse = assert(require "argparse")
+--local argparse = assert(require "argparse")
 
 -- Load local packages
 local exception  = assert(require "lib.exception")
 local path       = assert(require "lib.path")
 local version    = assert(require "lib.version")
+local argparse   = assert(require "lib.argparse")
 local util       = assert(require "lib.util")
 local logging    = assert(require "lib.logging")
 local logger     = logging.logger
@@ -88,6 +89,8 @@ local function command_gpack_create(args)
    local symbol_table   = gpackage.create_symbol_table()
    symbol_table.sbeg = "<"
    symbol_table.send = ">"
+   
+   symbol_table:add_symbol("name", args.name)
 
    for k, v in pairs(args.symbol) do
       local s = util.split(v, "=")
@@ -95,16 +98,8 @@ local function command_gpack_create(args)
    end
 
    gpack_template = symbol_table:substitute(gpack_template)
-   
-   -- Write the template to file
-   local filename = ""
-   if args.name then
-      filename = args.name .. ".lua"
-   else
-      filename = template_name .. ".lua"
-   end
 
-   local gpack_file = assert(io.open(path.join(global_config.current_directory, filename), 'w'))
+   local gpack_file = assert(io.open(path.join(global_config.current_directory, args.name .. ".lua"), 'w'))
    gpack_file:write(gpack_template)
    gpack_file:close()
 end
@@ -140,24 +135,13 @@ end
 --- Main driver.
 function main()
    -- Arg parser
-   local parser = argparse(description.script_name, description.name .. ":\n" .. description.desc)
+   local parser = argparse.create(description)
    
    -- Commands
    local parser_conf  = parser:command("conf" , "Manipulate config file.")
    local parser_init  = parser:command("init" , "Initialize stack.")
    local parser_lmod  = parser:command("lmod" , "Manipulate Lmod.") 
    local parser_gpack = parser:command("gpack", "Manipulate 'gpack' files.") 
-   
-   -- Some general arguments
-   parser:option("-c --config", "Provide config file."):overwrite(false)
-   parser:option("-t --token"   , "Set a stack token."):overwrite(false)
-   parser:flag("--debug", "Print debug information (mostly for developers).")
-   parser:flag("--quiet", "Do not print anything to stdout.")
-   parser:option("--format", "Set printout format.", "fancy")
-   parser:flag("-v --version", "Print '" .. version.get_version() .. "' and exit."):action(function()
-      print(version.get_version())
-      os.exit(0)
-   end)
    
    -- config specific
    local parser_conf_create = parser_conf:command("create", "Create a basic config in current directory.")
@@ -171,7 +155,7 @@ function main()
 
    -- gpack specific
    local parser_gpack_create = parser_gpack:command("create", "Create a 'gpack' template file.")
-   parser_gpack_create:option("-n --name"    , "Set name of Gpack."):overwrite(false)
+   parser_gpack_create:argument("name")
    parser_gpack_create:option("-t --template", "Set template to be used."):overwrite(false)
    parser_gpack_create:option("-s --symbol"  , "Add symbol to be substituted."):count("*")
    
