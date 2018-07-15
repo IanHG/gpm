@@ -14,6 +14,8 @@ local database   = assert(require "lib.database")
 local lmod       = assert(require "lib.lmod")
 local gpackage   = assert(require "lib.gpackage")
 local initializer = assert(require "lib.initialize")
+local downloader = assert(require "lib.downloader")
+local filesystem = assert(require "lib.filesystem")
 
 -- Description of this script
 local description = version.get_description("gpm-util")
@@ -107,9 +109,31 @@ local function command_gpack_create(args)
    gpack_file:close()
 end
 
+local function command_gpack_download(args)
+   local repo = ""
+   if args.repo then
+      repo = args.repo
+   else
+      repo = global_config.repo
+   end
+
+   local source      = path.join(repo,                            args.name .. ".lua")
+   local destination = path.join(global_config.current_directory, args.name .. ".lua")
+
+   if (args.force and filesystem.exists(destination)) then
+      filesystem.remove(destination)
+   end
+
+   local dl = downloader:create()
+   dl.has_luasocket_http = false
+   dl:download(source, destination)
+end
+
 local function command_gpack(args)
    if args.create then
       command_gpack_create(args)
+   elseif args.download then
+      command_gpack_download(args)
    end
 end
 
@@ -147,9 +171,15 @@ function main()
 
    -- gpack specific
    local parser_gpack_create = parser_gpack:command("create", "Create a 'gpack' template file.")
-   parser_gpack:option("-n --name"    , "Set name of Gpack."):overwrite(false)
-   parser_gpack:option("-t --template", "Set template to be used."):overwrite(false)
-   parser_gpack:option("-s --symbol"  , "Add symbol to be substituted."):count("*")
+   parser_gpack_create:option("-n --name"    , "Set name of Gpack."):overwrite(false)
+   parser_gpack_create:option("-t --template", "Set template to be used."):overwrite(false)
+   parser_gpack_create:option("-s --symbol"  , "Add symbol to be substituted."):count("*")
+   
+   -- download
+   local parser_gpack_download = parser_gpack:command("download", "Download Gpack.")
+   parser_gpack_download:argument("name")
+   parser_gpack_download:option("-r --repo"    , "Set remote repo."):overwrite(false)
+   parser_gpack_download:flag  ("--force"      , "Force download.")
       
    -- Parse arguments
    args = parser:parse()
