@@ -127,9 +127,15 @@ function downloader_class:download(url, dest, force)
 
    -- If file exist, we remove if forced, else return
    if filesystem.exists(self.destination) then
-      if self.force then         
-         filesystem.remove(self.destination)
+      if self.force then
+         logger:message("Removing destination.")
+         if filesystem.isdir(self.destination) then
+            filesystem.rmdir(self.destination, true)
+         else
+            filesystem.remove(self.destination)
+         end
       else
+         logger:message("Destination already exists, skipping download. If you want to download anyways, re-run with '--force-download'.")
          return
       end
    end

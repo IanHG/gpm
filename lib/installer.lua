@@ -482,9 +482,9 @@ end
 
 function installer_class:download(is_git)
    if is_git then
-      self.downloader:download(self.gpack.url, self.build.unpack_path)
+      self.downloader:download(self.gpack.url, self.build.unpack_path, self.options.force_download)
    else
-      self.downloader:download(self.gpack.url, self.build.source_path)
+      self.downloader:download(self.gpack.url, self.build.source_path, self.options.force_download)
    end
 end
 
@@ -576,6 +576,7 @@ local function install(args)
       local gpack = gpackage.load_gpackage(args.gpack)
       
       local installer = installer_class:create()
+      installer.options.force_download = args.force_download
       installer:install(gpack)
       
       --database.load_db(global_config)
