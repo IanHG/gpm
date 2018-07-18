@@ -2,6 +2,8 @@ local M = {}
 
 -- Search for lua module, with callback if not found.
 -- If module is not found will return 'nil'.
+--
+-- If callback is passed will return whatever callback returns.
 local function loadrequire(module, callback)
    local function requiref(module)
       return require(module)
