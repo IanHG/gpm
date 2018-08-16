@@ -397,8 +397,8 @@ function gpackage_locator_class:try_download()
    local source      = path.join(global_config.repo  , self.name .. self.ext)
    local destination = path.join(self.config.gpk_path, self.name .. self.ext)
  
-   logger:message(" Source       gpack : '" .. source      .. "'.")
-   logger:message(" Destionation gpack : '" .. destination .. "'.")
+   logger:message(" Source      gpack : '" .. source      .. "'.")
+   logger:message(" Destination gpack : '" .. destination .. "'.")
    
    local dl = downloader:create()
    dl.has_luasocket_http = false
@@ -427,8 +427,10 @@ function gpackage_locator_class:locate(name, config)
    if filepath ~= nil then
       return filepath
    end
-
+   
    -- Else we try to download from repo
+   logger:message("Package not found locally, trying remotely.")
+   
    filepath = self:try_download()
    if filepath == nil then
       logger:alert("No Gpackage with name '" .. self.name .. "' was found.")

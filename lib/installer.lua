@@ -218,7 +218,7 @@ local function generate_prepend_path(gpack, install_path)
    if gpack.lmod.autopath then
       for directory in lfs.dir(install_path) do
          if directory:match("bin") then
-            table.insert(prepend_path, {"PATH", "bin"})
+            table.insert(prepend_path, {"PATH", path.join(install_path, "bin")})
          elseif directory:match("include") then
             generate_prepend_path_include("include", prepend_path, install_path)
          elseif directory:match("lib64") then
@@ -570,7 +570,7 @@ end
 local function install(args)
    exception.try(function() 
       -- Bootstrap build
-      logger:message("BOOTSTRAP PACKAGE")
+      logger:message("BOOTSTRAP PACKAGE NEW")
       args.gpack = args.gpk
 
       local gpack = gpackage.load_gpackage(args.gpack)
