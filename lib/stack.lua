@@ -104,7 +104,7 @@ local function stack(args)
             end
             
             -- Run the command
-            local status = util.execute_command(execcmd, { io.stdout })
+            local status = util.execute_command(execcmd)
             if status ~= 0 then
                error("Failed to build package : " .. value)
             end

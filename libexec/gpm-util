@@ -1,68 +1,196 @@
 -- Load globally installed packages
-local argparse = assert(require "argparse")
+--local argparse = assert(require "argparse")
 
 -- Load local packages
 local exception  = assert(require "lib.exception")
 local path       = assert(require "lib.path")
 local version    = assert(require "lib.version")
+local argparse   = assert(require "lib.argparse")
 local util       = assert(require "lib.util")
 local logging    = assert(require "lib.logging")
-local ansicolor  = assert(require "lib.ansicolor")
+local logger     = logging.logger
 local configload = assert(require "lib.configload")
 local filesystem = assert(require "lib.filesystem")
 local database   = assert(require "lib.database")
 local lmod       = assert(require "lib.lmod")
-local hwdetect   = assert(require "lib.hwdetect.hwdetect")
+local gpackage   = assert(require "lib.gpackage")
+local initializer = assert(require "lib.initialize")
+local downloader = assert(require "lib.downloader")
+local filesystem = assert(require "lib.filesystem")
 
 -- Description of this script
-local description = version.get_description("gpm-stack.lua")
+local description = version.get_description("gpm-util")
+
+-- Load template
+local function load_template(ttype, name)
+   local f = io.open(path.join(global_config.template_path, path.join(ttype, name .. ".lua")))
+   
+   if f == nil then
+      logger:alert("Did not find template file '" .. name .. "' while searchin '" .. global_config.template_path .. "'.")
+      assert(false)
+   end
+   
+   local template = f:read("*all")
+   return template
+end
 
 --
-local function command_lmod(args, logs)
+local function command_lmod(args)
    if args.update_cache then
-      lmod.update_lmod_cache(logs)
+      lmod.update_lmod_cache()
+   end
+end
+
+local function command_config_create(args)
+   logger:message("Creating config file.")
+   
+   -- Create a config template
+   local config_template = load_template("config", "basic")
+   local symbol_table    = gpackage.create_symbol_table()
+   symbol_table.sbeg = "<"
+   symbol_table.send = ">"
+   symbol_table:add_symbol("stack_path"  , "\"" .. global_config.current_directory .. "\"")
+   symbol_table:add_symbol("stack_name"  , "\"" .. "Main stack"   .. "\"")
+   symbol_table:add_symbol("lmod_version", "\"" .. "7.7.38"       .. "\"")
+   symbol_table:add_symbol("nprocesses"  , "4")
+
+   config_template = symbol_table:substitute(config_template)
+   
+   -- Write the template to file
+   local config_file = assert(io.open(path.join(global_config.current_directory, "config.lua"), 'w'))
+   config_file:write(config_template)
+   config_file:close()
+end
+
+local function command_config(args)
+   if args.create then
+      -- create a config file
+      command_config_create(args)
+   end
+end
+
+local function command_init(args)
+   print("HERE")
+   initializer.initialize(args)
+end
+
+local function command_gpack_create(args)
+   logger:message("Creating gpack file.")
+   
+   local template_name = ""
+   if args.template then
+      template_name = args.template
+   else
+      template_name = "basic"
+   end
+
+   -- Create a config template
+   local gpack_template = load_template("gpack", template_name)
+   local symbol_table   = gpackage.create_symbol_table()
+   symbol_table.sbeg = "<"
+   symbol_table.send = ">"
+   
+   symbol_table:add_symbol("name", args.name)
+
+   for k, v in pairs(args.symbol) do
+      local s = util.split(v, "=")
+      symbol_table:add_symbol(s[1], s[2])
+   end
+
+   gpack_template = symbol_table:substitute(gpack_template)
+
+   local gpack_file = assert(io.open(path.join(global_config.current_directory, args.name .. ".lua"), 'w'))
+   gpack_file:write(gpack_template)
+   gpack_file:close()
+end
+
+local function command_gpack_download(args)
+   local repo = ""
+   if args.repo then
+      repo = args.repo
+   else
+      repo = global_config.repo
+   end
+
+   local source      = path.join(repo,                            args.name .. ".lua")
+   local destination = path.join(global_config.current_directory, args.name .. ".lua")
+
+   if (args.force and filesystem.exists(destination)) then
+      filesystem.remove(destination)
+   end
+
+   local dl = downloader:create()
+   dl.has_luasocket_http = false
+   dl:download(source, destination)
+end
+
+local function command_gpack(args)
+   if args.create then
+      command_gpack_create(args)
+   elseif args.download then
+      command_gpack_download(args)
    end
 end
 
 --- Main driver.
 function main()
    -- Arg parser
-   local parser = argparse(description.script_name, description.name .. ":\n" .. description.desc)
+   local parser = argparse.create(description)
    
    -- Commands
-   local parser_lmod = parser:command("lmod", "Manipulate Lmod.") 
+   local parser_conf  = parser:command("conf" , "Manipulate config file.")
+   local parser_init  = parser:command("init" , "Initialize stack.")
+   local parser_lmod  = parser:command("lmod" , "Manipulate Lmod.") 
+   local parser_gpack = parser:command("gpack", "Manipulate 'gpack' files.") 
    
-   -- Some general arguments
-   parser:option("-c --config", "Provide config file."):overwrite(false)
-   parser:option("-t --token"   , "Set a stack token."):overwrite(false)
-   parser:flag("--debug", "Print debug information (mostly for developers).")
-   parser:flag("-v --version", "Print '" .. version.get_version() .. "' and exit."):action(function()
-      print(version.get_version())
-      os.exit(0)
-   end)
+   -- config specific
+   local parser_conf_create = parser_conf:command("create", "Create a basic config in current directory.")
+   local parser_conf_update = parser_conf:command("update", "Update config.")
    
-   -- arch specific
-   --parser_arch:flag("-a --all"   , "List all available stacks."):overwrite(false)
+   -- init specific
+   parser_init:option("--parentstack", "Paths to source as GPM parent stacks. Give as comma-separated list."):overwrite(false)
    
    -- lmod specific
-   parser_lmod:flag  ("--update-cache",   "Update Lmod cache for current stack.")
+   parser_lmod:flag("--update-cache",   "Update Lmod cache for current stack.")
+
+   -- gpack specific
+   local parser_gpack_create = parser_gpack:command("create", "Create a 'gpack' template file.")
+   parser_gpack_create:argument("name")
+   parser_gpack_create:option("-t --template", "Set template to be used."):overwrite(false)
+   parser_gpack_create:option("-s --symbol"  , "Add symbol to be substituted."):count("*")
+   
+   -- download
+   local parser_gpack_download = parser_gpack:command("download", "Download Gpack.")
+   parser_gpack_download:argument("name")
+   parser_gpack_download:option("-r --repo"    , "Set remote repo."):overwrite(false)
+   parser_gpack_download:flag  ("--force"      , "Force download.")
       
    -- Parse arguments
    args = parser:parse()
+
+   if not args.quiet then
+      logger:add_log("stdout", io.stdout)
+   end
+
+   logger.format = args.format
    
    if args.debug then
-      logging.debug("Lua version : " .. _VERSION, io.stdout)
-      logging.debug(util.print(args, "args"), io.stdout)
+      logger:debug("Lua version : " .. _VERSION)
+      logger:debug(util.print(args, "args")    )
    end
-   
-   local logs = {io.stdout}
    
    exception.try(function()
       -- Bootstrap config
       configload.bootstrap(nil, args, {}, true)
 
       if args.lmod then
-         command_lmod(args, logs)
+         command_lmod(args)
+      elseif args.conf then
+         command_config(args)
+      elseif args.init then
+         command_init(args)
+      elseif args.gpack then
+         command_gpack(args)
       end
    end, function(e)
       -- Print exception

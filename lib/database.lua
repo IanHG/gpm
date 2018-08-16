@@ -1,7 +1,8 @@
 local path     = assert(require "lib.path")
 local util     = assert(require "lib.util")
 local logging  = assert(require "lib.logging")
-local packages = assert(require "lib.packages")
+local logger   = logging.logger
+--local packages = assert(require "lib.packages")
 
 local M = {}
 
@@ -11,6 +12,24 @@ local global_db = nil
 
 --- Default databases
 local default_dbs = {"package", "childstack"}
+
+--- 
+local function prerequisite_string(package)
+   local first = true
+   local str = ""
+   
+   for t, p in pairs(package.prerequisite) do
+      if not (type(t) == "number") then
+         if not first then
+            str = str .. ","
+         end
+         str = str .. t .. "=" .. p
+         first = false
+      end
+   end
+
+   return str
+end
 
 --- Create db entry from string (read from file).
 --
@@ -72,7 +91,7 @@ local function create_package_db_entry(package)
    local db_entry = { 
        gpk    = util.conditional(package.definition.pkgname   , package.definition.pkgname           , "nil"), 
        pkv    = util.conditional(package.definition.pkgversion, package.definition.pkgversion        , "nil"), 
-       prereq = util.conditional((package.prerequisite and (not (next(package.prerequisite) == nil))), packages.prerequisite_string(package), "nil"),
+       prereq = util.conditional((package.prerequisite and (not (next(package.prerequisite) == nil))), prerequisite_string(package), "nil"),
    }
 
    return db_entry
@@ -313,7 +332,7 @@ end
 --- List all installed packages
 local function list_installed()
    for n, db_entry in pairs(global_db["package"]) do
-      logging.message(util.print(db_entry, n), io.stdout)
+      logger:message(util.print(db_entry, n))
    end
 end
 

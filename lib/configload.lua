@@ -6,6 +6,7 @@ local filesystem = assert(require "lib.filesystem")
 local util       = assert(require "lib.util")
 local path       = assert(require "lib.path")
 local logging    = assert(require "lib.logging")
+local logger     = logging.logger
 
 -- Helper function to find folder of current script.
 local function folder_of_this()
@@ -24,10 +25,18 @@ local global_default_config = {
    current_directory = filesystem.cwd(),  
    -- Set folder of running script
    folder = folder_of_this(),
-   -- Set default .gpk path
-   gpk_path = folder_of_this() .. "../gpk",
-   -- Set default .gps path
-   gps_path = folder_of_this() .. "../gps",
+   --
+   stack_path = folder_of_this(),
+   ---- Set default .gpk path
+   --gpk_path = folder_of_this() .. "../gpk",
+   gpk_path = "",
+   ---- Set default .gps path
+   --gps_path = folder_of_this() .. "../gps",
+   gps_path = "",
+
+   template_path = folder_of_this() .. "../templates",
+   --
+   repo = "https://raw.githubusercontent.com/IanHG/gpm-gpackages/master",
    -- As of now we must give the hierarchical keyword, so we just default to empty
    heirarchical = {},
 
@@ -98,6 +107,10 @@ end
 -- @return{Dictionary} Returns definition og build.
 --local function bootstrap(config_path, args, default_config, set_global)
 bootstrap = function (config_path, args, default_config, set_global)
+   if args.debug then
+      logger:debug("Starting to bootstrap config.")
+   end
+
    -- Set default
    if not args then
       args = {}
@@ -110,14 +123,20 @@ bootstrap = function (config_path, args, default_config, set_global)
 
    -- Do some debug output if requested
    if args.debug then
-      logging.debug("Bootstrapping config.", io.stdout)
+      logger:debug("Bootstrapping config.")
    end
    
    -- Load config file
    if not config_path then
       config_path = configpath(args)
    end
-   assert(loadfile(config_path))()
+   
+   --print(config_path)
+   if (type(config_path) == "string") and (not util.isempty(config_path)) then
+      assert(loadfile(config_path))()
+   else
+      config = {}
+   end
    
    if config then
       local_config = util.merge(local_config, config)
@@ -129,7 +148,9 @@ bootstrap = function (config_path, args, default_config, set_global)
    
    
    -- Set this_path
-   local_config.this_path = util.conditional(path.is_abs_path(config_path), config_path, local_config.current_directory .. "/" .. config_path)
+   if (type(config_path) == "string") and (not util.isempty(config_path)) then
+      local_config.this_path = util.conditional(path.is_abs_path(config_path), config_path, local_config.current_directory .. "/" .. config_path)
+   end
 
    --
    -- Setup defaults
@@ -141,7 +162,7 @@ bootstrap = function (config_path, args, default_config, set_global)
 
    -- Setup stack_path
    if (not local_config.stack_path) then
-      local stack_path, _, _ = path.split_filename(args.config)
+      local stack_path, _, _  = path.split_filename(args.config)
       local_config.stack_path = path.remove_dir_end(stack_path)
    end
 
@@ -152,10 +173,10 @@ bootstrap = function (config_path, args, default_config, set_global)
    
    -- Setup gpk_path and gps_path
    if config.gpk_path then
-      local_config.gpk_path = config.gpk_path .. ":" .. local_config.folder .. "../gpk"
+      local_config.gpk_path = util.conditional(path.is_abs_path(config.gpk_path), config.gpk_path, path.join(config.stack_path, config.gpk_path))
    end
    if config.gps_path then
-      local_config.gps_path = config.gps_path .. ":" .. local_config.folder .. "../gps"
+      local_config.gps_path = config.gps_path
    end
    
    -- Setup build_path and lmod_path
@@ -197,7 +218,8 @@ bootstrap = function (config_path, args, default_config, set_global)
    
    -- If requested printout some debug information
    if(args.debug) then
-      logging.debug(util.print(local_config, "config"), io.stdout)
+      logger:debug("Done reading config...")
+      logger:debug(util.print(local_config, "config"))
    end
    
    -- Unset the loaded config (which has been loaded into global space!)
@@ -221,12 +243,12 @@ local function print_config(config, log)
    if not log then
       log = io.stdout
    end
-   logging.debug(util.print(default_config, "config"), log)
+   logger:debug(util.print(default_config, "config"), nil, log)
 end
 
 -- Load module
-M.configpath = configpath
-M.bootstrap  = bootstrap
+M.configpath   = configpath
+M.bootstrap    = bootstrap
 M.print_config = print_config
 
 return M

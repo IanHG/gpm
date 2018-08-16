@@ -1,5 +1,6 @@
-local _execcmd = assert(require "lib.execcmd")
-local _logging = assert(require "lib.logging")
+local execcmd = assert(require "lib.execcmd")
+local logging = assert(require "lib.logging")
+local logger   = logging.logger
 local hwdetect_util = assert(require "lib.hwdetect.util")
 
 local M = {}
@@ -118,31 +119,31 @@ end
 -- @param log        An optional log.
 --
 -- @return Returns status of command.
-local function execute_command(command, log, check)
+local function execute_command(command, check)
    if check == nil then
       check = true
    end
 
    -- Do some pre-logging
-   _logging.message("EXECUTING COMMAND : " .. command, log)
+   logger:message("EXECUTING COMMAND : " .. command)
 
    -- Run the command
-   --bool, msg, status = _execcmd.execcmd_shexec(command, log)
-   bool, msg, status = _execcmd.execcmd_bashexec(command, log)
+   --bool, msg, status = execcmd.execcmd_shexec(command, logger.logs)
+   bool, msg, status = execcmd.execcmd_bashexec(command, logger.logs)
    
    -- Do some post logging
    if (not check) or bool then
-      _logging.message("COMMAND : " .. command, log)
-      _logging.message("STATUS", log)
-      _logging.message(bool, log)
-      _logging.message(msg, log)
-      _logging.message(status, log)
+      logger:message("COMMAND : " .. command)
+      logger:message("STATUS")
+      logger:message(bool)
+      logger:message(msg)
+      logger:message(status)
    else
-      _logging.alert("COMMAND :" .. command, log)
-      _logging.alert("STATUS", log)
-      _logging.alert(bool, log)
-      _logging.alert(msg, log)
-      _logging.alert(status, log)
+      logger:alert("COMMAND :" .. command)
+      logger:alert("STATUS")
+      logger:alert(bool)
+      logger:alert(msg)
+      logger:alert(status)
       error("Command '" .. command .. "' exited with errors.")
    end
    

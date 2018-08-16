@@ -1,42 +1,35 @@
 -- Load globally installed packages
 local lfs      = assert(require "lfs")
-local argparse = assert(require "argparse")
 
 -- Load local packages
 local exception   = assert(require "lib.exception")
+local argparse    = assert(require "lib.argparse")
 local path        = assert(require "lib.path")
 local configload  = assert(require "lib.configload")
 local version     = assert(require "lib.version")
 local stack       = assert(require "lib.stack")
 local install     = assert(require "lib.install")
+local installer   = assert(require "lib.installer")
 local initializer = assert(require "lib.initialize")
 local remove      = assert(require "lib.remove")
 local util        = assert(require "lib.util")
 local logging     = assert(require "lib.logging")
+local logger      = logging.logger
 local ansicolor   = assert(require "lib.ansicolor")
 
 -- Description of this script
-local description = version.get_description("gpm-package.lua")
+local description = version.get_description("gpm-package")
 
 --- Main driver for gpm-package script.
 function main()
    -- Arg parser
-   local parser = argparse(description.script_name, description.name .. ":\n" .. description.desc)
+   local parser = argparse.create(description)
    
    -- Commands
    local parser_initialize = parser:command("initialize") 
    local parser_install = parser:command("install")
    local parser_remove = parser:command("remove")
    local parser_stack = parser:command("stack")
-   
-   -- Some general arguments
-   parser:option("-c --config", "Provide config file."):overwrite(false)
-   parser:flag("--debug", "Print debug information (mostly for developers).")
-   parser:flag("-v --version", "Print '" .. version.get_version() .. "' and exit."):action(function()
-      print(version.get_version())
-      os.exit(0)
-   end)
-   parser:option("-t --token"   , "Set a stack token."):overwrite(false)
 
    -- Initialize specific
    parser_initialize:option("--parentstack", "Paths to source as GPM parent stacks. Give as comma-separated list."):overwrite(false)
@@ -59,6 +52,7 @@ function main()
    parser_install:flag("--delete-source", "Delete the source files after build.")
    parser_install:flag("--keep-build-directory" , "Keep actual build directory.")
    parser_install:flag("--purgebuild" , "Purge by completely removing main build directory after build is complete.")
+   parser_install:flag("--old" , "Use old install script (.gpk format).")
 
    -- Remove specific
    parser_remove:mutex(
@@ -82,8 +76,13 @@ function main()
    
    -- Parse arguments
    args = parser:parse()
+
    if args.debug then
-      logging.debug(util.print(args, "args"), io.stdout)
+      logger:debug(util.print(args, "args"), io.stdout)
+   end
+
+   if not args.quiet then
+      logger:add_log("stdout", io.stdout)
    end
    
    exception.try(function()
@@ -99,7 +98,11 @@ function main()
          initializer.initialize(args)
       elseif args.install then
          -- Install command
-         install.install(args)
+         if args.old then
+            install.install(args)
+         else
+            installer.install(args)
+         end
       elseif args.remove then
          -- Remove Command
          remove.remove(args)

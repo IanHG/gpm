@@ -7,6 +7,7 @@ local path       = assert(require "lib.path")
 local version    = assert(require "lib.version")
 local util       = assert(require "lib.util")
 local logging    = assert(require "lib.logging")
+local logger     = logging.logger
 local ansicolor  = assert(require "lib.ansicolor")
 local configload = assert(require "lib.configload")
 local filesystem = assert(require "lib.filesystem")
@@ -14,7 +15,7 @@ local database   = assert(require "lib.database")
 local hwdetect   = assert(require "lib.hwdetect.hwdetect")
 
 -- Description of this script
-local description = version.get_description("gpm-stack.lua")
+local description = version.get_description("gpm-detect")
 
 --- Show architecture
 --
@@ -33,7 +34,6 @@ local function show_arch()
    hw_info.gpu_info:print()
    hw_info.mem_info:print()
    hw_info.net_info:print()
-
 end
 
 --- Net
@@ -44,17 +44,29 @@ local function command_net(args)
       hwdetect.net.detect_fast(net_info)
 
       if args.ib then
-         print(net_info.mellanox_infiniband_detected)
+         if net_info.mellanox_infiniband_detected then
+            logger:message(net_info.mellanox_infiniband_detected)
+            os.exit(0)
+         else
+            logger:message(net_info.mellanox_infiniband_detected)
+            os.exit(1)
+         end
       else
          if not util.isempty(args.port) then
             for k, v in pairs(args.port) do
                local port = "Port " .. tostring(v)
-               if net_info.ib.ports[port] then
-                  print("  IB " .. port)
-                  for kinner, vinner in pairs(net_info.ib.ports[port]) do
-                     print("      " .. kinner .. " : " .. vinner)
+               if net_info.ib then
+                  if net_info.ib.ports[port] then
+                     logger:message("  IB " .. port)
+                     for kinner, vinner in pairs(net_info.ib.ports[port]) do
+                        logger:message("      " .. kinner .. " : " .. vinner)
+                     end
+                     os.exit(0)
                   end
                end
+
+               logger:alert(port .. " not detected.")
+               os.exit(1)
             end
          else
             net_info:print()
@@ -82,6 +94,8 @@ function main()
    parser:option("-c --config", "Provide config file."):overwrite(false)
    parser:option("-t --token"   , "Set a stack token."):overwrite(false)
    parser:flag("--debug", "Print debug information (mostly for developers).")
+   parser:flag("--quiet", "Do not print anything to stdout.")
+   parser:flag("--fancy", "Print fancy output.")
    parser:flag("-v --version", "Print '" .. version.get_version() .. "' and exit."):action(function()
       print(version.get_version())
       os.exit(0)
@@ -100,9 +114,11 @@ function main()
    args = parser:parse()
    
    if args.debug then
-      logging.debug("Lua version : " .. _VERSION, io.stdout)
-      logging.debug(util.print(args, "args"), io.stdout)
+      logger:debug("Lua version : " .. _VERSION, "fancy", io.stdout)
+      logger:debug(util.print(args, "args")    , "fancy", io.stdout)
    end
+
+   settings.initialize(args)
    
    exception.try(function()
       -- Bootstrap config

@@ -1,7 +1,19 @@
 local logging    = assert(require "lib.logging")
+local logger     = logging.logger
 local path       = assert(require "lib.path")
 local util       = assert(require "lib.util")
 local filesystem = assert(require "lib.filesystem")
+local class      = assert(require "lib.class")
+local gpackage   = assert(require "lib.gpackage")
+
+local package_class = class.create_class()
+
+function package_class:__init()
+end
+
+function package_class:is_git_source()
+   return (self.build.source_type == "git")
+end
 
 local M = {}
 
@@ -21,28 +33,31 @@ local function locate_gpk_file(args, config)
 
    -- Try to locate gpk file
    if args.gpk then
-      local filename = args.gpk .. ".gpk"
-      local function locate_gpk_impl()
-         for gpk_path in path.iterator(config.gpk_path) do
-            if(global_config.debug) then
-               logging.debug("Checking path : " .. gpk_path, io.stdout)
-            end
+      local gl = gpackage.create_locator()
+      gl.ext = ".gpk"
+      filepath = gl:locate(args.gpk)
+      ----local filename = args.gpk .. ".gpk"
+      --local function locate_gpk_impl()
+      --   for gpk_path in path.iterator(config.gpk_path) do
+      --      if(global_config.debug) then
+      --         logger:debug("Checking path : " .. gpk_path)
+      --      end
 
-            -- Check for abs path
-            if not path.is_abs_path(gpk_path) then
-               gpk_path = path.join(config.stack_path, gpk_path)
-            end
-            
-            -- Create filename
-            local filepath = path.join(gpk_path, filename)
-            
-            -- Check for existance
-            if filesystem.exists(filepath) then
-               return filepath
-            end
-         end
-      end
-      filepath = locate_gpk_impl()
+      --      -- Check for abs path
+      --      if not path.is_abs_path(gpk_path) then
+      --         gpk_path = path.join(config.stack_path, gpk_path)
+      --      end
+      --      
+      --      -- Create filename
+      --      local filepath = path.join(gpk_path, filename)
+      --      
+      --      -- Check for existance
+      --      if filesystem.exists(filepath) then
+      --         return filepath
+      --      end
+      --   end
+      --end
+      --filepath = locate_gpk_impl()
    elseif args.gpkf then
       filepath = args.gpkf
    else
@@ -51,6 +66,41 @@ local function locate_gpk_file(args, config)
    
    -- Return found path
    return filepath
+end
+
+--- Load .gpk file into the program.
+-- 
+-- @param filepath    Path to file.
+-- @param package     Package object.
+local function load_gpk_file(filepath, package)
+   local f, msg = assert(loadfile(filepath))
+   if f then
+      f()
+   else
+      error("Error loading package. Reason : '" .. msg .. "'.")
+   end
+   
+   logger:message("GPK : " .. filepath)
+   
+   package.description = description
+   package.definition = definition
+   if build then
+      package.build = build
+      if args.source then
+         package.build.source = args.source
+      end
+   end
+   if lmod then
+      package.lmod = lmod
+   else
+      package.lmod = {}
+   end
+
+   if post then
+      package.post = post
+   else
+      package.post = {}
+   end
 end
 
 ---
@@ -145,43 +195,16 @@ end
 local function bootstrap(args)
    -- Do some debug printout if requested
    if args.debug then
-      logging.debug("Bootstrapping package", io.stdout)
+      logger:debug("Bootstrapping package")
    end
    
    -- Create local package table
-   local package = {}
+   local package = package_class:create()
    
    -- Load the gpk file
    local filepath = assert(locate_gpk_file(args, global_config))
+   load_gpk_file(filepath, package)
    
-   local f, msg = assert(loadfile(filepath))
-   if f then
-      f()
-   else
-      error("Error loading package. Reason : '" .. msg .. "'.")
-   end
-   
-   logging.message("GPK : " .. filepath, io.stdout)
-   
-   package.description = description
-   package.definition = definition
-   if build then
-      package.build = build
-      if args.source then
-         package.build.source = args.source
-      end
-   end
-   if lmod then
-      package.lmod = lmod
-   else
-      package.lmod = {}
-   end
-
-   if post then
-      package.post = post
-   else
-      package.post = {}
-   end
    
    -- Setup some version numbers and other needed variables
    package.definition.pkgversion = args.pkv
@@ -304,35 +327,19 @@ local function bootstrap(args)
 
    -- check package validity
    check, reason = is_valid(package)
+
    if not check then
       error("Package not valid: " .. reason)
    end
 
    if args.debug then
-      logging.debug("Done bootstrapping package", io.stdout)
+      logger:debug("Done bootstrapping package")
    end
 
    -- return package
    return package
 end
 
---- 
-local function prerequisite_string(package)
-   local first = true
-   local str = ""
-   
-   for t, p in pairs(package.prerequisite) do
-      if not (type(t) == "number") then
-         if not first then
-            str = str .. ","
-         end
-         str = str .. t .. "=" .. p
-         first = false
-      end
-   end
-
-   return str
-end
 
 -- Load module
 M.is_heirarchical     = is_heirarchical

@@ -1,4 +1,5 @@
 local ansicolor = assert(require "lib.ansicolor")
+local class     = assert(require "lib.class")
 
 M = {}
 
@@ -8,27 +9,34 @@ M = {}
 --
 -- @param msg
 -- @param prefix
--- @param raw
+-- @param format
 --
 -- @return Returns the created message.
-local function create_message(msg, prefix, postfix, raw)
+local function create_message(msg, prefix, postfix, format)
    -- Create message
-   if not msg then
+   
+   -- Make sure variable msg is a string
+   if msg == nil then
       msg = ""
    else
       msg = tostring(msg)
    end
-   if not raw then
+
+   -- Create message with correct format
+   if ((not format) or (format == "fancy")) then
       msg = msg:gsub("\n", "\n" .. prefix)
       msg = prefix .. msg .. postfix .. "\n"
+   elseif (format == "newline") then
+      msg = msg .. "\n"
    end
+
    return msg
 end
 
 --- Print a message to one or several logs.
 --
--- @param msg
--- @param log
+-- @param msg    The message to log.
+-- @param log    A single log or a set of logs.
 local function write_to_log(msg, log)
    -- Print  message to logs
    if type(log) == "table" then
@@ -46,11 +54,11 @@ end
 --
 -- @param msg   The message
 -- @param log   A single output stream or a set of output streams
--- @param raw   Print raw message, or add newline to the end
-local function message(msg, log, raw)
+-- @param format   Print raw message, or add newline to the end
+local function message(msg, log, format)
    if log then
       -- Create message
-      msg = create_message(msg, ansicolor.bold .. ansicolor.green .. " --> " .. ansicolor.default, ansicolor.reset, raw)
+      msg = create_message(msg, ansicolor.bold .. ansicolor.green .. " --> " .. ansicolor.default, ansicolor.reset, format)
       
       -- Then write to log
       write_to_log(msg, log)
@@ -63,11 +71,11 @@ end
 --
 -- @param msg   The message
 -- @param log   A single output stream or a set of output streams
--- @param raw   Print raw message, or add newline to the end
-local function alert(msg, log, raw)
+-- @param format   Print format message, or add newline to the end
+local function alert(msg, log, format)
    if log then
       -- Create message
-      msg = create_message(msg, ansicolor.bold .. ansicolor.red .. " !!! " .. ansicolor.default, ansicolor.reset, raw)
+      msg = create_message(msg, ansicolor.bold .. ansicolor.red .. " !!! " .. ansicolor.default, ansicolor.reset, format)
       
       -- Then write to log
       write_to_log(msg, log)
@@ -80,17 +88,17 @@ end
 --
 -- @param msg   The message
 -- @param log   A single output stream or a set of output streams
--- @param raw   Print raw message, or add newline to the end
-local function debug(msg, log, raw)
-   if global_config.debug then
+-- @param format   Print raw message, or add newline to the end
+local function debug(msg, log, format)
+   --if global_config.debug then
       if log then
          -- Create message
-         msg = create_message(msg, ansicolor.bold .. ansicolor.blue .. " >>> " .. ansicolor.default, ansicolor.reset, raw)
+         msg = create_message(msg, ansicolor.bold .. ansicolor.blue .. " >>> " .. ansicolor.default, ansicolor.reset, format)
          
          -- Then write to log
          write_to_log(msg, log)
       end
-   end
+   --end
 end
 
 --- Match line with a list of strings.
@@ -201,8 +209,7 @@ local function log_call(stack)
          msg = msg .. ansicolor.blue " ... " .. ansicolor.default .. "Running\n"
       end
       
-      message(msg , {logfile}, true)
-      message(msg , {io.stdout})
+      message(msg , {logfile}, "raw")
 
       logfile:close()
    end
@@ -249,10 +256,79 @@ local function log_call_end(success, stack)
    end
 end
 
+--- Create class for logging.
+local logger_class = class.create_class()
+
+function logger_class:__init()
+   self.logs   = { }
+   self.format = "fancy"
+end
+
+function logger_class:add_log(name, log)
+   self.logs[name] = log
+end
+
+function logger_class:open_logfile(name, path)
+   local log = io.open(path, "w")
+   if not log then
+      print(name)
+      print(path)
+      assert(false)
+   end
+   self.logs[name] = log
+end
+
+function logger_class:close_logfile(name)
+   self.logs[name]:close()
+   self.logs[name] = nil
+end
+
+function logger_class:write(msg)
+   for k, v in pairs(self.logs) do
+      v:write(msg)
+   end
+end
+
+function logger_class:message(msg, format, logs)
+   if not format then
+      format = self.format
+   end
+   if not logs then
+      logs = self.logs
+   end
+
+   message(msg, logs, format)
+end
+
+function logger_class:alert(msg, format, logs)
+   if not format then
+      format = self.format
+   end
+   if not logs then
+      logs = self.logs
+   end
+
+   alert(msg, logs, format)
+end
+
+function logger_class:debug(msg, format, logs)
+   --if global_config.debug then
+      if not format then
+         format = self.format
+      end
+      if not logs then
+         logs = self.logs
+      end
+
+      debug(msg, logs, format)
+   --end
+end
+
 -- Load module
 M.message      = message
 M.alert        = alert
 M.debug        = debug
+M.logger       = logger_class:create()
 M.grep         = grep
 M.log_call     = log_call
 M.log_call_end = log_call_end

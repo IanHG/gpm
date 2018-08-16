@@ -13,7 +13,7 @@ local filesystem = assert(require "lib.filesystem")
 local database   = assert(require "lib.database")
 
 -- Description of this script
-local description = version.get_description("gpm-stack.lua")
+local description = version.get_description("gpm-stack")
 
 --- Print the currently loaded stacks.
 --
