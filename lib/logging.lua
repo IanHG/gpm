@@ -219,6 +219,11 @@ local function log_call_end(success, stack)
    if global_config.log_path then
       -- Open log file
       local logfile = io.open(global_config.log_path, "a")
+
+      if not logfile then
+         alert("Cannot open file '" .. global_config.log_path .. "'.", io.stdout)
+         error("Could not open log-file.")
+      end
       
       -- If stack do extra printout
       if stack then
