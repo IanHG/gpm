@@ -453,13 +453,18 @@ function installer_class:finalize()
    filesystem.chdir(global_config.current_directory)
 end
 
+-- Create unpacking command
 function installer_class:unpack_command()
 end
 
+-- Unpack source code before building
 function installer_class:unpack()
+   -- check for force unpack
    if self.options.force_unpack then
       filesystem.rmdir(self.build.unpack_path, true)
    end
+
+   -- do unpack
    if not lfs.attributes(self.build.unpack_path, 'mode') then
       filesystem.mkdir(self.build.unpack_path, {}, true)
 
@@ -489,6 +494,7 @@ function installer_class:unpack()
    end
 end
 
+-- Create needed files
 function installer_class:create_files()
    for _, v in pairs(self.gpack.files) do
       logger:message("Creating file '" .. v[1] .. "'.")
@@ -496,6 +502,7 @@ function installer_class:create_files()
    end
 end
 
+-- Download source code
 function installer_class:download(is_git)
    local status = nil
    if is_git then
@@ -510,6 +517,7 @@ function installer_class:download(is_git)
    end
 end
 
+-- Build the package
 function installer_class:build_gpack()
    filesystem.chdir(self.build.unpack_path)
    
@@ -548,6 +556,7 @@ function installer_class:build_gpack()
    end
 end
 
+-- Do post install commands
 function installer_class:post()
    local ml_cmd = generate_ml_command(self.gpack)
 
