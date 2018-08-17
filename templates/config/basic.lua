@@ -12,6 +12,9 @@ config = {
    gpk_path = "gpk",
    gps_path = "gps",
 
+   -- Set remote repository
+   -- repo = "<repo>",
+   
    --
    meta_stack = {
       allow_registration = true,
