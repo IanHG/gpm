@@ -481,10 +481,16 @@ function installer_class:create_files()
 end
 
 function installer_class:download(is_git)
+   local status = nil
    if is_git then
-      self.downloader:download(self.gpack.url, self.build.unpack_path, self.options.force_download)
+      status = self.downloader:download(self.gpack.url, self.build.unpack_path, self.options.force_download)
    else
-      self.downloader:download(self.gpack.url, self.build.source_path, self.options.force_download)
+      status = self.downloader:download(self.gpack.url, self.build.source_path, self.options.force_download)
+   end
+
+   if not status then
+      logger:alert("Could not download package : '" .. self.gpack.url .. "'.")
+      assert(false)
    end
 end
 

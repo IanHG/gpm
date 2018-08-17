@@ -84,6 +84,8 @@ function downloader_class:download_internal()
    local f = assert(io.open(self.destination, 'wb')) -- open in "binary" mode
    f:write(body)
    f:close()
+
+   return true
 end
 
 --- Use external program to download file
@@ -106,15 +108,18 @@ function downloader_class:download_external()
    end
    
    -- Execute command
-   local status = util.execute_command(cmd)
-
-   if status ~= 0 then
-      assert(false)
-   end
+   local  status = util.execute_command(cmd, false)
+   
+   return status
 end
 
 --- Download url
-function downloader_class:download(url, dest, force)
+function downloader_class:download(url, dest, force, hardfail)
+   if util.isempty(url) or util.isempty(dest) then
+      logger:alert("URL or destination is empty.")
+      return false
+   end
+
    logger:message("Downloading : '" .. url .. "' to destination '" .. dest .. "'.")
 
    self.url         = url
@@ -141,15 +146,23 @@ function downloader_class:download(url, dest, force)
    end
    
    -- 
+   local status = nil
    if self.url_type == "git" then
-      self:download_external()
+      status = self:download_external()
    else
       if self.has_luasocket_http then
-         self:download_internal()
+         status = self:download_internal()
       else
-         self:download_external()
+         status = self:download_external()
       end
    end
+   
+   if (not status) and hardfail then
+      logger:alert("Downloader could not download file '" .. self.url .. "'.")
+      assert(false)
+   end
+
+   return status
 end
 
 local function create()
