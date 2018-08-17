@@ -615,7 +615,7 @@ local function install(args)
          -- Install gpack
          local installer = installer_class:create()
          installer.options.force_download = args.force_download
-         installer.options.purge          = args.purgebuild
+         installer.options.purge          = args.purge_build
          installer.options.keep_source    = not args.remove_source
          installer.options.keep_build     = args.keep_build
          installer:install(gpack)
