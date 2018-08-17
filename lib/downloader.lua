@@ -41,8 +41,6 @@ function downloader_class:__init()
    self.url_type    = nil -- "git", "http", or "local"
    self.destination = ""
 
-   self.force       = false
-   
    -- Some internal settings 
    self.has_luasocket_http   = http and true or false
    self.external_http_method = "wget"
@@ -126,13 +124,9 @@ function downloader_class:download(url, dest, force, hardfail)
    self.url_type    = determine_url_type(self.url)
    self.destination = dest
 
-   if force ~= nil then
-      self.force = force
-   end
-
    -- If file exist, we remove if forced, else return
    if filesystem.exists(self.destination) then
-      if self.force then
+      if force then
          logger:message("Removing destination.")
          if filesystem.isdir(self.destination) then
             filesystem.rmdir(self.destination, true)
@@ -141,7 +135,7 @@ function downloader_class:download(url, dest, force, hardfail)
          end
       else
          logger:message("Destination already exists, skipping download. If you want to download anyways, re-run with '--force-download'.")
-         return
+         return true
       end
    end
    
