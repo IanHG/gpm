@@ -578,14 +578,25 @@ local function install(args)
       -- Bootstrap build
       logger:message("BOOTSTRAP PACKAGE NEW")
       args.gpack = args.gpk
-
+      
+      -- Load database
+      database.load_db(global_config)
+      
+      -- Load gpack
       local gpack = gpackage.load_gpackage(args.gpack)
       
-      local installer = installer_class:create()
-      installer.options.force_download = args.force_download
-      installer:install(gpack)
+      if (util.conditional(database.use_db(), not database.installed(gpack), true)) or args.force then
+         -- Install gpack
+         local installer = installer_class:create()
+         installer.options.force_download = args.force_download
+         installer:install(gpack)
+
+         database.insert_package(gpack)
+         database.save_db(global_config)
+      else
+         logger:message("Package already installed!")
+      end
       
-      --database.load_db(global_config)
       
       --if args.debug then
       --   logger:debug(util.print(package, "package"))

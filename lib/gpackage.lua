@@ -208,8 +208,11 @@ end
 local gpackage_class = class.create_class(gpackage_creator_class)
 
 function gpackage_class:__init()
+   -- Versioning
+   self.gpack_version = 2
+   
    -- Util
-   self.log_format = "newline"
+   self.log_format    = "newline"
 
    -- General stuff
    self.name        = ""

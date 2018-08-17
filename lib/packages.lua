@@ -9,6 +9,7 @@ local gpackage   = assert(require "lib.gpackage")
 local package_class = class.create_class()
 
 function package_class:__init()
+   self.gpack_version = 1
 end
 
 function package_class:is_git_source()

@@ -88,11 +88,20 @@ end
 --
 -- @return   Return database entry for package
 local function create_package_db_entry(package)
-   local db_entry = { 
-       gpk    = util.conditional(package.definition.pkgname   , package.definition.pkgname           , "nil"), 
-       pkv    = util.conditional(package.definition.pkgversion, package.definition.pkgversion        , "nil"), 
-       prereq = util.conditional((package.prerequisite and (not (next(package.prerequisite) == nil))), prerequisite_string(package), "nil"),
-   }
+   local db_entry = nil
+   if package.gpack_version >= 2 then
+      db_entry = {
+         gpk    = package.name,
+         pkv    = package.version,
+         prereq = "nil",
+      }
+   else
+      db_entry = { 
+          gpk    = util.conditional(package.definition.pkgname   , package.definition.pkgname           , "nil"), 
+          pkv    = util.conditional(package.definition.pkgversion, package.definition.pkgversion        , "nil"), 
+          prereq = util.conditional((package.prerequisite and (not (next(package.prerequisite) == nil))), prerequisite_string(package), "nil"),
+      }
+   end
 
    return db_entry
 end
