@@ -349,6 +349,7 @@ function lmod_installer_class:install_modulefile()
    filesystem.copy (self:file_build_path(), self:file_install_path())
 end
 
+-- Create and install lmod script files.
 function lmod_installer_class:install(gpack, build_path, install_path)
    assert(gpack)
    assert(build_path)
@@ -388,6 +389,9 @@ function installer_class:__init()
    self.options = {
       force_download = false,
       force_unpack   = false,
+      purge          = false,
+      keep_source    = true,
+      keep_build     = false,
    }
 
    self.build = {
@@ -403,10 +407,10 @@ end
 
 --- Initialize installation of package.
 function installer_class:initialize()
-   self.build.build_path = generate_build_path(self.gpack)
-   self.build.source_path = path.join(self.build.build_path, self.gpack.nameversion .. "." .. get_extension(self.gpack.url))
-   self.build.unpack_path = path.join(self.build.build_path, self.gpack.nameversion)
-   self.build.log_path    = path.join(self.build.build_path, self.gpack.nameversion .. ".log")
+   self.build.build_path   = generate_build_path(self.gpack)
+   self.build.source_path  = path.join(self.build.build_path, self.gpack.nameversion .. "." .. get_extension(self.gpack.url))
+   self.build.unpack_path  = path.join(self.build.build_path, self.gpack.nameversion)
+   self.build.log_path     = path.join(self.build.build_path, self.gpack.nameversion .. ".log")
    self.build.install_path = generate_install_path(self.gpack)
 
    -- Change directory to build_path
@@ -432,6 +436,18 @@ function installer_class:finalize()
    
    -- Close package log file
    logger:close_logfile("package")
+
+   -- Check for purge and keep source/build
+   if self.options.purge then
+      filesystem.rmdir(self.build.build_path, true)
+   else
+      if not self.options.keep_source then
+         filesystem.remove(self.build.source_path)
+      end
+      if not self.options.keep_build then
+         filesystem.rmdir(self.build.unpack_path, true)
+      end
+   end
    
    -- Change directory back to where we started
    filesystem.chdir(global_config.current_directory)
@@ -545,6 +561,7 @@ function installer_class:post()
    end
 end
 
+-- Install package
 function installer_class:install(gpack)
    self.gpack = gpack
 
@@ -589,6 +606,9 @@ local function install(args)
          -- Install gpack
          local installer = installer_class:create()
          installer.options.force_download = args.force_download
+         installer.options.purge          = args.purgebuild
+         installer.options.keep_source    = not args.remove_source
+         installer.options.keep_build     = args.keep_build
          installer:install(gpack)
 
          database.insert_package(gpack)
@@ -596,43 +616,7 @@ local function install(args)
       else
          logger:message("Package already installed!")
       end
-      
-      
-      --if args.debug then
-      --   logger:debug(util.print(package, "package"))
-      --end
-      
-      -- If package is not installed we install it
-      --if (util.conditional(database.use_db(), not database.installed(package), true)) or args.force then
-
-         --database.insert_package(package)
-         --database.save_db(global_config)
-         
-         ---- Remove build dir if requested (and various other degress of removing source data)
-         --if args.purgebuild then
-         --   local status, msg = filesystem.rmdir(package.build_directory, true)
-         --   if not status then
-         --      print("Could not purge build directory. Reason : '" .. msg .. "'.") 
-         --   end
-         --else 
-         --   if args.delete_source then
-         --      local status, msg = filesystem.remove(path.join(package.build_directory, package.build.source_destination))
-         --   end
-         --   if (not args.keep_build_directory) then
-         --      local status, msg = filesystem.rmdir(path.join(package.build_directory, package.definition.pkg), true)
-         --      if not status then
-         --         print(msg)
-         --      end
-         --   end
-         --end
-   --   else
-   --      logger:message("Package already installed!")
-   --   end
    end, function(e)
-      --local status, msg = filesystem.rmdir(package.build_directory, true)
-      --if not status then
-      --   print("Could not purge build directory after ERROR. Reason : '" .. msg .. "'.") 
-      --end
       logger:alert("There was a PROBLEM installing the package")
       error(e)
    end)
