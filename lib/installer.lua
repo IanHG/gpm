@@ -254,6 +254,38 @@ local function generate_prepend_path(gpack, install_path)
    return prepend_path
 end
 
+local autoconf_installer_class = class.create_class()
+
+function autoconf_installer_class:__init()
+end
+
+function autoconf_install_class:install_default(gpack, build)
+   local ml_cmd = generate_ml_command(gpack)
+   local configure_command    = ml_cmd .. "./configure --prefix=" .. build.install_path
+   for k, v in pairs(gpack.autotools.args) do
+      configure_command = configure_command .. " " .. v
+   end
+
+   if gpack.autotools.options.run_autoconf then
+      local autoconf_command = ml_cmd .. "autoconf"
+      local status_autoconf  = util.execute_command(autoconf_command)
+   end
+
+   local make_command         = ml_cmd .. "make -j" .. global_config.nprocesses
+   local make_install_command = ml_cmd .. "make install"
+   
+   local status_configure    = util.execute_command(configure_command)
+   local status_make         = util.execute_command(make_command)
+   local status_make_install = util.execute_command(make_install_command)
+end
+
+function autoconf_installer_class:install(gpack, build)
+   if gpack.autotools.commands then
+   else
+      self:install_default(gpack, build)
+   end
+end
+
 -- Handle "install" of lmod stuff (module file)
 local lmod_installer_class = class.create_class()
 
@@ -522,17 +554,20 @@ function installer_class:build_gpack()
    filesystem.chdir(self.build.unpack_path)
    
    if self.gpack.autotools then
-      local ml_cmd = generate_ml_command(self.gpack)
-      local configure_command    = ml_cmd .. "./configure --prefix=" .. self.build.install_path
-      for k, v in pairs(self.gpack.autotools_args) do
-         configure_command = configure_command .. " " .. v
-      end
-      local make_command         = ml_cmd .. "make -j" .. global_config.nprocesses
-      local make_install_command = ml_cmd .. "make install"
+      --local ml_cmd = generate_ml_command(self.gpack)
+      --local configure_command    = ml_cmd .. "./configure --prefix=" .. self.build.install_path
+      --for k, v in pairs(self.gpack.autotools_args) do
+      --   configure_command = configure_command .. " " .. v
+      --end
+      --local make_command         = ml_cmd .. "make -j" .. global_config.nprocesses
+      --local make_install_command = ml_cmd .. "make install"
 
-      local status_configure    = util.execute_command(configure_command)
-      local status_make         = util.execute_command(make_command)
-      local status_make_install = util.execute_command(make_install_command)
+      --local status_configure    = util.execute_command(configure_command)
+      --local status_make         = util.execute_command(make_command)
+      --local status_make_install = util.execute_command(make_install_command)
+      local builder = autoconf_installer_class:create()
+      builder.install(self.gpack, self.build)
+
    elseif self.gpack.cmake then
       local cmake_build_path = path.join(self.build.unpack_path, "build")
       filesystem.mkdir(cmake_build_path)

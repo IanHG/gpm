@@ -43,8 +43,12 @@ function main()
    if not args.quiet then
       logger:add_log("stdout", io.stdout)
    end
-
+   
    logger.format = args.format
+   
+   if args.debug then
+      logger:debug("DEBUG INFORMATION WILL BE PRINTED.")
+   end
    
    if args.debug then
       logger:debug("Lua version : " .. _VERSION)

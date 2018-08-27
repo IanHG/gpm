@@ -224,7 +224,7 @@ function gpackage_class:__init()
    self.nameversion = ""
 
    -- Build
-   self.autotools   = false
+   self.autotools   = nil
    self.cmake       = false
    self.files       = {}
    self.post        = {}
@@ -265,14 +265,22 @@ function gpackage_class:__init()
 end
 
 function gpackage_class:autotools_setter()
-   return function(...)
+   return function(version, options, ...)
+      if options == nil then
+         options = {}
+      end
       assert(not self.cmake)
-      self.autotools = true
+      assert(not self.autotools)
       local p = pack( ... )
       for k, v in pairs(p) do
          assert(type(v) == "string")
       end
       self.autotools_args = p
+      self.autotools = {
+         version = version,
+         options = options,
+         args    = p,
+      }
       return self.ftable
    end
 end
