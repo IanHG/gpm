@@ -17,6 +17,7 @@ local gpackage   = assert(require "lib.gpackage")
 local initializer = assert(require "lib.initialize")
 local downloader = assert(require "lib.downloader")
 local filesystem = assert(require "lib.filesystem")
+local symbtab    = assert(require "lib.symbtab")
 
 -- Description of this script
 local description = version.get_description("gpm-util")
@@ -46,7 +47,7 @@ local function command_config_create(args)
    
    -- Create a config template
    local config_template = load_template("config", "basic")
-   local symbol_table    = gpackage.create_symbol_table()
+   local symbol_table    = symbtab.create()
    symbol_table.sbeg = "<"
    symbol_table.send = ">"
    symbol_table:add_symbol("stack_path"  , "\"" .. global_config.current_directory .. "\"")
@@ -86,7 +87,7 @@ local function command_gpack_create(args)
 
    -- Create a config template
    local gpack_template = load_template("gpack", template_name)
-   local symbol_table   = gpackage.create_symbol_table()
+   local symbol_table   = symbtab.create()
    symbol_table.sbeg = "<"
    symbol_table.send = ">"
    

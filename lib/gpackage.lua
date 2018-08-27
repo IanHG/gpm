@@ -7,6 +7,7 @@ local path    = assert(require "lib.path")
 local logging = assert(require "lib.logging")
 local logger  = logging.logger
 local downloader = assert(require "lib.downloader")
+local symbtab    = assert(require "lib.symbtab")
 
 local function pack(...)
    return { ... }
@@ -28,61 +29,6 @@ end
 local function get_name(gpackage_path)
    local p, f, e = path.split_filename(gpackage_path)
    return f:gsub("." .. e, "")
-end
-
---- Class to implement a simple symbol table,
--- which can be used for string substitution.
---
-local gpackage_symbol_table_class = class.create_class()
-
-function gpackage_symbol_table_class:__init()
-   self.sbeg    = "%"
-   self.send    = "%"
-   self.symbols = { }
-
-   self.ftable = {
-      add = self:add_symbol_setter(),
-   }
-end
-
-function gpackage_symbol_table_class:add_symbol(symb, ssymb)
-   if not (type(symb) == "string") or util.isempty(symb) then
-      assert(false)
-   end
-   if not (type(ssymb) == "string") then
-      assert(false)
-   end
-
-   local symbol = self.sbeg .. symb .. self.send
-   if not self.symbols[symbol] then
-      self.symbols[self.sbeg .. symb .. self.send] = ssymb
-   end
-end
-
-function gpackage_symbol_table_class:add_symbol_setter()
-   return function(symb, ssymb)
-      self:add_symbol(symb, ssymb)
-      return self.ftable
-   end
-end
-
-function gpackage_symbol_table_class:substitute(str)
-   local function escape(k)
-      return k:gsub("%%", "%%%%")
-   end
-
-   for k, v in pairs(self.symbols) do
-      str = string.gsub(str, escape(k), v)
-   end
-   
-   return str
-end
-
-function gpackage_symbol_table_class:print()
-   logger:message("   Symbol table : ")
-   for k, v in pairs(self.symbols) do
-      logger:message("      " .. k .. " : " .. v)
-   end
 end
 
 --- Base class for the different gpackage classes.
@@ -233,7 +179,7 @@ function gpackage_class:__init()
    self.dependencies = {}
    
    -- 
-   self.symbol_table = gpackage_symbol_table_class:create()
+   self.symbol_table = symbtab.create()
    
    -- Lmod 
    self.lmod = gpackage_lmod_class:create()
@@ -472,15 +418,9 @@ local function create_locator()
    return gl
 end
 
-local function create_symbol_table()
-   local st = gpackage_symbol_table_class:create()
-   return st
-end
-
 --- Create the module
 M.load_gpackage       = load_gpackage
 M.create_locator      = create_locator
-M.create_symbol_table = create_symbol_table
 
 -- return module
 return M

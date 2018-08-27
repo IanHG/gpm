@@ -5,11 +5,11 @@ local io    = assert(require "io")
 local os    = assert(require "os")
 
 -- Setup posix binds, such that the module works with different versions of luaposix
-local posix_read = nil
-local posix_pipe = nil
-local posix_fork = nil
+local posix_read  = nil
+local posix_pipe  = nil
+local posix_fork  = nil
 local posix_execp = nil
-local posix_dup2 = nil
+local posix_dup2  = nil
 local posix_close = nil
 
 local function setup_posix_binds()
