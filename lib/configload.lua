@@ -107,14 +107,15 @@ end
 -- @return{Dictionary} Returns definition og build.
 --local function bootstrap(config_path, args, default_config, set_global)
 bootstrap = function (config_path, args, default_config, set_global)
+   -- Set default
+   if  args == nil then
+      args = {}
+   end
+   
    if args.debug then
       logger:debug("Starting to bootstrap config.")
    end
-
-   -- Set default
-   if not args then
-      args = {}
-   end
+   
    if not default_config then
       default_config = {}
    end

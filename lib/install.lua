@@ -131,7 +131,7 @@ local function make_package_ready_for_install(package)
          local is_tar_xz = string.match(source_file, "tar.xz")
          local is_tar    = string.match(source_file, "tar")
          local is_zip = string.match(source_file, "zip")
-         local tar_line = nil
+         local tar_line = ""
          if is_tar_gz then
             tar_line = "tar -zxvf " .. destination .. " --transform 's/" .. source_file_strip .. "/" .. package.definition.pkg .. "/'"
          elseif is_tar_xz then
