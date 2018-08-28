@@ -30,7 +30,7 @@ end
 --
 local symbol_table_class = class.create_class()
 
-function symbol_table_class:__init()
+function symbol_table_class:__init(ftable)
    self.sbeg    = "%"
    self.send    = "%"
    self.symbols = { }
@@ -38,6 +38,10 @@ function symbol_table_class:__init()
    self.ftable = {
       add = self:add_symbol_setter(),
    }
+
+   if ftable then
+      self.ftable["endblock"] = function() return ftable end
+   end
 end
 
 function symbol_table_class:add_symbol(symb, ssymb, overwrite, format_fcn)

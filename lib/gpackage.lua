@@ -101,6 +101,8 @@ function gpackage_creator_class:print_setter()
    end
 end
 
+--- Autoconf bootstrapper
+--
 local gpackage_autoconf_class = class.create_class(gpackage_creator_class)
 
 function gpackage_autoconf_class:__init(ftable)
@@ -136,6 +138,8 @@ function gpackage_autoconf_class:__init(ftable)
    }
 end
 
+--- Cmake bootstrapper
+--
 local gpackage_cmake_class = class.create_class(gpackage_creator_class)
 
 function gpackage_cmake_class:__init(ftable)
