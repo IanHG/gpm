@@ -13,6 +13,7 @@ local class      = assert(require "lib.class")
 local gpackage   = assert(require "lib.gpackage")
 local commander  = assert(require "lib.commander")
 local execcmd    = assert(require "lib.execcmd")
+local pathhandler = assert(require "lib.pathhandler")
 
 local M = {}
 
@@ -345,6 +346,8 @@ function builder_class:install(gpack, build)
          table.insert(command_stack, self.creator:command("exec", { command = self:_generate_exec_command(gpack, "make install") }))
       elseif v.command == "shell" then
          table.insert(command_stack, self.creator:command("exec", { command = self:_generate_exec_command(gpack, v.options.cmd) }))
+      elseif v.command == "chdir" then
+         table.insert(command_stack, self.creator:command("chdir", { dir = v.options.dir }))
       end
    end
    
@@ -491,7 +494,8 @@ local installer_class = class.create_class()
 
 function installer_class:__init()
    self.lmod_installer = lmod_installer_class:create()
-   self.downloader     = downloader:create()
+   self.pathhandler    = pathhandler.create()
+   self.downloader     = downloader.create()
    self.executor       = commander.create_executor({}, logger)
    self.creator        = commander.create_creator ({}, logger)
    self.creator:add("exec", function(options, input, output)
@@ -504,6 +508,11 @@ function installer_class:__init()
       output.output = {
          stdout = out.out
       }
+   end)
+   self.creator:add("chdir", function(options, input, output)
+      self.pathhandler:push(options.dir)
+      output.status = 0
+      output.output = {}
    end)
 
    self.gpack          = nil

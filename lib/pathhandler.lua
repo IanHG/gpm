@@ -67,7 +67,11 @@ function path_handler_class:pop_all()
 end
 
 function path_handler_class:current()
-   return self.paths[#self.paths]
+   if #self.paths > 0 then
+      return self.paths[#self.paths]
+   else
+      return filesystem.cwd()
+   end
 end
 
 function path_handler_class:print()

@@ -131,6 +131,10 @@ function gpackage_autoconf_class:__init(ftable)
          table.insert(self.commands, { command = "shell", options = { cmd = cmd } })
          return self.ftable
       end,
+      chdir = function(dir)
+         table.insert(self.commands, { command = "chdir", options = { dir = dir } })
+         return self.ftable
+      end,
 
       endblock = function()
          return ftable
@@ -166,6 +170,10 @@ function gpackage_cmake_class:__init(ftable)
       end,
       shell = function(cmd)
          table.insert(self.commands, { command = "shell", options = { cmd = cmd } })
+         return self.ftable
+      end,
+      chdir = function(dir)
+         table.insert(self.commands, { command = "chdir", options = { dir = dir } })
          return self.ftable
       end,
 
