@@ -105,10 +105,46 @@ local gpackage_autoconf_class = class.create_class(gpackage_creator_class)
 
 function gpackage_autoconf_class:__init(ftable)
    self.commands = {}
+   self.btype    = "autoconf"
 
    self.ftable = {
       autoconf = function()
          table.insert(self.commands, { command = "autoconf" } ) 
+         return self.ftable
+      end,
+      configure = function(...) 
+         table.insert(self.commands, { command = "configure", options = { options = pack(...) } })
+         self.configargs = pack(...)
+         return self.ftable
+      end,
+      make = function()
+         table.insert(self.commands, { command = "make" }) 
+         return self.ftable
+      end,
+      makeinstall = function() 
+         table.insert(self.commands, { command = "makeinstall" }) 
+         return self.ftable
+      end,
+      shell = function(cmd)
+         table.insert(self.commands, { command = "shell", options = { cmd = cmd } })
+         return self.ftable
+      end,
+
+      endblock = function()
+         return ftable
+      end
+   }
+end
+
+local gpackage_cmake_class = class.create_class(gpackage_creator_class)
+
+function gpackage_cmake_class:__init(ftable)
+   self.commands = {}
+   self.btype    = "cmake"
+
+   self.ftable = {
+      cmake = function(...)
+         table.insert(self.commands, { command = "cmake"    , options = { options = pack(...) } } ) 
          return self.ftable
       end,
       configure = function(...) 
@@ -266,14 +302,15 @@ end
 function gpackage_class:cmake_setter()
    return function(version, ...)
       assert(not self.autoconf)
-      self.cmake = true
-      self.cmake_version = version
+      assert(not self.cmake)
       local p = pack( ... )
       for k, v in pairs(p) do
          assert(type(v) == "string")
       end
-      self.cmake_args = p
-      return self.ftable
+      self.cmake = gpackage_cmake_class:create(nil, self.ftable)
+      self.cmake.version   = version
+      self.cmake.cmakeargs = p
+      return self.cmake.ftable
    end
 end
 

@@ -256,93 +256,109 @@ local function generate_prepend_path(gpack, install_path)
    return prepend_path
 end
 
-local autoconf_installer_class = class.create_class()
+local builder_class = class.create_class()
 
-function autoconf_installer_class:__init(build, executor, creator)
-   print("EXECUTOR")
-   print(executor)
-   self.build    = build
+function builder_class:__init(executor, creator)
    self.executor = executor
    self.creator  = creator
-end
-
-function autoconf_installer_class:_generate_autoconf_exec_command(gpack)
-   local ml_cmd = generate_ml_command(gpack)
-   local autoconf_command = ml_cmd .. "autoconf"
    
-   return autoconf_command
+   -- Some internals
+   self._ml_cmd   = nil
 end
 
-function autoconf_installer_class:_generate_configure_exec_command(gpack)
-   local ml_cmd = generate_ml_command(gpack)
-   local configure_command = ml_cmd .. "./configure --prefix=" .. self.build.install_path
+function builder_class:_generate_exec_command(gpack, cmd)
+   local  command = self._ml_cmd .. cmd
+   return command
+end
+
+function builder_class:_generate_cmake_exec_command(gpack, build)
+   local cmake_command = self._ml_cmd .. "cmake ../. -DCMAKE_INSTALL_PREFIX=" .. build.install_path
+   for k, v in pairs(gpack.cmakeargs) do
+      cmake_command = cmake_command .. " " .. v
+   end
+   return cmake_command
+end
+
+function builder_class:_generate_configure_exec_command(gpack, build)
+   local configure_command = self._ml_cmd .. "./configure --prefix=" .. build.install_path
    for k, v in pairs(gpack.autoconf.configargs) do
       configure_command = configure_command .. " " .. v
    end
    return configure_command
 end
 
-function autoconf_installer_class:_generate_make_exec_command(gpack)
-   local  ml_cmd       = generate_ml_command(gpack)
-   local  make_command = ml_cmd .. "make -j" .. global_config.nprocesses
+function builder_class:_generate_make_exec_command(gpack)
+   local  make_command = self._ml_cmd .. "make -j" .. global_config.nprocesses
    return make_command
 end
 
-function autoconf_installer_class:_generate_makeinstall_exec_command(gpack)
-   local  ml_cmd       = generate_ml_command(gpack)
-   local  make_install_command = ml_cmd .. "make install"
-   return make_install_command
-end
+--function builder_class:install_default(gpack, build)
+--   local ml_cmd = generate_ml_command(gpack)
+--   local configure_command    = ml_cmd .. "./configure --prefix=" .. build.install_path
+--   for k, v in pairs(gpack.autoconf.configargs) do
+--      configure_command = configure_command .. " " .. v
+--   end
+--
+--   if gpack.autoconf.options.run_autoconf then
+--      local autoconf_command = ml_cmd .. "autoconf"
+--      local status_autoconf  = util.execute_command(autoconf_command)
+--   end
+--
+--   local make_command         = ml_cmd .. "make -j" .. global_config.nprocesses
+--   local make_install_command = ml_cmd .. "make install"
+--   
+--   local status_configure    = util.execute_command(configure_command)
+--   local status_make         = util.execute_command(make_command)
+--   local status_make_install = util.execute_command(make_install_command)
+--end
 
-function autoconf_installer_class:_generate_shell_exec_command(gpack, command)
-   local  ml_cmd       = generate_ml_command(gpack)
-   local shell_command = ml_cmd .. command.options.cmd
-   return shell_command
-end
+function builder_class:install(gpack, build)
+   self._ml_cmd = generate_ml_command(gpack)
 
-function autoconf_installer_class:install_default(gpack, build)
-   local ml_cmd = generate_ml_command(gpack)
-   local configure_command    = ml_cmd .. "./configure --prefix=" .. build.install_path
-   for k, v in pairs(gpack.autoconf.configargs) do
-      configure_command = configure_command .. " " .. v
+   local setup = nil
+   if gpack.autoconf then
+      setup = gpack.autoconf
+   elseif gpack.cmake then
+      setup = gpack.cmake
    end
 
-   if gpack.autoconf.options.run_autoconf then
-      local autoconf_command = ml_cmd .. "autoconf"
-      local status_autoconf  = util.execute_command(autoconf_command)
+   local command_stack = {}
+   if not setup.commands then
+      setup.commands = {
+         { command = setup.btype },
+         { command = "configure" },
+         { command = "make" },
+         { command = "makeinstall" },
+      }
    end
 
-   local make_command         = ml_cmd .. "make -j" .. global_config.nprocesses
-   local make_install_command = ml_cmd .. "make install"
-   
-   local status_configure    = util.execute_command(configure_command)
-   local status_make         = util.execute_command(make_command)
-   local status_make_install = util.execute_command(make_install_command)
-end
-
-function autoconf_installer_class:install(gpack, build)
-   if gpack.autoconf.commands then
-      local command_stack = {}
-      for k, v in pairs(gpack.autoconf.commands) do
-         print("COMMAND : " .. v.command)
-         if v.command == "autoconf" then
-            table.insert(command_stack, self.creator:command("exec", { command = self:_generate_autoconf_exec_command(gpack) }))
-         elseif v.command == "configure" then
-            print("CONFIGURE: " .. self:_generate_configure_exec_command(gpack))
-            table.insert(command_stack, self.creator:command("exec", { command = self:_generate_configure_exec_command(gpack) }))
-         elseif v.command == "make" then
-            table.insert(command_stack, self.creator:command("exec", { command = self:_generate_make_exec_command(gpack) }))
-         elseif v.command == "makeinstall" then
-            table.insert(command_stack, self.creator:command("exec", { command = self:_generate_makeinstall_exec_command(gpack) }))
-         elseif v.command == "shell" then
-            table.insert(command_stack, self.creator:command("exec", { command = self:_generate_shell_exec_command(gpack, v) }))
-         end
+   for k, v in pairs(setup.commands) do
+      if v.command == "autoconf" then
+         table.insert(command_stack, self.creator:command("exec", { command = self:_generate_exec_command(gpack, "autoconf") }))
+      elseif v.command == "cmake" then
+         table.insert(command_stack, self.creator:command("exec", { command = self:_generate_cmake_exec_command(gpack) }))
+      elseif v.command == "configure" then
+         table.insert(command_stack, self.creator:command("exec", { command = self:_generate_configure_exec_command(gpack, build) }))
+      elseif v.command == "make" then
+         table.insert(command_stack, self.creator:command("exec", { command = self:_generate_make_exec_command(gpack) }))
+      elseif v.command == "makeinstall" then
+         table.insert(command_stack, self.creator:command("exec", { command = self:_generate_exec_command(gpack, "make install") }))
+      elseif v.command == "shell" then
+         table.insert(command_stack, self.creator:command("exec", { command = self:_generate_exec_command(gpack, v.options.cmd) }))
       end
-      print("SELF EXECUTOR")
-      print(self.executor)
-      self.executor:execute(command_stack)
-   else
-      self:install_default(gpack, build)
+   end
+   
+   -- Execute build commands
+   if setup.btype == "cmake" then
+      local cmake_build_path = path.join(build.unpack_path, "build")
+      filesystem.mkdir(cmake_build_path)
+      filesystem.chdir(cmake_build_path)
+   end
+
+   self.executor:execute(command_stack)
+   
+   if setup.btype == "cmake" then
+      filesystem.chdir(build.unpack_path)
    end
 end
 
@@ -627,30 +643,30 @@ end
 function installer_class:build_gpack()
    filesystem.chdir(self.build.unpack_path)
    
-   if self.gpack.autoconf then
-      local builder = autoconf_installer_class:create(nil, self.build, self.executor, self.creator)
-      builder:install(self.gpack, self.build)
-   elseif self.gpack.cmake then
-      local cmake_build_path = path.join(self.build.unpack_path, "build")
-      filesystem.mkdir(cmake_build_path)
-      filesystem.chdir(cmake_build_path)
+   local builder = builder_class:create(nil, self.executor, self.creator)
+   builder:install(self.gpack, self.build)
+   
+   ----elseif self.gpack.cmake then
+   --   local cmake_build_path = path.join(self.build.unpack_path, "build")
+   --   filesystem.mkdir(cmake_build_path)
+   --   filesystem.chdir(cmake_build_path)
 
-      local ml_cmd        = generate_ml_command(self.gpack)
-      local cmake_command = ml_cmd .. "cmake ../. -DCMAKE_INSTALL_PREFIX=" .. self.build.install_path
-      for k, v in pairs(self.gpack.cmake_args) do
-         cmake_command = cmake_command .. " " .. v
-      end
-      local make_command         = ml_cmd .. "make -j" .. global_config.nprocesses
-      local make_install_command = ml_cmd .. "make install"
+   --   local ml_cmd        = generate_ml_command(self.gpack)
+   --   local cmake_command = ml_cmd .. "cmake ../. -DCMAKE_INSTALL_PREFIX=" .. self.build.install_path
+   --   for k, v in pairs(self.gpack.cmake_args) do
+   --      cmake_command = cmake_command .. " " .. v
+   --   end
+   --   local make_command         = ml_cmd .. "make -j" .. global_config.nprocesses
+   --   local make_install_command = ml_cmd .. "make install"
 
-      local status_cmake        = util.execute_command(cmake_command)
-      local status_make         = util.execute_command(make_command)
-      local status_make_install = util.execute_command(make_install_command)
+   --   local status_cmake        = util.execute_command(cmake_command)
+   --   local status_make         = util.execute_command(make_command)
+   --   local status_make_install = util.execute_command(make_install_command)
 
-      filesystem.chdir(self.build.unpack_path)
-   else
-      error("Unknown configure method. Use either autotool() or cmake().")
-   end
+   --   filesystem.chdir(self.build.unpack_path)
+   ----else
+   ----   error("Unknown configure method. Use either autotool() or cmake().")
+   ----end
 end
 
 -- Do post install commands
