@@ -5,11 +5,11 @@ local io    = assert(require "io")
 local os    = assert(require "os")
 
 -- Setup posix binds, such that the module works with different versions of luaposix
-local posix_read  = nil
-local posix_pipe  = nil
-local posix_fork  = nil
+local posix_read = nil
+local posix_pipe = nil
+local posix_fork = nil
 local posix_execp = nil
-local posix_dup2  = nil
+local posix_dup2 = nil
 local posix_close = nil
 
 local function setup_posix_binds()
@@ -170,10 +170,18 @@ local function read_from_fds(fd, log, chunksize)
                if log then
                   if type(log) == "table" then
                      for key, value in pairs(log) do
-                        value:write(line)
+                        if type(log[key]) == "string" then
+                           log[key] = log[key] .. line
+                        else
+                           log[key]:write(line)
+                        end
                      end
                   else
-                     log:write(line)
+                     if type(log) == "string" then
+                        log = log .. line
+                     else
+                        log:write(line)
+                     end
                   end
                end
             end

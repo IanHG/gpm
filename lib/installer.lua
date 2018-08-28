@@ -11,6 +11,8 @@ local lmod       = assert(require "lib.lmod")
 local downloader = assert(require "lib.downloader")
 local class      = assert(require "lib.class")
 local gpackage   = assert(require "lib.gpackage")
+local commander  = assert(require "lib.commander")
+local execcmd    = assert(require "lib.execcmd")
 
 local M = {}
 
@@ -256,17 +258,56 @@ end
 
 local autoconf_installer_class = class.create_class()
 
-function autoconf_installer_class:__init()
+function autoconf_installer_class:__init(build, executor, creator)
+   print("EXECUTOR")
+   print(executor)
+   self.build    = build
+   self.executor = executor
+   self.creator  = creator
 end
 
-function autoconf_install_class:install_default(gpack, build)
+function autoconf_installer_class:_generate_autoconf_exec_command(gpack)
+   local ml_cmd = generate_ml_command(gpack)
+   local autoconf_command = ml_cmd .. "autoconf"
+   
+   return autoconf_command
+end
+
+function autoconf_installer_class:_generate_configure_exec_command(gpack)
+   local ml_cmd = generate_ml_command(gpack)
+   local configure_command = ml_cmd .. "./configure --prefix=" .. self.build.install_path
+   for k, v in pairs(gpack.autoconf.configargs) do
+      configure_command = configure_command .. " " .. v
+   end
+   return configure_command
+end
+
+function autoconf_installer_class:_generate_make_exec_command(gpack)
+   local  ml_cmd       = generate_ml_command(gpack)
+   local  make_command = ml_cmd .. "make -j" .. global_config.nprocesses
+   return make_command
+end
+
+function autoconf_installer_class:_generate_makeinstall_exec_command(gpack)
+   local  ml_cmd       = generate_ml_command(gpack)
+   local  make_install_command = ml_cmd .. "make install"
+   return make_install_command
+end
+
+function autoconf_installer_class:_generate_shell_exec_command(gpack, command)
+   local  ml_cmd       = generate_ml_command(gpack)
+   local shell_command = ml_cmd .. command.options.cmd
+   return shell_command
+end
+
+function autoconf_installer_class:install_default(gpack, build)
    local ml_cmd = generate_ml_command(gpack)
    local configure_command    = ml_cmd .. "./configure --prefix=" .. build.install_path
-   for k, v in pairs(gpack.autotools.args) do
+   for k, v in pairs(gpack.autoconf.configargs) do
       configure_command = configure_command .. " " .. v
    end
 
-   if gpack.autotools.options.run_autoconf then
+   if gpack.autoconf.options.run_autoconf then
       local autoconf_command = ml_cmd .. "autoconf"
       local status_autoconf  = util.execute_command(autoconf_command)
    end
@@ -280,7 +321,26 @@ function autoconf_install_class:install_default(gpack, build)
 end
 
 function autoconf_installer_class:install(gpack, build)
-   if gpack.autotools.commands then
+   if gpack.autoconf.commands then
+      local command_stack = {}
+      for k, v in pairs(gpack.autoconf.commands) do
+         print("COMMAND : " .. v.command)
+         if v.command == "autoconf" then
+            table.insert(command_stack, self.creator:command("exec", { command = self:_generate_autoconf_exec_command(gpack) }))
+         elseif v.command == "configure" then
+            print("CONFIGURE: " .. self:_generate_configure_exec_command(gpack))
+            table.insert(command_stack, self.creator:command("exec", { command = self:_generate_configure_exec_command(gpack) }))
+         elseif v.command == "make" then
+            table.insert(command_stack, self.creator:command("exec", { command = self:_generate_make_exec_command(gpack) }))
+         elseif v.command == "makeinstall" then
+            table.insert(command_stack, self.creator:command("exec", { command = self:_generate_makeinstall_exec_command(gpack) }))
+         elseif v.command == "shell" then
+            table.insert(command_stack, self.creator:command("exec", { command = self:_generate_shell_exec_command(gpack, v) }))
+         end
+      end
+      print("SELF EXECUTOR")
+      print(self.executor)
+      self.executor:execute(command_stack)
    else
       self:install_default(gpack, build)
    end
@@ -416,6 +476,20 @@ local installer_class = class.create_class()
 function installer_class:__init()
    self.lmod_installer = lmod_installer_class:create()
    self.downloader     = downloader:create()
+   self.executor       = commander.create_executor({}, logger)
+   self.creator        = commander.create_creator ({}, logger)
+   self.creator:add("exec", function(options, input, output)
+      input.logger:message("Running in shell : '" .. options.command .. "'.")
+      print("CWD: " .. filesystem.cwd())
+      local out    = { out = "" }
+      local status = execcmd.execcmd_bashexec(options.command, out)
+
+      output.status = status
+      output.output = {
+         stdout = out.out
+      }
+   end)
+
    self.gpack          = nil
 
    self.options = {
@@ -553,21 +627,9 @@ end
 function installer_class:build_gpack()
    filesystem.chdir(self.build.unpack_path)
    
-   if self.gpack.autotools then
-      --local ml_cmd = generate_ml_command(self.gpack)
-      --local configure_command    = ml_cmd .. "./configure --prefix=" .. self.build.install_path
-      --for k, v in pairs(self.gpack.autotools_args) do
-      --   configure_command = configure_command .. " " .. v
-      --end
-      --local make_command         = ml_cmd .. "make -j" .. global_config.nprocesses
-      --local make_install_command = ml_cmd .. "make install"
-
-      --local status_configure    = util.execute_command(configure_command)
-      --local status_make         = util.execute_command(make_command)
-      --local status_make_install = util.execute_command(make_install_command)
-      local builder = autoconf_installer_class:create()
-      builder.install(self.gpack, self.build)
-
+   if self.gpack.autoconf then
+      local builder = autoconf_installer_class:create(nil, self.build, self.executor, self.creator)
+      builder:install(self.gpack, self.build)
    elseif self.gpack.cmake then
       local cmake_build_path = path.join(self.build.unpack_path, "build")
       filesystem.mkdir(cmake_build_path)

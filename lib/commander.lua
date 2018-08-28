@@ -26,7 +26,8 @@ end
 local command_creator_class = class.create_class()
 
 function command_creator_class:__init(logger)
-   self._logger = logger
+   print(logger)
+   self._logger   = logger
    self._fn_table = {}
 end
 
@@ -69,8 +70,8 @@ function command_executor_class:__init(logger)
    self._logger = logger
 
    self._last = {
-      status = nil,
-      output = nil,
+      status = 0 ,
+      output = {},
    }
 end
 
@@ -96,7 +97,11 @@ end
 function command_executor_class:_execute_command(command)
    if command.is_a and command:is_a(command_class) then
       self:_log_pre_execute_command(command)
+      print("INPUT")
       local input = self._last.output
+      input.logger = self._logger
+      print("INPUT")
+      print(input)
       self._last = { status = 0, output = { } }
       command.fn(command.options, input, self._last)
       self:_log_post_execute_command(command)
@@ -135,17 +140,17 @@ end
 
 --- Create a command 'executor'
 local function create_executor(...)
-   local  executor = command_executor_class:create(nil, ...)
+   local  executor = command_executor_class:create(...)
    return executor
 end
 
 --- Create a command 'creator'
 local function create_creator(...)
-   local  creator = command_creator_class:create(nil, ...)
+   local  creator = command_creator_class:create(...)
    return creator
 end
 
-M.executor = create_executor
-M.creator  = create_creator
+M.create_executor = create_executor
+M.create_creator  = create_creator
 
 return M

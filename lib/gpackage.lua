@@ -101,6 +101,38 @@ function gpackage_creator_class:print_setter()
    end
 end
 
+local gpackage_autoconf_class = class.create_class(gpackage_creator_class)
+
+function gpackage_autoconf_class:__init(ftable)
+   self.commands = {}
+
+   self.ftable = {
+      autoconf = function()
+         table.insert(self.commands, { command = "autoconf" } ) 
+         return self.ftable
+      end,
+      configure = function(...) 
+         table.insert(self.commands, { command = "configure", options = { options = pack(...) } })
+         self.configargs = pack(...)
+         return self.ftable
+      end,
+      make = function()
+         table.insert(self.commands, { command = "make" }) 
+         return self.ftable
+      end,
+      makeinstall = function() 
+         table.insert(self.commands, { command = "makeinstall" }) 
+         return self.ftable
+      end,
+      shell = function(cmd)
+         table.insert(self.commands, { command = "shell", options = { cmd = cmd } })
+         return self.ftable
+      end,
+
+      endblock = ftable
+   }
+end
+
 --- Lmod
 --
 --
@@ -170,7 +202,7 @@ function gpackage_class:__init()
    self.nameversion = ""
 
    -- Build
-   self.autotools   = nil
+   self.autoconf   = nil
    self.cmake       = false
    self.files       = {}
    self.post        = {}
@@ -197,7 +229,7 @@ function gpackage_class:__init()
       description = self:string_setter("description"),
 
       -- Build
-      autotools   = self:autotools_setter(),
+      autoconf    = self:autoconf_setter(),
       cmake       = self:cmake_setter(),
       file        = self:element_setter("files", 2),
       post        = self:element_setter("post", 1),
@@ -210,30 +242,28 @@ function gpackage_class:__init()
    }
 end
 
-function gpackage_class:autotools_setter()
+function gpackage_class:autoconf_setter()
    return function(version, options, ...)
       if options == nil then
          options = {}
       end
       assert(not self.cmake)
-      assert(not self.autotools)
+      assert(not self.autoconf)
       local p = pack( ... )
       for k, v in pairs(p) do
          assert(type(v) == "string")
       end
-      self.autotools_args = p
-      self.autotools = {
-         version = version,
-         options = options,
-         args    = p,
-      }
-      return self.ftable
+      self.autoconf = gpackage_autoconf_class:create(nil, self.ftable)
+      self.autoconf.version    = version
+      self.autoconf.options    = options
+      self.autoconf.configargs = p
+      return self.autoconf.ftable
    end
 end
 
 function gpackage_class:cmake_setter()
    return function(version, ...)
-      assert(not self.autotools)
+      assert(not self.autoconf)
       self.cmake = true
       self.cmake_version = version
       local p = pack( ... )
@@ -303,8 +333,8 @@ function gpackage_class:print()
       logger:message("Signature : " .. self.signature)
    end
 
-   if self.autotools then
-      for k, v in pairs(self.autotools_args) do
+   if self.autoconf then
+      for k, v in pairs(self.autoconf.configargs) do
          logger:message("   Autotools arg : " .. v)
       end
    end
