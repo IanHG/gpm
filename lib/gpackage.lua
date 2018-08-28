@@ -129,7 +129,9 @@ function gpackage_autoconf_class:__init(ftable)
          return self.ftable
       end,
 
-      endblock = ftable
+      endblock = function()
+         return ftable
+      end
    }
 end
 
