@@ -101,78 +101,50 @@ function gpackage_creator_class:print_setter()
    end
 end
 
---- Autoconf bootstrapper
+--- Builder bootstrapper
 --
-local gpackage_autoconf_class = class.create_class(gpackage_creator_class)
+-- Defines how to build either using cmake or autoconf
+local gpackage_builder_class = class.create_class(gpackage_creator_class)
 
-function gpackage_autoconf_class:__init(ftable)
+function gpackage_builder_class:__init(btype, ftable)
    self.commands = {}
-   self.btype    = "autoconf"
+   self.btype    = btype
 
    self.ftable = {
-      autoconf = function()
+      configure = function(...) 
+         table.insert(self.commands, { command = "configure", options = { options = pack(...) } })
+         self.configargs = pack(...)
+         return self.ftable
+      end,
+      make = function()
+         table.insert(self.commands, { command = "make" }) 
+         return self.ftable
+      end,
+      makeinstall = function() 
+         table.insert(self.commands, { command = "makeinstall" }) 
+         return self.ftable
+      end,
+      shell = function(cmd)
+         table.insert(self.commands, { command = "shell", options = { cmd = cmd } })
+         return self.ftable
+      end,
+
+      endblock = function()
+         return ftable
+      end
+   }
+
+   if self.btype == "autoconf" then
+      self.ftable["autoconf"] = function()
          table.insert(self.commands, { command = "autoconf" } ) 
          return self.ftable
-      end,
-      configure = function(...) 
-         table.insert(self.commands, { command = "configure", options = { options = pack(...) } })
-         self.configargs = pack(...)
-         return self.ftable
-      end,
-      make = function()
-         table.insert(self.commands, { command = "make" }) 
-         return self.ftable
-      end,
-      makeinstall = function() 
-         table.insert(self.commands, { command = "makeinstall" }) 
-         return self.ftable
-      end,
-      shell = function(cmd)
-         table.insert(self.commands, { command = "shell", options = { cmd = cmd } })
-         return self.ftable
-      end,
-
-      endblock = function()
-         return ftable
       end
-   }
-end
-
---- Cmake bootstrapper
---
-local gpackage_cmake_class = class.create_class(gpackage_creator_class)
-
-function gpackage_cmake_class:__init(ftable)
-   self.commands = {}
-   self.btype    = "cmake"
-
-   self.ftable = {
-      cmake = function(...)
-         table.insert(self.commands, { command = "cmake"    , options = { options = pack(...) } } ) 
+   else
+      self.ftable["cmake"] = function(...)
+         table.insert(self.commands, { command = "cmake", options = { options = pack(...) } } ) 
          return self.ftable
-      end,
-      configure = function(...) 
-         table.insert(self.commands, { command = "configure", options = { options = pack(...) } })
-         self.configargs = pack(...)
-         return self.ftable
-      end,
-      make = function()
-         table.insert(self.commands, { command = "make" }) 
-         return self.ftable
-      end,
-      makeinstall = function() 
-         table.insert(self.commands, { command = "makeinstall" }) 
-         return self.ftable
-      end,
-      shell = function(cmd)
-         table.insert(self.commands, { command = "shell", options = { cmd = cmd } })
-         return self.ftable
-      end,
-
-      endblock = function()
-         return ftable
       end
-   }
+   end
 end
 
 --- Lmod
@@ -295,7 +267,7 @@ function gpackage_class:autoconf_setter()
       for k, v in pairs(p) do
          assert(type(v) == "string")
       end
-      self.autoconf = gpackage_autoconf_class:create(nil, self.ftable)
+      self.autoconf = gpackage_builder_class:create(nil, "autoconf", self.ftable)
       self.autoconf.version    = version
       self.autoconf.options    = options
       self.autoconf.configargs = p
@@ -311,7 +283,7 @@ function gpackage_class:cmake_setter()
       for k, v in pairs(p) do
          assert(type(v) == "string")
       end
-      self.cmake = gpackage_cmake_class:create(nil, self.ftable)
+      self.cmake = gpackage_builder_class:create(nil, "cmake", self.ftable)
       self.cmake.version   = version
       self.cmake.cmakeargs = p
       return self.cmake.ftable
