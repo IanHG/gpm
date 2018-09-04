@@ -136,6 +136,9 @@ function gpackage_builder_class:__init(btype, upstream_ftable, logger)
       shell = function(cmd)
          table.insert(self.commands, { command = "shell", options = { cmd = cmd } })
       end,
+      install = function(...)
+         table.insert(self.commands, { command = "install", options = { install = pack(...) } })
+      end,
       
       with_directory = function(dir)
          table.insert(self.commands, { command = "pushdir", options = { dir = dir} })
@@ -153,11 +156,12 @@ function gpackage_builder_class:__init(btype, upstream_ftable, logger)
       end,
    }
 
-   if self.btype == "autoconf" then
+   if (self.btype == "autoconf") or (self.btype == "build") then
       self.ftable_def["autoconf"] = function()
          table.insert(self.commands, { command = "autoconf" } ) 
       end
-   else
+   end
+   if (self.btype == "cmake") or (self.btype == "build") then
       self.ftable_def["cmake"] = function(...)
          table.insert(self.commands, { command = "cmake", options = { options = pack(...) } } ) 
       end
@@ -286,6 +290,7 @@ function gpackage_class:__init(logger)
       -- Build
       autoconf    = self:autoconf_setter(),
       cmake       = self:cmake_setter(),
+      build       = self:build_setter(),
       file        = self:element_setter("files", 2),
       post        = self:element_setter("post", 1),
       
@@ -308,32 +313,38 @@ function gpackage_class:autoconf_setter()
       if options == nil then
          options = {}
       end
-      assert(not self.cmake)
-      assert(not self.autoconf)
+      assert(not self.build)
       local p = pack( ... )
       for k, v in pairs(p) do
          assert(type(v) == "string")
       end
-      self.autoconf = gpackage_builder_class:create(nil, "autoconf", self.ftable, self.logger)
-      self.autoconf.version    = version
-      self.autoconf.options    = options
-      self.autoconf.configargs = p
-      return self.autoconf.ftable
+      self.build = gpackage_builder_class:create(nil, "autoconf", self.ftable, self.logger)
+      self.build.version    = version
+      self.build.options    = options
+      self.build.configargs = p
+      return self.build.ftable:get()
    end
 end
 
 function gpackage_class:cmake_setter()
    return function(version, ...)
-      assert(not self.autoconf)
-      assert(not self.cmake)
+      assert(not self.build)
       local p = pack( ... )
       for k, v in pairs(p) do
          assert(type(v) == "string")
       end
-      self.cmake = gpackage_builder_class:create(nil, "cmake", self.ftable, self.logger)
-      self.cmake.version   = version
-      self.cmake.cmakeargs = p
-      return self.cmake.ftable
+      self.build = gpackage_builder_class:create(nil, "cmake", self.ftable, self.logger)
+      self.build.version   = version
+      self.build.cmakeargs = p
+      return self.build.ftable:get()
+   end
+end
+
+function gpackage_class:build_setter()
+   return function()
+      assert(not self.build)
+      self.build = gpackage_builder_class:create(nil, "build", self.ftable, self.logger)
+      return self.build.ftable:get()
    end
 end
 

@@ -292,6 +292,23 @@ function builder_class:_generate_make_exec_command(gpack)
    return make_command
 end
 
+function builder_class:_generate_copy_exec_command(gpack, build, p)
+   local copy_command = "cp"
+   if filesystem.isdir(p) then
+      copy_command = copy_command .. " -r"
+   end
+   local source = nil
+   if path.is_abs_path(p) then
+      source = p
+   else
+      source = path.join(build.unpack_path, p)
+   end
+   
+   copy_command = copy_command .. " " .. source .. " " .. build.install_path
+
+   return copy_command
+end
+
 --function builder_class:install_default(gpack, build)
 --   local ml_cmd = generate_ml_command(gpack)
 --   local configure_command    = ml_cmd .. "./configure --prefix=" .. build.install_path
@@ -315,24 +332,24 @@ end
 function builder_class:install(gpack, build)
    self._ml_cmd = generate_ml_command(gpack)
 
-   local setup = nil
-   if gpack.autoconf then
-      setup = gpack.autoconf
-   elseif gpack.cmake then
-      setup = gpack.cmake
-   end
+   --local setup = nil
+   --if gpack.autoconf then
+   --   setup = gpack.autoconf
+   --elseif gpack.cmake then
+   --   setup = gpack.cmake
+   --end
 
    local command_stack = {}
-   if not setup.commands then
-      setup.commands = {
-         { command = setup.btype },
+   if not gpack.build.commands then
+      gpack.build.commands = {
+         { command = gpack.build.btype },
          { command = "configure" },
          { command = "make" },
          { command = "makeinstall" },
       }
    end
 
-   for k, v in pairs(setup.commands) do
+   for k, v in pairs(gpack.build.commands) do
       if v.command == "autoconf" then
          table.insert(command_stack, self.creator:command("exec", { command = self:_generate_exec_command(gpack, "autoconf") }))
       elseif v.command == "cmake" then
@@ -345,11 +362,16 @@ function builder_class:install(gpack, build)
          table.insert(command_stack, self.creator:command("exec", { command = self:_generate_exec_command(gpack, "make install") }))
       elseif v.command == "shell" then
          table.insert(command_stack, self.creator:command("exec", { command = self:_generate_exec_command(gpack, v.options.cmd) }))
+      elseif v.command == "install" then
+         table.insert(command_stack, self.creator:command("mkdir", { path = build.install_path, mode = {}, recursive = true }))
+         for k, v in pairs(v.options.install) do
+            table.insert(command_stack, self.creator:command("exec", { command = self:_generate_copy_exec_command(gpack, build, v)}))
+         end
       end
    end
    
    -- Execute build commands
-   if setup.btype == "cmake" then
+   if gpack.build.btype == "cmake" then
       local cmake_build_path = path.join(build.unpack_path, "build")
       filesystem.mkdir(cmake_build_path)
       filesystem.chdir(cmake_build_path)
@@ -357,7 +379,7 @@ function builder_class:install(gpack, build)
 
    self.executor:execute(command_stack)
    
-   if setup.btype == "cmake" then
+   if gpack.build.btype == "cmake" then
       filesystem.chdir(build.unpack_path)
    end
 end
@@ -503,6 +525,12 @@ function installer_class:__init()
       output.status = status
       output.output = {
          stdout = out.out
+      }
+   end)
+   self.creator:add("mkdir", function(options, input, output)
+      local status = filesystem.mkdir(options.path, options.mode, options.recursive)
+      output.status = status
+      output.output = {
       }
    end)
 
