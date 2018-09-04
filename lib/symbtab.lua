@@ -3,6 +3,7 @@ local M = {}
 local class   = require "lib.class"
 local logging = require "lib.logging"
 local logger  = logging.logger
+local ftable  = require "lib.ftable"
 
 -- Check if string or table is empty.
 local function isempty(s)
@@ -30,18 +31,21 @@ end
 --
 local symbol_table_class = class.create_class()
 
-function symbol_table_class:__init(ftable)
+function symbol_table_class:__init(upstream_ftable, logger)
    self.sbeg    = "%"
    self.send    = "%"
    self.symbols = { }
-
-   self.ftable = {
+   
+   self.ftable  = ftable.create_ftable({}, nil, logger)
+   self.ftable_def = {
       add = self:add_symbol_setter(),
    }
 
-   if ftable then
-      self.ftable["endblock"] = function() return ftable end
+   if upstream_ftable then
+      self.ftable_def.symbolend = function() upstream_ftable:get() end
    end
+
+   self.ftable:push(self.ftable_def)
 end
 
 function symbol_table_class:add_symbol(symb, ssymb, overwrite, format_fcn)
@@ -73,7 +77,6 @@ end
 function symbol_table_class:add_symbol_setter()
    return function(symb, ssymb, overwrite, format_fcn)
       self:add_symbol(symb, ssymb, overwrite, format_fcn)
-      return self.ftable
    end
 end
 
