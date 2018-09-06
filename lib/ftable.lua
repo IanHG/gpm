@@ -60,13 +60,10 @@ function ftable_class:_setup_metaftable()
    for k, v in pairs(self.ftable_def) do
       for fk, fv in pairs(v) do
          self.metaftable[fk] = function(...)
-            print("CALLING FUNCTION" .. fk)
             local ftable_return = fv(...)
             if ftable_return ~= nil then
-               print("RETURN FTABLE_RETURN")
                return ftable_return
             else
-               print("RETURNING METATABLE")
                return self.metaftable
             end
          end

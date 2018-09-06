@@ -744,7 +744,6 @@ local function install(args)
    exception.try(function() 
       -- Bootstrap build
       logger:message("BOOTSTRAP PACKAGE NEW")
-      args.gpack = args.gpk
       
       -- Load database
       database.load_db(global_config)

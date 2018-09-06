@@ -287,6 +287,9 @@ function gpackage_class:__init(logger)
       version     = self:string_setter("version", "signature"),
       description = self:string_setter("description"),
 
+      -- Depend
+      dependson   = self:element_setter("dependencies", 2),
+
       -- Build
       autoconf    = self:autoconf_setter(),
       cmake       = self:cmake_setter(),
@@ -348,7 +351,7 @@ function gpackage_class:build_setter()
    end
 end
 
-function gpackage_class:load(gpackage_path)
+function gpackage_class:load(gpackage_path, gpack_version)
    assert(type(gpackage_path) == "string")
    self.path = gpackage_path
    self.name = get_name(gpackage_path)
@@ -362,7 +365,14 @@ function gpackage_class:load(gpackage_path)
       logger:alert("Could not load.")
    end
    
-   self.symbol_table:add_symbol("version", self.version)
+   if gpack_version ~= nil then
+      print("HERE")
+      print(gpack_version)
+      self.version = gpack_version
+      self.symbol_table:add_symbol("version", gpack_version, true)
+   else
+      self.symbol_table:add_symbol("version", self.version)
+   end
 
    for k, v in pairs(self) do
       if type(v) == "string" then
@@ -501,12 +511,25 @@ function gpackage_locator_class:locate(name, config)
    return filepath
 end
 
+local function get_gpack_name_version(name)
+   local split = util.split(name, "@")
+   if #split == 1 then
+      return split[1], nil
+   elseif #split == 2 then
+      return split[1], split[2]
+   else
+      assert(false)
+   end
+end
+
 --- Load .gpk file into gpackage object.
 -- 
 -- @param path   The path of the .gpk.
 local function load_gpackage(name)
+   local gpack_name, gpack_version = get_gpack_name_version(name)
+
    local gpackage_locator = gpackage_locator_class:create()
-   local path             = gpackage_locator:locate(name)
+   local path             = gpackage_locator:locate(gpack_name)
 
    if path == nil then
       logger:alert("Could not load Gpackage.")
@@ -516,7 +539,7 @@ local function load_gpackage(name)
    logger:message("Found gpack : '" .. path .. "'.")
 
    local gpack = gpackage_class:create()
-   gpack:load(path)
+   gpack:load(path, gpack_version)
    
    gpack:print()
    
