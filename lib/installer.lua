@@ -43,8 +43,12 @@ end
 local function generate_ml_command(gpack)
    local ml_cmd = ". " .. global_config.stack_path .. "/bin/modules.sh --link-relative --force && "
    
-   for k, v in util.ordered(gpack.dependencies) do
-      ml_cmd = ml_cmd .. "ml " .. v .. " && "
+   for k, v in pairs(gpack.dependencies.dependson) do
+      ml_cmd = ml_cmd .. "ml " .. v.name .. "/" .. v.version .. " && "
+   end
+   
+   for k, v in pairs(gpack.dependencies.load) do
+      ml_cmd = ml_cmd .. "ml " .. v.name .. "/" .. v.version .. " && "
    end
    
    return ml_cmd
@@ -273,7 +277,7 @@ end
 
 function builder_class:_generate_cmake_exec_command(gpack, build)
    local cmake_command = self._ml_cmd .. "cmake ../. -DCMAKE_INSTALL_PREFIX=" .. build.install_path
-   for k, v in pairs(gpack.cmakeargs) do
+   for k, v in pairs(gpack.build.cmakeargs) do
       cmake_command = cmake_command .. " " .. v
    end
    return cmake_command
@@ -281,7 +285,7 @@ end
 
 function builder_class:_generate_configure_exec_command(gpack, build)
    local configure_command = self._ml_cmd .. "./configure --prefix=" .. build.install_path
-   for k, v in pairs(gpack.autoconf.configargs) do
+   for k, v in pairs(gpack.build.configargs) do
       configure_command = configure_command .. " " .. v
    end
    return configure_command
@@ -309,35 +313,8 @@ function builder_class:_generate_copy_exec_command(gpack, build, p)
    return copy_command
 end
 
---function builder_class:install_default(gpack, build)
---   local ml_cmd = generate_ml_command(gpack)
---   local configure_command    = ml_cmd .. "./configure --prefix=" .. build.install_path
---   for k, v in pairs(gpack.autoconf.configargs) do
---      configure_command = configure_command .. " " .. v
---   end
---
---   if gpack.autoconf.options.run_autoconf then
---      local autoconf_command = ml_cmd .. "autoconf"
---      local status_autoconf  = util.execute_command(autoconf_command)
---   end
---
---   local make_command         = ml_cmd .. "make -j" .. global_config.nprocesses
---   local make_install_command = ml_cmd .. "make install"
---   
---   local status_configure    = util.execute_command(configure_command)
---   local status_make         = util.execute_command(make_command)
---   local status_make_install = util.execute_command(make_install_command)
---end
-
 function builder_class:install(gpack, build)
    self._ml_cmd = generate_ml_command(gpack)
-
-   --local setup = nil
-   --if gpack.autoconf then
-   --   setup = gpack.autoconf
-   --elseif gpack.cmake then
-   --   setup = gpack.cmake
-   --end
 
    local command_stack = {}
    if not gpack.build.commands then
@@ -353,7 +330,7 @@ function builder_class:install(gpack, build)
       if v.command == "autoconf" then
          table.insert(command_stack, self.creator:command("exec", { command = self:_generate_exec_command(gpack, "autoconf") }))
       elseif v.command == "cmake" then
-         table.insert(command_stack, self.creator:command("exec", { command = self:_generate_cmake_exec_command(gpack) }))
+         table.insert(command_stack, self.creator:command("exec", { command = self:_generate_cmake_exec_command(gpack, build) }))
       elseif v.command == "configure" then
          table.insert(command_stack, self.creator:command("exec", { command = self:_generate_configure_exec_command(gpack, build) }))
       elseif v.command == "make" then
@@ -389,12 +366,12 @@ local lmod_installer_class = class.create_class()
 
 function lmod_installer_class:__init()
    -- Settings
-   self.gpack          = nil
-   self.build_path      = nil
-   self.install_path    = nil
+   self.gpack        = nil
+   self.build_path   = nil
+   self.install_path = nil
    
    -- Internal work 
-   self.modulefile     = nil
+   self.modulefile   = nil
 end
 
 function lmod_installer_class:file_build_path()
@@ -448,6 +425,11 @@ function lmod_installer_class:write_modulefile()
    --self.modulefile:write("\n")
    --self.modulefile
    --self.modulefile:write("-- Package specific\n")
+   
+   -- Dependencies
+   for k, v in pairs(self.gpack.dependencies.dependson) do
+      lmod_file:write("depends_on(\"" .. v.name .. "/" .. v.version .. "\")\n")
+   end
    
    -- Alias
    for k, v in pairs(self.gpack.lmod.alias) do

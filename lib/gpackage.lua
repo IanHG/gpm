@@ -10,6 +10,17 @@ local downloader  = assert(require "lib.downloader")
 local symbtab     = assert(require "lib.symbtab")
 local ftable = assert(require "lib.ftable" )
 
+local function get_gpack_name_version(name)
+   local split = util.split(name, "@")
+   if #split == 1 then
+      return split[1], nil
+   elseif #split == 2 then
+      return split[1], split[2]
+   else
+      assert(false)
+   end
+end
+
 local function pack(...)
    return { ... }
 
@@ -119,6 +130,8 @@ function gpackage_builder_class:__init(btype, upstream_ftable, logger)
    self.logger   = logger
    self.commands = {}
    self.btype    = btype
+   self.cmakeargs = {}
+   self.configargs = {}
 
    self.ftable = ftable.create_ftable({}, nil, self.logger)
 
@@ -164,6 +177,7 @@ function gpackage_builder_class:__init(btype, upstream_ftable, logger)
    if (self.btype == "cmake") or (self.btype == "build") then
       self.ftable_def["cmake"] = function(...)
          table.insert(self.commands, { command = "cmake", options = { options = pack(...) } } ) 
+         self.btype = "cmake"
       end
    end
 
@@ -264,7 +278,11 @@ function gpackage_class:__init(logger)
    self.post     = {}
 
    -- Dependencies
-   self.dependencies = {}
+   self.dependencies = {
+      heirarchical = {},
+      dependson    = {},
+      load         = {},
+   }
    
    -- Function table for loading package
    self.ftable       = ftable.create_ftable({}, nil, self.logger)
@@ -288,7 +306,7 @@ function gpackage_class:__init(logger)
       description = self:string_setter("description"),
 
       -- Depend
-      dependson   = self:element_setter("dependencies", 2),
+      dependson   = self:dependson_setter(),
 
       -- Build
       autoconf    = self:autoconf_setter(),
@@ -309,6 +327,36 @@ function gpackage_class:__init(logger)
    }
 
    self.ftable:push(self.ftable_def)
+end
+
+function gpackage_class:dependson_setter()
+   return function(gpack_name_version, dependency)
+      if util.isempty(dependency) then
+         dependency = "dependson"
+      end
+
+      local gpack_name, gpack_version = get_gpack_name_version(gpack_name_version)
+      assert(gpack_name and gpack_version)
+      
+      if dependency == "heirarchical" then
+         table.insert(self.dependencies.heirarchical, { 
+            name       = gpack_name,
+            version    = gpack_version,
+         })
+      elseif dependency == "dependson" then
+         table.insert(self.dependencies.dependson, { 
+            name       = gpack_name,
+            version    = gpack_version,
+         })
+      elseif dependency == "load" then
+         table.insert(self.dependencies.load, { 
+            name       = gpack_name,
+            version    = gpack_version,
+         })
+      else
+         assert(false)
+      end
+   end
 end
 
 function gpackage_class:autoconf_setter()
@@ -511,16 +559,6 @@ function gpackage_locator_class:locate(name, config)
    return filepath
 end
 
-local function get_gpack_name_version(name)
-   local split = util.split(name, "@")
-   if #split == 1 then
-      return split[1], nil
-   elseif #split == 2 then
-      return split[1], split[2]
-   else
-      assert(false)
-   end
-end
 
 --- Load .gpk file into gpackage object.
 -- 
