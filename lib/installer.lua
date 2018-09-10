@@ -338,9 +338,6 @@ function builder_class:_locate_build(gpack)
          end
 
          local match_version, match_operator = parse_match_version(match_version)
-         print("HERE")
-         print(match_version)
-         print(match_operator)
          local function match(m, c, last) 
             if match_operator == ">" then
                return c > m
@@ -367,6 +364,7 @@ function builder_class:_locate_build(gpack)
 
          local match_split = util.split(match_version, ".")
          local check_split = util.split(check_version, ".")
+         assert(#check_split >= #match_split)
          for i = 1, #match_split do
             if match(match_split[i], check_split[i], i == #match_split) then
                return true
