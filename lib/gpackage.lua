@@ -272,8 +272,7 @@ function gpackage_class:__init(logger)
    self.nameversion = ""
 
    -- Build
-   self.autoconf = nil
-   self.cmake    = false
+   self.builds   = {}
    self.files    = {}
    self.post     = {}
 
@@ -364,38 +363,39 @@ function gpackage_class:autoconf_setter()
       if options == nil then
          options = {}
       end
-      assert(not self.build)
       local p = pack( ... )
       for k, v in pairs(p) do
          assert(type(v) == "string")
       end
-      self.build = gpackage_builder_class:create(nil, "autoconf", self.ftable, self.logger)
-      self.build.version    = version
-      self.build.options    = options
-      self.build.configargs = p
-      return self.build.ftable:get()
+      local build = gpackage_builder_class:create(nil, "autoconf", self.ftable, self.logger)
+      build.version    = version
+      build.options    = options
+      build.configargs = p
+      table.insert(self.builds, build)
+      return build.ftable:get()
    end
 end
 
 function gpackage_class:cmake_setter()
    return function(version, ...)
-      assert(not self.build)
       local p = pack( ... )
       for k, v in pairs(p) do
          assert(type(v) == "string")
       end
-      self.build = gpackage_builder_class:create(nil, "cmake", self.ftable, self.logger)
-      self.build.version   = version
-      self.build.cmakeargs = p
-      return self.build.ftable:get()
+      local build = gpackage_builder_class:create(nil, "cmake", self.ftable, self.logger)
+      build.version   = version
+      build.cmakeargs = p
+      table.insert(self.builds, build)
+      return build.ftable:get()
    end
 end
 
 function gpackage_class:build_setter()
-   return function()
-      assert(not self.build)
-      self.build = gpackage_builder_class:create(nil, "build", self.ftable, self.logger)
-      return self.build.ftable:get()
+   return function(tags)
+      local build = gpackage_builder_class:create(nil, "build", self.ftable, self.logger)
+      build.tags = tags
+      table.insert(self.builds, build)
+      return build.ftable:get()
    end
 end
 
@@ -420,6 +420,17 @@ function gpackage_class:load(gpackage_path, gpack_version)
       self.symbol_table:add_symbol("version", gpack_version, true)
    else
       self.symbol_table:add_symbol("version", self.version)
+   end
+   
+   local version_split = util.split(self.version, ".")
+   if #version_split >= 1 then
+      self.symbol_table:add_symbol("version_major", version_split[1])
+      if #version_split >= 2 then
+         self.symbol_table:add_symbol("version_minor", version_split[2])
+         if #version_split >= 3 then
+            self.symbol_table:add_symbol("version_patch", version_split[3])
+         end
+      end
    end
 
    for k, v in pairs(self) do

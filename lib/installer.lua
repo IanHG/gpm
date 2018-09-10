@@ -270,33 +270,33 @@ function builder_class:__init(executor, creator)
    self._ml_cmd   = nil
 end
 
-function builder_class:_generate_exec_command(gpack, cmd)
+function builder_class:_generate_exec_command(cmd)
    local  command = self._ml_cmd .. cmd
    return command
 end
 
-function builder_class:_generate_cmake_exec_command(gpack, build)
+function builder_class:_generate_cmake_exec_command(build, cmakeargs)
    local cmake_command = self._ml_cmd .. "cmake ../. -DCMAKE_INSTALL_PREFIX=" .. build.install_path
-   for k, v in pairs(gpack.build.cmakeargs) do
+   for k, v in pairs(cmakeargs) do
       cmake_command = cmake_command .. " " .. v
    end
    return cmake_command
 end
 
-function builder_class:_generate_configure_exec_command(gpack, build)
+function builder_class:_generate_configure_exec_command(build, configargs)
    local configure_command = self._ml_cmd .. "./configure --prefix=" .. build.install_path
-   for k, v in pairs(gpack.build.configargs) do
+   for k, v in pairs(configargs) do
       configure_command = configure_command .. " " .. v
    end
    return configure_command
 end
 
-function builder_class:_generate_make_exec_command(gpack)
+function builder_class:_generate_make_exec_command()
    local  make_command = self._ml_cmd .. "make -j" .. global_config.nprocesses
    return make_command
 end
 
-function builder_class:_generate_copy_exec_command(gpack, build, p)
+function builder_class:_generate_copy_exec_command(build, p)
    local copy_command = "cp"
    if filesystem.isdir(p) then
       copy_command = copy_command .. " -r"
@@ -313,42 +313,133 @@ function builder_class:_generate_copy_exec_command(gpack, build, p)
    return copy_command
 end
 
+function builder_class:_locate_build(gpack)
+   if #gpack.builds == 0 then
+      logger:alert("No build...")
+      assert(false)
+   elseif #gpack.builds == 1 then
+      return gpack.builds[1]
+   else
+      local function match_version(match_version, check_version)
+         local function parse_match_version(match_version)
+            if     string.match(match_version, ">=") then
+               return string.gsub(match_version, ">=", ""), ">="
+            elseif string.match(match_version, ">") then
+               return string.gsub(match_version, ">" , ""), ">"
+            elseif string.match(match_version, "<=") then
+               return string.gsub(match_version, "<=", ""), "<="
+            elseif string.match(match_version, "<") then
+               return string.gsub(match_version, "<" , ""), "<"
+            elseif string.match(match_version, "=") then
+               return string.gsub(match_version, "=" , ""), "="
+            else
+               return match_version, "="
+            end
+         end
+
+         local match_version, match_operator = parse_match_version(match_version)
+         print("HERE")
+         print(match_version)
+         print(match_operator)
+         local function match(m, c, last) 
+            if match_operator == ">" then
+               return c > m
+            elseif match_operator == ">=" then
+               if last then
+                  return c >= m
+               else
+                  return c > m
+               end
+            elseif match_operator == "<" then
+               return c < m
+            elseif match_operator == "<=" then
+               if last then
+                  return c <= m
+               else
+                  return c < m
+               end
+            elseif match_operator == "=" then
+               return c == m
+            else
+               return c == m
+            end
+         end
+
+         local match_split = util.split(match_version, ".")
+         local check_split = util.split(check_version, ".")
+         for i = 1, #match_split do
+            if match(match_split[i], check_split[i], i == #match_split) then
+               return true
+            end
+         end
+
+         return false
+      end
+
+      local function match_build_version(build, version)
+         if build.tags ~= nil then
+            if build.tags.version ~= nil then
+               if match_version(build.tags.version, version) then
+                  return true
+               end
+            end
+         end
+
+         return false
+      end
+
+      for k, v in pairs(gpack.builds) do
+         if match_build_version(v, gpack.version) then
+            return v
+         end
+      end
+
+      -- If nothing was found, we return the first build without a tag
+      for k, v in pairs(gpack.builds) do
+         if v.tags == nil then
+            return v
+         end
+      end
+   end
+end
+
 function builder_class:install(gpack, build)
    self._ml_cmd = generate_ml_command(gpack)
 
+   local gpack_build   = self:_locate_build(gpack)
    local command_stack = {}
-   if not gpack.build.commands then
-      gpack.build.commands = {
-         { command = gpack.build.btype },
+   if not gpack_build.commands then
+      gpack_build.commands = {
+         { command = gpack_build.btype },
          { command = "configure" },
          { command = "make" },
          { command = "makeinstall" },
       }
    end
 
-   for k, v in pairs(gpack.build.commands) do
+   for k, v in pairs(gpack_build.commands) do
       if v.command == "autoconf" then
-         table.insert(command_stack, self.creator:command("exec", { command = self:_generate_exec_command(gpack, "autoconf") }))
+         table.insert(command_stack, self.creator:command("exec", { command = self:_generate_exec_command("autoconf") }))
       elseif v.command == "cmake" then
-         table.insert(command_stack, self.creator:command("exec", { command = self:_generate_cmake_exec_command(gpack, build) }))
+         table.insert(command_stack, self.creator:command("exec", { command = self:_generate_cmake_exec_command(build, gpack_build.cmakeargs) }))
       elseif v.command == "configure" then
-         table.insert(command_stack, self.creator:command("exec", { command = self:_generate_configure_exec_command(gpack, build) }))
+         table.insert(command_stack, self.creator:command("exec", { command = self:_generate_configure_exec_command(build, gpack_build.configargs) }))
       elseif v.command == "make" then
-         table.insert(command_stack, self.creator:command("exec", { command = self:_generate_make_exec_command(gpack) }))
+         table.insert(command_stack, self.creator:command("exec", { command = self:_generate_make_exec_command() }))
       elseif v.command == "makeinstall" then
-         table.insert(command_stack, self.creator:command("exec", { command = self:_generate_exec_command(gpack, "make install") }))
+         table.insert(command_stack, self.creator:command("exec", { command = self:_generate_exec_command("make install") }))
       elseif v.command == "shell" then
-         table.insert(command_stack, self.creator:command("exec", { command = self:_generate_exec_command(gpack, v.options.cmd) }))
+         table.insert(command_stack, self.creator:command("exec", { command = self:_generate_exec_command(v.options.cmd) }))
       elseif v.command == "install" then
          table.insert(command_stack, self.creator:command("mkdir", { path = build.install_path, mode = {}, recursive = true }))
          for k, v in pairs(v.options.install) do
-            table.insert(command_stack, self.creator:command("exec", { command = self:_generate_copy_exec_command(gpack, build, v)}))
+            table.insert(command_stack, self.creator:command("exec", { command = self:_generate_copy_exec_command(build, v)}))
          end
       end
    end
    
    -- Execute build commands
-   if gpack.build.btype == "cmake" then
+   if gpack_build.btype == "cmake" then
       local cmake_build_path = path.join(build.unpack_path, "build")
       filesystem.mkdir(cmake_build_path)
       filesystem.chdir(cmake_build_path)
@@ -356,7 +447,7 @@ function builder_class:install(gpack, build)
 
    self.executor:execute(command_stack)
    
-   if gpack.build.btype == "cmake" then
+   if gpack_build.btype == "cmake" then
       filesystem.chdir(build.unpack_path)
    end
 end
@@ -501,7 +592,9 @@ function installer_class:__init()
    self.creator:add("exec", function(options, input, output)
       input.logger:message("Running in shell : '" .. options.command .. "'.")
       print("CWD: " .. filesystem.cwd())
-      local out    = { out = "" }
+      --local out = logger.logs
+      --out.out   = ""
+      local out = { out = "" }
       local status = execcmd.execcmd_bashexec(options.command, out)
 
       output.status = status
@@ -717,6 +810,49 @@ function installer_class:install(gpack)
    self:finalize()
 end
 
+local function run_installer(args, gpack, force)
+   if force == nil then
+      force = args.force
+   end
+
+   if (util.conditional(database.use_db(), not database.installed(gpack), true)) or force then
+      -- Install gpack
+      local installer = installer_class:create()
+      installer.options.force_download = args.force_download
+      installer.options.purge          = args.purge_build
+      installer.options.keep_source    = not args.remove_source
+      installer.options.keep_build     = args.keep_build
+      installer:install(gpack)
+   
+      database.insert_package(gpack)
+   else
+      logger:message("Package already installed!")
+   end
+end
+
+local function check_and_fix_dependencies(args, gpack)
+   local function install_dependency(depend)
+      local name_version = depend.name
+      if not util.isempty(depend.version) then
+         name_version = name_version .. "@" .. depend.version
+      end
+
+      local gpack_depend = gpackage.load_gpackage(name_version)
+
+      run_installer(args, gpack_depend, util.conditional(args.force_dependencies, true, false))
+   end
+
+   -- Check and install dependson
+   for k, v in pairs(gpack.dependencies.dependson) do
+      install_dependency(v)
+   end
+   
+   -- Check and install load
+   for k, v in pairs(gpack.dependencies.load) do
+      install_dependency(v)
+   end
+end
+
 -------------------------------------
 -- Wrapper for installing a package.
 --
@@ -733,20 +869,14 @@ local function install(args)
       -- Load gpack
       local gpack = gpackage.load_gpackage(args.gpack)
       
-      if (util.conditional(database.use_db(), not database.installed(gpack), true)) or args.force then
-         -- Install gpack
-         local installer = installer_class:create()
-         installer.options.force_download = args.force_download
-         installer.options.purge          = args.purge_build
-         installer.options.keep_source    = not args.remove_source
-         installer.options.keep_build     = args.keep_build
-         installer:install(gpack)
+      -- Check dependencies
+      check_and_fix_dependencies(args, gpack)
 
-         database.insert_package(gpack)
-         database.save_db(global_config)
-      else
-         logger:message("Package already installed!")
-      end
+      -- Install package
+      run_installer(args, gpack)
+      
+      -- Save database
+      database.save_db(global_config)
    end, function(e)
       logger:alert("There was a PROBLEM installing the package")
       error(e)
