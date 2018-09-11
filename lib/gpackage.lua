@@ -6,8 +6,20 @@ local util    = assert(require "lib.util")
 local path    = assert(require "lib.path")
 local logging = assert(require "lib.logging")
 local logger  = logging.logger
-local downloader = assert(require "lib.downloader")
-local symbtab    = assert(require "lib.symbtab")
+local downloader  = assert(require "lib.downloader")
+local symbtab     = assert(require "lib.symbtab")
+local ftable = assert(require "lib.ftable" )
+
+local function get_gpack_name_version(name)
+   local split = util.split(name, "@")
+   if #split == 1 then
+      return split[1], nil
+   elseif #split == 2 then
+      return split[1], split[2]
+   else
+      assert(false)
+   end
+end
 
 local function pack(...)
    return { ... }
@@ -31,6 +43,48 @@ local function get_name(gpackage_path)
    return f:gsub("." .. e, "")
 end
 
+local build_definition_class = class.create_class()
+
+function build_definition_class:__init()
+   --
+   self.name     = nil
+   self.version  = nil
+   self.tag      = nil
+   
+   -- Definition
+   self.version_prefix = "@"
+   self.tag_prefix     = ":"
+end
+
+function build_definition_class:initialize(name_version_tag)
+   local match_pattern   = "["  .. self.version_prefix .. self.tag_prefix .. "]"
+   local nomatch_pattern = "[^" .. self.version_prefix .. self.tag_prefix .. "]"
+   local pattern = "(" .. match_pattern .. nomatch_pattern .. "*)"
+   
+   -- Loop over pattern matches
+   while true do
+      local match = string.match(name_version_tag, pattern)
+      if match == nil then
+         -- If no match we break the loop
+         break
+      end
+
+      if string.match(match, self.tag_prefix) then
+         self.tag = string.gsub(match, self.tag_prefix, "")
+      elseif string.match(match, self.version_prefix) then
+         self.version = string.gsub(match, self.version_prefix, "")
+      else
+         assert(false)
+      end
+
+      name_version_tag = string.gsub(name_version_tag, match, "")
+   end
+   
+   -- What is left is the name
+   self.name = name_version_tag
+end
+
+
 --- Base class for the different gpackage classes.
 -- Implemenents some general function for creating the
 -- setter functions to be passed to the extern package.
@@ -43,14 +97,12 @@ end
 function gpackage_creator_class:true_setter(var)
    return function()
       self[var] = true
-      return self.ftable
    end
 end
 
 function gpackage_creator_class:false_setter(var)
    return function()
       self[var] = false
-      return self.ftable
    end
 end
 
@@ -71,7 +123,6 @@ function gpackage_creator_class:string_setter(...)
          end
          self[t_outer[i]] = t_inner[i]
       end
-      return self.ftable
    end
 end
 
@@ -84,8 +135,6 @@ function gpackage_creator_class:element_setter(var, num)
       assert(#t_inner == num)
 
       table.insert(self[var], t_inner)
-
-      return self.ftable
    end
 end
 
@@ -96,91 +145,95 @@ function gpackage_creator_class:print_setter()
       for i = 1, #t_inner do
          logger:message(t_inner[i], self.log_format)
       end
-
-      return self.ftable
    end
 end
 
---- Autoconf bootstrapper
+--local gpackage_directory_class = class.create_class()
 --
-local gpackage_autoconf_class = class.create_class(gpackage_creator_class)
+--function gpackage_directory_class:__init(commands, ftable)
+--   self.ftable = {
+--      pop_directory = function()
+--         table.insert(commands, { command = "popdir" })
+--         return ftable 
+--      end,
+--   }
+--
+--   setmetatable(self.ftable, {
+--      __index = ftable,
+--   })
+--end
 
-function gpackage_autoconf_class:__init(ftable)
+--- Builder bootstrapper
+--
+-- Defines how to build either using cmake or autoconf
+local gpackage_builder_class = class.create_class(gpackage_creator_class)
+
+function gpackage_builder_class:__init(btype, upstream_ftable, logger)
+   self.logger   = logger
    self.commands = {}
-   self.btype    = "autoconf"
+   self.btype    = btype
+   self.cmakeargs = {}
+   self.configargs = {}
 
-   self.ftable = {
-      autoconf = function()
-         table.insert(self.commands, { command = "autoconf" } ) 
-         return self.ftable
-      end,
+   self.ftable = ftable.create_ftable({}, nil, self.logger)
+
+   self.ftable_def = {
       configure = function(...) 
          table.insert(self.commands, { command = "configure", options = { options = pack(...) } })
          self.configargs = pack(...)
-         return self.ftable
       end,
       make = function()
          table.insert(self.commands, { command = "make" }) 
-         return self.ftable
       end,
       makeinstall = function() 
          table.insert(self.commands, { command = "makeinstall" }) 
-         return self.ftable
       end,
       shell = function(cmd)
          table.insert(self.commands, { command = "shell", options = { cmd = cmd } })
-         return self.ftable
+      end,
+      install = function(...)
+         table.insert(self.commands, { command = "install", options = { install = pack(...) } })
+      end,
+      
+      with_directory = function(dir)
+         table.insert(self.commands, { command = "pushdir", options = { dir = dir} })
+         --table.insert(self.storage, gpackage_directory_class:create(self.commands, self.ftable))
+         self.ftable:push({
+            popdir = function()
+               table.insert(self.commands, { command = "popdir", options = { dir = dir} })
+               self.ftable:pop()
+            end
+         })
       end,
       chdir = function(dir)
          table.insert(self.commands, { command = "chdir", options = { dir = dir } })
          return self.ftable
       end,
 
-      endblock = function()
-         return ftable
-      end
+      buildend = function()
+         return upstream_ftable:get()
+      end,
    }
+
+   if (self.btype == "autoconf") or (self.btype == "build") then
+      self.ftable_def["autoconf"] = function()
+         table.insert(self.commands, { command = "autoconf" } ) 
+      end
+   end
+   if (self.btype == "cmake") or (self.btype == "build") then
+      self.ftable_def["cmake"] = function(...)
+         table.insert(self.commands, { command = "cmake", options = { options = pack(...) } } ) 
+         self.btype = "cmake"
+      end
+   end
+
+   self.ftable:push(self.ftable_def)
 end
 
---- Cmake bootstrapper
---
-local gpackage_cmake_class = class.create_class(gpackage_creator_class)
-
-function gpackage_cmake_class:__init(ftable)
-   self.commands = {}
-   self.btype    = "cmake"
-
-   self.ftable = {
-      cmake = function(...)
-         table.insert(self.commands, { command = "cmake"    , options = { options = pack(...) } } ) 
-         return self.ftable
-      end,
-      configure = function(...) 
-         table.insert(self.commands, { command = "configure", options = { options = pack(...) } })
-         self.configargs = pack(...)
-         return self.ftable
-      end,
-      make = function()
-         table.insert(self.commands, { command = "make" }) 
-         return self.ftable
-      end,
-      makeinstall = function() 
-         table.insert(self.commands, { command = "makeinstall" }) 
-         return self.ftable
-      end,
-      shell = function(cmd)
-         table.insert(self.commands, { command = "shell", options = { cmd = cmd } })
-         return self.ftable
-      end,
-      chdir = function(dir)
-         table.insert(self.commands, { command = "chdir", options = { dir = dir } })
-         return self.ftable
-      end,
-
-      endblock = function()
-         return ftable
-      end
-   }
+function gpackage_builder_class:debug(str)
+   if global_config.debug and self.logger then
+      logger:debug(str)
+   end
 end
 
 --- Lmod
@@ -188,7 +241,11 @@ end
 --
 local gpackage_lmod_class = class.create_class(gpackage_creator_class)
 
-function gpackage_lmod_class:__init()
+function gpackage_lmod_class:__init(upstream_ftable, logger)
+   -- Util
+   self.logger = logger
+
+   --
    self.help   = [[]]
    self.family = {}
    self.group  = "core"
@@ -201,9 +258,11 @@ function gpackage_lmod_class:__init()
    self.prepend_path_abs = {}
    self.alias            = {}
    self.autopath         = true
-
+   
+   --
+   self.ftable     = ftable.create_ftable(nil, nil, logger)
    -- Function table for loading package
-   self.ftable = {
+   self.ftable_def = {
       -- General
       help         = self:string_setter ("help"),
       family       = self:element_setter("family", 1),
@@ -216,8 +275,14 @@ function gpackage_lmod_class:__init()
       prepend_path     = self:element_setter("prepend_path"    , 2),
       prepend_path_abs = self:element_setter("prepend_path_abs", 2),
       alias            = self:element_setter("alias"           , 2),
-      noautopath       = self:false_setter("autopath")
+      noautopath       = self:false_setter("autopath"),
+
+      lmodend = function()
+         return upstream_ftable:get()
+      end,
    }
+
+   self.ftable:push(self.ftable_def)
 end
 
 function gpackage_lmod_class:print()
@@ -235,12 +300,13 @@ end
 --
 local gpackage_class = class.create_class(gpackage_creator_class)
 
-function gpackage_class:__init()
+function gpackage_class:__init(logger)
    -- Versioning
    self.gpack_version = 2
    
    -- Util
    self.log_format    = "newline"
+   self.logger        = logger
 
    -- General stuff
    self.name        = ""
@@ -252,22 +318,28 @@ function gpackage_class:__init()
    self.nameversion = ""
 
    -- Build
-   self.autoconf   = nil
-   self.cmake       = false
-   self.files       = {}
-   self.post        = {}
+   self.builds   = {}
+   self.files    = {}
+   self.post     = {}
 
    -- Dependencies
-   self.dependencies = {}
-   
-   -- 
-   self.symbol_table = symbtab.create()
-   
-   -- Lmod 
-   self.lmod = gpackage_lmod_class:create()
+   self.dependencies = {
+      heirarchical = {},
+      dependson    = {},
+      load         = {},
+   }
    
    -- Function table for loading package
-   self.ftable = {
+   self.ftable       = ftable.create_ftable({}, nil, self.logger)
+   
+   -- 
+   self.symbol_table = symbtab.create({}, self.ftable, self.logger)
+   
+   -- Lmod 
+   self.lmod         = gpackage_lmod_class:create({}, self.ftable, self.logger)
+   
+   --
+   self.ftable_def = {
       -- Util
       print       = self:print_setter(),
       format      = self:string_setter("log_format"),
@@ -278,18 +350,49 @@ function gpackage_class:__init()
       version     = self:string_setter("version", "signature"),
       description = self:string_setter("description"),
 
+      -- Depend
+      dependson   = self:dependson_setter(),
+
       -- Build
       autoconf    = self:autoconf_setter(),
       cmake       = self:cmake_setter(),
+      build       = self:build_setter(),
       file        = self:element_setter("files", 2),
       post        = self:element_setter("post", 1),
       
       -- Lmod
-      lmod = self.lmod.ftable,
+      lmod   = function() 
+         return self.lmod.ftable:get()
+      end,
 
       --
-      symbol = self.symbol_table.ftable,
+      symbol = function()
+         return self.symbol_table.ftable:get()
+      end,
    }
+
+   self.ftable:push(self.ftable_def)
+end
+
+function gpackage_class:dependson_setter()
+   return function(gpack_name_version_tag, dependency)
+      if util.isempty(dependency) then
+         dependency = "dependson"
+      end
+
+      local depend_build_definition = build_definition_class:create({})
+      depend_build_definition:initialize(gpack_name_version_tag)
+
+      if dependency == "heirarchical" then
+         table.insert(self.dependencies.heirarchical, depend_build_definition)
+      elseif dependency == "dependson" then
+         table.insert(self.dependencies.dependson, depend_build_definition)
+      elseif dependency == "load" then
+         table.insert(self.dependencies.load, depend_build_definition)
+      else
+         assert(false)
+      end
+   end
 end
 
 function gpackage_class:autoconf_setter()
@@ -297,41 +400,51 @@ function gpackage_class:autoconf_setter()
       if options == nil then
          options = {}
       end
-      assert(not self.cmake)
-      assert(not self.autoconf)
       local p = pack( ... )
       for k, v in pairs(p) do
          assert(type(v) == "string")
       end
-      self.autoconf = gpackage_autoconf_class:create(nil, self.ftable)
-      self.autoconf.version    = version
-      self.autoconf.options    = options
-      self.autoconf.configargs = p
-      return self.autoconf.ftable
+      local build = gpackage_builder_class:create(nil, "autoconf", self.ftable, self.logger)
+      build.version    = version
+      build.options    = options
+      build.configargs = p
+      table.insert(self.builds, build)
+      return build.ftable:get()
    end
 end
 
 function gpackage_class:cmake_setter()
    return function(version, ...)
-      assert(not self.autoconf)
-      assert(not self.cmake)
       local p = pack( ... )
       for k, v in pairs(p) do
          assert(type(v) == "string")
       end
-      self.cmake = gpackage_cmake_class:create(nil, self.ftable)
-      self.cmake.version   = version
-      self.cmake.cmakeargs = p
-      return self.cmake.ftable
+      local build = gpackage_builder_class:create(nil, "cmake", self.ftable, self.logger)
+      build.version   = version
+      build.cmakeargs = p
+      table.insert(self.builds, build)
+      return build.ftable:get()
    end
 end
 
-function gpackage_class:load(gpackage_path)
+function gpackage_class:build_setter()
+   return function(tags)
+      if tags == nil then
+         tags = {}
+      end
+      local build = gpackage_builder_class:create(nil, "build", self.ftable, self.logger)
+      build.tags = tags
+      table.insert(self.builds, build)
+      return build.ftable:get()
+   end
+end
+
+function gpackage_class:load(gpackage_path, gpack_version)
    assert(type(gpackage_path) == "string")
    self.path = gpackage_path
    self.name = get_name(gpackage_path)
    
-   local env  = self.ftable
+   local env  = self.ftable:get()
    local file = dofile_into_environment(self.path, env)
    
    if env[self.name] then
@@ -340,7 +453,23 @@ function gpackage_class:load(gpackage_path)
       logger:alert("Could not load.")
    end
    
-   self.symbol_table:add_symbol("version", self.version)
+   if gpack_version ~= nil then
+      self.version = gpack_version
+      self.symbol_table:add_symbol("version", gpack_version, true)
+   else
+      self.symbol_table:add_symbol("version", self.version)
+   end
+   
+   local version_split = util.split(self.version, ".")
+   if #version_split >= 1 then
+      self.symbol_table:add_symbol("version_major", version_split[1])
+      if #version_split >= 2 then
+         self.symbol_table:add_symbol("version_minor", version_split[2])
+         if #version_split >= 3 then
+            self.symbol_table:add_symbol("version_patch", version_split[3])
+         end
+      end
+   end
 
    for k, v in pairs(self) do
       if type(v) == "string" then
@@ -472,18 +601,22 @@ function gpackage_locator_class:locate(name, config)
    filepath = self:try_download()
    if filepath == nil then
       logger:alert("No Gpackage with name '" .. self.name .. "' was found.")
+      assert(false)
    end
    
    -- Return found path
    return filepath
 end
 
+
 --- Load .gpk file into gpackage object.
 -- 
 -- @param path   The path of the .gpk.
-local function load_gpackage(name)
+local function load_gpackage(build_definition)
+   --local gpack_name, gpack_version = get_gpack_name_version(name)
+
    local gpackage_locator = gpackage_locator_class:create()
-   local path             = gpackage_locator:locate(name)
+   local path             = gpackage_locator:locate(build_definition.name)
 
    if path == nil then
       logger:alert("Could not load Gpackage.")
@@ -493,7 +626,7 @@ local function load_gpackage(name)
    logger:message("Found gpack : '" .. path .. "'.")
 
    local gpack = gpackage_class:create()
-   gpack:load(path)
+   gpack:load(path, build_definition.version)
    
    gpack:print()
    
@@ -507,9 +640,15 @@ local function create_locator()
    return gl
 end
 
+local function create_build_definition(...)
+   local  bd = build_definition_class:create(...)
+   return bd
+end
+
 --- Create the module
-M.load_gpackage       = load_gpackage
-M.create_locator      = create_locator
+M.load_gpackage           = load_gpackage
+M.create_locator          = create_locator
+M.create_build_definition = create_build_definition
 
 -- return module
 return M

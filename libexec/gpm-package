@@ -35,6 +35,7 @@ function main()
    parser_initialize:option("--parentstack", "Paths to source as GPM parent stacks. Give as comma-separated list."):overwrite(false)
    
    -- Install specific
+   parser_install:argument("gpack", "<gpack[@version]>")
    parser_install:mutex(
       parser_install:option("--gpk" , "GPM Package (GPK) to install/remove (will look for .gpk file)."):overwrite(false),
       parser_install:option("--gpkf", "GPM Package (GPK) file to install/remove."):overwrite(false)
@@ -49,12 +50,14 @@ function main()
    parser_install:flag("--force", "Force install of package.")
    parser_install:flag("--force-download", "Force download or copying of source.")
    parser_install:flag("--force-unpack", "Force unpacking of source.")
+   parser_install:flag("--force-dependencies", "Force installing dependencies.")
    parser_install:flag("--delete-source", "Delete the source files after build.")
    parser_install:flag("--keep-build-directory" , "Keep actual build directory.")
    parser_install:flag("--purge-build" , "Purge by completely removing main build directory after build is complete.")
    parser_install:flag("--old" , "Use old install script (.gpk format).")
 
    -- Remove specific
+   parser_remove:argument("gpack", "<gpack[@version]>")
    parser_remove:mutex(
       parser_remove:option("--gpk" , "GPM Package (GPK) to install/remove (will look for .gpk file)."):overwrite(false),
       parser_remove:option("--gpkf", "GPM Package (GPK) file to install/remove."):overwrite(false)

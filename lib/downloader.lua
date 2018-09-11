@@ -42,7 +42,8 @@ function downloader_class:__init()
    self.destination = ""
 
    -- Some internal settings 
-   self.has_luasocket_http   = http and true or false
+   --self.has_luasocket_http   = http and true or false
+   self.has_luasocket_http   = false
    self.external_http_method = "wget"
 end
 

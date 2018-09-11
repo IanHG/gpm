@@ -97,11 +97,8 @@ end
 function command_executor_class:_execute_command(command)
    if command.is_a and command:is_a(command_class) then
       self:_log_pre_execute_command(command)
-      print("INPUT")
       local input = self._last.output
       input.logger = self._logger
-      print("INPUT")
-      print(input)
       self._last = { status = 0, output = { } }
       command.fn(command.options, input, self._last)
       self:_log_post_execute_command(command)
