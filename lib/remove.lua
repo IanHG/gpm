@@ -162,7 +162,9 @@ local function remove(args)
          database.remove_package(package)
          database.save_db(global_config)
       else
-         local gpack = gpackage.load_gpackage(args.gpack)
+         local build_definition = gpackage.create_build_definition({})
+         build_definition:initialize(args.gpack)
+         local gpack = gpackage.load_gpackage(build_definition)
          
          -- Load database
          database.load_db(global_config)

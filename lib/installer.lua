@@ -260,11 +260,14 @@ local function generate_prepend_path(gpack, install_path)
    return prepend_path
 end
 
+
 local builder_class = class.create_class()
 
-function builder_class:__init(executor, creator)
+function builder_class:__init(executor, creator, options)
    self.executor = executor
    self.creator  = creator
+
+   self.tag = options.tag
    
    -- Some internals
    self._ml_cmd   = nil
@@ -313,7 +316,7 @@ function builder_class:_generate_copy_exec_command(build, p)
    return copy_command
 end
 
-function builder_class:_locate_build(gpack)
+function builder_class:_locate_build(gpack, build_definition)
    if #gpack.builds == 0 then
       logger:alert("No build...")
       assert(false)
@@ -366,8 +369,12 @@ function builder_class:_locate_build(gpack)
          local check_split = util.split(check_version, ".")
          assert(#check_split >= #match_split)
          for i = 1, #match_split do
-            if match(match_split[i], check_split[i], i == #match_split) then
-               return true
+            if match(match_split[i], check_split[i], true) then
+               if match_split[i] ~= check_split[i] then
+                  return true
+               end
+            else
+               return false
             end
          end
 
@@ -387,24 +394,38 @@ function builder_class:_locate_build(gpack)
       end
 
       for k, v in pairs(gpack.builds) do
-         if match_build_version(v, gpack.version) then
-            return v
+         if (build_definition.tag == nil and v.tags.tag == nil) or (v.tags.tag == build_definition.tag) then
+            if match_build_version(v, gpack.version) then
+               return v
+            end
          end
       end
-
-      -- If nothing was found, we return the first build without a tag
-      for k, v in pairs(gpack.builds) do
-         if v.tags == nil then
-            return v
+      
+      -- If we have a tag we check for a build with no version
+      if build_definition.tag ~= nil then
+         for k, v in pairs(gpack.builds) do
+            if (v.tags.tag == build_definition.tag) and (v.tags.version == nil) then
+               return v
+            end
+         end
+      else
+         -- If nothing was found, we return the first build without a tag
+         for k, v in pairs(gpack.builds) do
+            if v.tags.tag == nil then
+               return v
+            end
          end
       end
    end
+
+   logger:alert("No build found")
+   assert(false)
 end
 
-function builder_class:install(gpack, build)
+function builder_class:install(gpack, build_definition, build)
    self._ml_cmd = generate_ml_command(gpack)
 
-   local gpack_build   = self:_locate_build(gpack)
+   local gpack_build   = self:_locate_build(gpack, build_definition)
    local command_stack = {}
    if not gpack_build.commands then
       gpack_build.commands = {
@@ -744,8 +765,8 @@ end
 function installer_class:build_gpack()
    filesystem.chdir(self.build.unpack_path)
    
-   local builder = builder_class:create(nil, self.executor, self.creator)
-   builder:install(self.gpack, self.build)
+   local builder = builder_class:create(nil, self.executor, self.creator, { tag = self.tag })
+   builder:install(self.gpack, self.build_definition, self.build)
    
    ----elseif self.gpack.cmake then
    --   local cmake_build_path = path.join(self.build.unpack_path, "build")
@@ -785,8 +806,9 @@ function installer_class:post()
 end
 
 -- Install package
-function installer_class:install(gpack)
+function installer_class:install(gpack, build_definition)
    self.gpack = gpack
+   self.build_definition = build_definition
 
    self:initialize()
    
@@ -808,7 +830,7 @@ function installer_class:install(gpack)
    self:finalize()
 end
 
-local function run_installer(args, gpack, force)
+local function run_installer(args, gpack, build_definition, force)
    if force == nil then
       force = args.force
    end
@@ -820,7 +842,7 @@ local function run_installer(args, gpack, force)
       installer.options.purge          = args.purge_build
       installer.options.keep_source    = not args.remove_source
       installer.options.keep_build     = args.keep_build
-      installer:install(gpack)
+      installer:install(gpack, build_definition)
    
       database.insert_package(gpack)
    else
@@ -830,14 +852,17 @@ end
 
 local function check_and_fix_dependencies(args, gpack)
    local function install_dependency(depend)
-      local name_version = depend.name
-      if not util.isempty(depend.version) then
-         name_version = name_version .. "@" .. depend.version
-      end
+      --local name_version = depend.name
+      --if not util.isempty(depend.version) then
+      --   name_version = name_version .. "@" .. depend.version
+      --end
+      --if not util.isempty(depend.tag) then
+      --   name_version = name_version .. ":" .. depend.tag
+      --end
 
-      local gpack_depend = gpackage.load_gpackage(name_version)
+      local gpack_depend = gpackage.load_gpackage(depend)
 
-      run_installer(args, gpack_depend, util.conditional(args.force_dependencies, true, false))
+      run_installer(args, gpack_depend, depend, util.conditional(args.force_dependencies, true, false))
    end
 
    -- Check and install dependson
@@ -863,15 +888,18 @@ local function install(args)
       
       -- Load database
       database.load_db(global_config)
+
+      local build_definition = gpackage.create_build_definition()
+      build_definition:initialize(args.gpack)
       
       -- Load gpack
-      local gpack = gpackage.load_gpackage(args.gpack)
+      local gpack = gpackage.load_gpackage(build_definition)
       
       -- Check dependencies
       check_and_fix_dependencies(args, gpack)
 
       -- Install package
-      run_installer(args, gpack)
+      run_installer(args, gpack, build_definition)
       
       -- Save database
       database.save_db(global_config)

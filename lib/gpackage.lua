@@ -43,6 +43,48 @@ local function get_name(gpackage_path)
    return f:gsub("." .. e, "")
 end
 
+local build_definition_class = class.create_class()
+
+function build_definition_class:__init()
+   --
+   self.name     = nil
+   self.version  = nil
+   self.tag      = nil
+   
+   -- Definition
+   self.version_prefix = "@"
+   self.tag_prefix     = ":"
+end
+
+function build_definition_class:initialize(name_version_tag)
+   local match_pattern   = "["  .. self.version_prefix .. self.tag_prefix .. "]"
+   local nomatch_pattern = "[^" .. self.version_prefix .. self.tag_prefix .. "]"
+   local pattern = "(" .. match_pattern .. nomatch_pattern .. "*)"
+   
+   -- Loop over pattern matches
+   while true do
+      local match = string.match(name_version_tag, pattern)
+      if match == nil then
+         -- If no match we break the loop
+         break
+      end
+
+      if string.match(match, self.tag_prefix) then
+         self.tag = string.gsub(match, self.tag_prefix, "")
+      elseif string.match(match, self.version_prefix) then
+         self.version = string.gsub(match, self.version_prefix, "")
+      else
+         assert(false)
+      end
+
+      name_version_tag = string.gsub(name_version_tag, match, "")
+   end
+   
+   -- What is left is the name
+   self.name = name_version_tag
+end
+
+
 --- Base class for the different gpackage classes.
 -- Implemenents some general function for creating the
 -- setter functions to be passed to the extern package.
@@ -329,29 +371,20 @@ function gpackage_class:__init(logger)
 end
 
 function gpackage_class:dependson_setter()
-   return function(gpack_name_version, dependency)
+   return function(gpack_name_version_tag, dependency)
       if util.isempty(dependency) then
          dependency = "dependson"
       end
 
-      local gpack_name, gpack_version = get_gpack_name_version(gpack_name_version)
-      assert(gpack_name and gpack_version)
-      
+      local depend_build_definition = build_definition_class:create({})
+      depend_build_definition:initialize(gpack_name_version_tag)
+
       if dependency == "heirarchical" then
-         table.insert(self.dependencies.heirarchical, { 
-            name       = gpack_name,
-            version    = gpack_version,
-         })
+         table.insert(self.dependencies.heirarchical, depend_build_definition)
       elseif dependency == "dependson" then
-         table.insert(self.dependencies.dependson, { 
-            name       = gpack_name,
-            version    = gpack_version,
-         })
+         table.insert(self.dependencies.dependson, depend_build_definition)
       elseif dependency == "load" then
-         table.insert(self.dependencies.load, { 
-            name       = gpack_name,
-            version    = gpack_version,
-         })
+         table.insert(self.dependencies.load, depend_build_definition)
       else
          assert(false)
       end
@@ -392,6 +425,9 @@ end
 
 function gpackage_class:build_setter()
    return function(tags)
+      if tags == nil then
+         tags = {}
+      end
       local build = gpackage_builder_class:create(nil, "build", self.ftable, self.logger)
       build.tags = tags
       table.insert(self.builds, build)
@@ -414,8 +450,6 @@ function gpackage_class:load(gpackage_path, gpack_version)
    end
    
    if gpack_version ~= nil then
-      print("HERE")
-      print(gpack_version)
       self.version = gpack_version
       self.symbol_table:add_symbol("version", gpack_version, true)
    else
@@ -574,11 +608,11 @@ end
 --- Load .gpk file into gpackage object.
 -- 
 -- @param path   The path of the .gpk.
-local function load_gpackage(name)
-   local gpack_name, gpack_version = get_gpack_name_version(name)
+local function load_gpackage(build_definition)
+   --local gpack_name, gpack_version = get_gpack_name_version(name)
 
    local gpackage_locator = gpackage_locator_class:create()
-   local path             = gpackage_locator:locate(gpack_name)
+   local path             = gpackage_locator:locate(build_definition.name)
 
    if path == nil then
       logger:alert("Could not load Gpackage.")
@@ -588,7 +622,7 @@ local function load_gpackage(name)
    logger:message("Found gpack : '" .. path .. "'.")
 
    local gpack = gpackage_class:create()
-   gpack:load(path, gpack_version)
+   gpack:load(path, build_definition.version)
    
    gpack:print()
    
@@ -602,9 +636,15 @@ local function create_locator()
    return gl
 end
 
+local function create_build_definition(...)
+   local  bd = build_definition_class:create(...)
+   return bd
+end
+
 --- Create the module
-M.load_gpackage       = load_gpackage
-M.create_locator      = create_locator
+M.load_gpackage           = load_gpackage
+M.create_locator          = create_locator
+M.create_build_definition = create_build_definition
 
 -- return module
 return M
