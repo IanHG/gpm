@@ -9,6 +9,7 @@ local logger  = logging.logger
 local downloader  = assert(require "lib.downloader")
 local symbtab     = assert(require "lib.symbtab")
 local ftable = assert(require "lib.ftable" )
+local luautil = assert(require "lib.luautil" )
 
 local function get_gpack_name_version(name)
    local split = util.split(name, "@")
@@ -32,10 +33,24 @@ local function pack(...)
 end
 
 local function dofile_into_environment(filename, env)
-    setmetatable ( env, { __index = _G } )
-    local status, result = assert(pcall(setfenv(assert(loadfile(filename)), env)))
-    setmetatable(env, nil)
-    return result
+   function readall(file)
+      local f = assert(io.open(file, "rb"))
+      local content = f:read("*all")
+      f:close()
+      return content
+   end
+
+   setmetatable ( env, { __index = _G } )
+   local status = nil
+   local result = nil
+   if luautil.version() == "Lua 5.1" then
+      status, result = assert(pcall(setfenv(assert(loadfile(filename)), env)))
+   else
+      local content  = readall(filename)
+      status, result = assert(pcall(load(content, nil, nil, env)))
+   end
+   setmetatable(env, nil)
+   return result
 end
 
 local function get_name(gpackage_path)
