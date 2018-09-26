@@ -21,7 +21,14 @@ local function loadrequire(module, callback)
    return m
 end
 
+---
+-- Get lua version
+local function version()
+   return _VERSION
+end
+
 -- Create module
 M.require = loadrequire
+M.version = version
 
 return M
