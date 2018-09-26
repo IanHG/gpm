@@ -620,10 +620,7 @@ function installer_class:__init()
    self.creator        = commander.create_creator ({}, logger)
    self.creator:add("exec", function(options, input, output)
       input.logger:message("Running in shell : '" .. options.command .. "'.")
-      print("CWD: " .. filesystem.cwd())
-      --local out = logger.logs
-      --out.out   = ""
-      local out = { out = "" }
+      local out = { out = "", logger = input.logger }
       local status = execcmd.execcmd_bashexec(options.command, out)
 
       output.status = status
@@ -810,11 +807,11 @@ function installer_class:post()
    local ml_cmd = generate_ml_command(self.gpack)
 
    for k, v in pairs(self.gpack.post) do
-      local cmd = ml_cmd .. v
+      local cmd    = ml_cmd .. v[0]
       local status = util.execute_command(cmd)
 
       if status == nil then
-         logger:alert("Command '" .. v .. "' failed to execute.")
+         logger:alert("Command '" .. v[0] .. "' failed to execute.")
       end
    end
 end
