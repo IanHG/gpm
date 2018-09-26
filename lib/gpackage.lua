@@ -360,6 +360,7 @@ function gpackage_class:__init(logger)
       format      = self:string_setter("log_format"),
 
       -- General
+      name        = self:string_setter("name"),
       homepage    = self:string_setter("homepage"),
       url         = self:string_setter("url"),
       version     = self:string_setter("version", "signature"),
