@@ -141,13 +141,19 @@ local function generate_setenv(gpack, install_path)
 
    if gpack.lmod.setenv then
       for _, v in pairs(gpack.lmod.setenv) do
-         table.insert(prepend_path, path.join(install_path, v))
+         if not util.isempty(v.value) then
+            table.insert(setenv, {v[1], path.join(install_path, v[2])})
+         else
+            table.insert(setenv, {v[1], install_path})
+         end
       end
    end
    
    if gpack.lmod.setenv_abs then
       for _, v in pairs(gpack.lmod.setenv_abs) do
-         table.insert(prepend_path, v)
+         -- Abs path cannot be empty
+         assert(not util.isempty(v[2]))
+         table.insert(setenv, v)
       end
    end
 

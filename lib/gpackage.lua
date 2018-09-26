@@ -462,9 +462,15 @@ function gpackage_class:load(gpackage_path, gpack_version)
    
    local env  = self.ftable:get()
    local file = dofile_into_environment(self.path, env)
+
+   local function parse_name(str)
+      return str:gsub("-", "_")
+   end
+
+   local fname = parse_name(self.name)
    
-   if env[self.name] then
-      env[self.name]()
+   if env[fname] then
+      env[fname]()
    else
       logger:alert("Could not load.")
    end
