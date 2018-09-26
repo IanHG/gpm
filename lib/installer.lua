@@ -903,7 +903,7 @@ local function install(args)
       -- Load database
       database.load_db(global_config)
 
-      local build_definition = gpackage.create_build_definition()
+      local build_definition = gpackage.create_build_definition({}, args)
       build_definition:initialize(args.gpack)
       
       -- Load gpack

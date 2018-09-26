@@ -60,15 +60,17 @@ end
 
 local build_definition_class = class.create_class()
 
-function build_definition_class:__init()
+function build_definition_class:__init(args)
+   -- Definition
+   self.version_prefix = "@"
+   self.tag_prefix     = ":"
+   
    --
    self.name     = nil
    self.version  = nil
    self.tag      = nil
    
-   -- Definition
-   self.version_prefix = "@"
-   self.tag_prefix     = ":"
+   self.url      = args.url
 end
 
 function build_definition_class:initialize(name_version_tag)
@@ -455,7 +457,7 @@ function gpackage_class:build_setter()
    end
 end
 
-function gpackage_class:load(gpackage_path, gpack_version)
+function gpackage_class:load(gpackage_path, build_definition)
    assert(type(gpackage_path) == "string")
    self.path = gpackage_path
    self.name = get_name(gpackage_path)
@@ -464,22 +466,28 @@ function gpackage_class:load(gpackage_path, gpack_version)
    local file = dofile_into_environment(self.path, env)
 
    local function parse_name(str)
-      return str:gsub("-", "_")
+      return str:gsub("-", "_"):gsub("%.", "_")
    end
 
    local fname = parse_name(self.name)
    
+   print(fname)
    if env[fname] then
+      print("CALLING")
       env[fname]()
    else
       logger:alert("Could not load.")
    end
-   
-   if gpack_version ~= nil then
-      self.version = gpack_version
-      self.symbol_table:add_symbol("version", gpack_version, true)
+
+   if build_definition.version ~= nil then
+      self.version = build_definition.version
+      self.symbol_table:add_symbol("version", build_definition.version, true)
    else
       self.symbol_table:add_symbol("version", self.version)
+   end
+
+   if build_definition.url ~= nil then
+      self.url = build_definition.url
    end
    
    local version_split = util.split(self.version, ".")
@@ -648,7 +656,7 @@ local function load_gpackage(build_definition)
    logger:message("Found gpack : '" .. path .. "'.")
 
    local gpack = gpackage_class:create()
-   gpack:load(path, build_definition.version)
+   gpack:load(path, build_definition)
    
    gpack:print()
    
