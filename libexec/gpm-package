@@ -35,7 +35,7 @@ function main()
    parser_initialize:option("--parentstack", "Paths to source as GPM parent stacks. Give as comma-separated list."):overwrite(false)
    
    -- Install specific
-   parser_install:argument("gpack", "<gpack[@version][:tag]>")
+   parser_install:argument("gpack", "<gpack[@version][:tag]>"):args("+")
    parser_install:mutex(
       parser_install:option("--gpk" , "GPM Package (GPK) to install/remove (will look for .gpk file)."):overwrite(false),
       parser_install:option("--gpkf", "GPM Package (GPK) file to install/remove."):overwrite(false)

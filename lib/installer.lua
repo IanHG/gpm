@@ -899,18 +899,20 @@ local function install(args)
       
       -- Load database
       database.load_db(global_config)
-
-      local build_definition = gpackage.create_build_definition({}, args)
-      build_definition:initialize(args.gpack)
       
-      -- Load gpack
-      local gpack = gpackage.load_gpackage(build_definition)
-      
-      -- Check dependencies
-      check_and_fix_dependencies(args, gpack)
+      for kgpack, vgpack in pairs(args.gpack) do
+         local build_definition = gpackage.create_build_definition({}, args)
+         build_definition:initialize(vgpack)
+         
+         -- Load gpack
+         local gpack = gpackage.load_gpackage(build_definition)
+         
+         -- Check dependencies
+         check_and_fix_dependencies(args, gpack)
 
-      -- Install package
-      run_installer(args, gpack, build_definition)
+         -- Install package
+         run_installer(args, gpack, build_definition)
+      end
       
       -- Save database
       database.save_db(global_config)
