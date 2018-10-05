@@ -70,7 +70,11 @@ function build_definition_class:__init(args)
    self.version  = nil
    self.tag      = nil
    
-   self.url      = args.url
+   if args ~= nil then
+      self.url      = args.url
+   else
+      self.url = nil
+   end
 end
 
 function build_definition_class:initialize(name_version_tag)

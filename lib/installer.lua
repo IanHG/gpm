@@ -807,11 +807,11 @@ function installer_class:post()
    local ml_cmd = generate_ml_command(self.gpack)
 
    for k, v in pairs(self.gpack.post) do
-      local cmd    = ml_cmd .. v[0]
+      local cmd    = ml_cmd .. v[1]
       local status = util.execute_command(cmd)
 
       if status == nil then
-         logger:alert("Command '" .. v[0] .. "' failed to execute.")
+         logger:alert("Command '" .. v[1] .. "' failed to execute.")
       end
    end
 end
