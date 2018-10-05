@@ -373,7 +373,8 @@ function gpackage_class:__init(logger)
       description = self:string_setter("description"),
 
       -- Depend
-      dependson   = self:dependson_setter(),
+      dependson = self:dependson_setter(),
+      depend    = self:dependson_setter(),
 
       -- Build
       autoconf    = self:autoconf_setter(),

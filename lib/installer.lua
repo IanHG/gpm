@@ -547,7 +547,7 @@ function lmod_installer_class:write_modulefile()
    
    -- Dependencies
    for k, v in pairs(self.gpack.dependencies.dependson) do
-      lmod_file:write("depends_on(\"" .. v.name .. "/" .. v.version .. "\")\n")
+      self.modulefile:write("depends_on(\"" .. v.name .. "/" .. v.version .. "\")\n")
    end
    
    -- Alias
