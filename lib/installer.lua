@@ -14,6 +14,7 @@ local gpackage   = assert(require "lib.gpackage")
 local commander  = assert(require "lib.commander")
 local execcmd    = assert(require "lib.execcmd")
 local pathhandler = assert(require "lib.pathhandler")
+local symbtab    = assert(require "lib.symbtab")
 
 local M = {}
 
@@ -465,6 +466,14 @@ function builder_class:install(gpack, build_definition, build)
          end
       end
    end
+
+   -- Make substitutions in command stack
+   local st = symbtab.create({})
+   st:add_symbol("build"  , build.build_path)
+   st:add_symbol("install", build.install_path)
+   for k, v in pairs(command_stack) do
+      v:substitute(st)
+   end
    
    -- Execute build commands
    if gpack_build.btype == "cmake" then
@@ -491,6 +500,8 @@ function lmod_installer_class:__init()
    
    -- Internal work 
    self.modulefile   = nil
+
+   self.symbtab = symbtab.create({})
 end
 
 function lmod_installer_class:file_build_path()
@@ -558,18 +569,20 @@ function lmod_installer_class:write_modulefile()
    -- Setenv
    local setenv = generate_setenv(self.gpack, self.install_path)
    for k, v in pairs(setenv) do
-      self.modulefile:write("setenv('" .. v[1] .. "', '" .. v[2] .. "')\n")
+      self.modulefile:write("setenv('" .. v[1] .. "', '" .. self.symbtab:substitute(v[2]) .. "')\n")
    end
    
    -- Prepend path
    local prepend_path = generate_prepend_path(self.gpack, self.install_path)
    for k, v in pairs(prepend_path) do
+      local tab = ""
       if v[1] == "LD_RUN_PATH" then
          self.modulefile:write("if os.getenv(\"GPM_USE_LD_RUN_PATH\") == \"1\" then\n")
-         self.modulefile:write("   prepend_path('" .. v[1] .. "', '" .. v[2] .. "')\n")
+         tab = "   "
+      end
+      self.modulefile:write(tab .. "prepend_path('" .. v[1] .. "', '" .. self.symbtab:substitute(v[2]) .. "')\n")
+      if v[1] == "LD_RUN_PATH" then
          self.modulefile:write("end\n")
-      else
-         self.modulefile:write("prepend_path('" .. v[1] .. "', '" .. v[2] .. "')\n")
       end
    end
 end
@@ -658,6 +671,8 @@ function installer_class:__init()
       log_path    = "",
       unpack_path = "",
    }
+
+   self.symbtab = symbtab.create({})
 end
 
 --- Initialize installation of package.
@@ -667,6 +682,10 @@ function installer_class:initialize()
    self.build.unpack_path  = path.join(self.build.build_path, self.gpack.nameversion)
    self.build.log_path     = path.join(self.build.build_path, self.gpack.nameversion .. ".log")
    self.build.install_path = generate_install_path(self.gpack)
+   
+   -- Add symbols to symbol table
+   self.symbtab:add_symbol("build",   self.build.build_path)
+   self.symbtab:add_symbol("install", self.build.install_path)
 
    -- Change directory to build_path
    filesystem.rmdir(self.build.build_path, false)
@@ -753,7 +772,7 @@ end
 function installer_class:create_files()
    for _, v in pairs(self.gpack.files) do
       logger:message("Creating file '" .. v[1] .. "'.")
-      create_file(v[1], v[2])
+      create_file(self.symbtab:substitute(v[1]), self.symbtab:substitute(v[2]))
    end
 end
 
@@ -778,28 +797,6 @@ function installer_class:build_gpack()
    
    local builder = builder_class:create(nil, self.executor, self.creator, { tag = self.tag })
    builder:install(self.gpack, self.build_definition, self.build)
-   
-   ----elseif self.gpack.cmake then
-   --   local cmake_build_path = path.join(self.build.unpack_path, "build")
-   --   filesystem.mkdir(cmake_build_path)
-   --   filesystem.chdir(cmake_build_path)
-
-   --   local ml_cmd        = generate_ml_command(self.gpack)
-   --   local cmake_command = ml_cmd .. "cmake ../. -DCMAKE_INSTALL_PREFIX=" .. self.build.install_path
-   --   for k, v in pairs(self.gpack.cmake_args) do
-   --      cmake_command = cmake_command .. " " .. v
-   --   end
-   --   local make_command         = ml_cmd .. "make -j" .. global_config.nprocesses
-   --   local make_install_command = ml_cmd .. "make install"
-
-   --   local status_cmake        = util.execute_command(cmake_command)
-   --   local status_make         = util.execute_command(make_command)
-   --   local status_make_install = util.execute_command(make_install_command)
-
-   --   filesystem.chdir(self.build.unpack_path)
-   ----else
-   ----   error("Unknown configure method. Use either autotool() or cmake().")
-   ----end
 end
 
 -- Do post install commands

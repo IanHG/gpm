@@ -119,7 +119,13 @@ function symbol_table_class:substitute(str)
    end
    
    -- Call substitution implementation
-   str = substitute_impl(str)
+   if type(str) == "string" then
+      str = substitute_impl(str)
+   elseif type(str) == "table" then
+      for k, v in pairs(str) do
+         str[k] = self:substitute(v)
+      end
+   end
 
    return str
 end

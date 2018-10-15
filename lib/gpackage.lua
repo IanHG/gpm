@@ -474,26 +474,28 @@ function gpackage_class:load(gpackage_path, build_definition)
       return str:gsub("-", "_"):gsub("%.", "_")
    end
 
+   -- Run the gpack
    local fname = parse_name(self.name)
-   
-   print(fname)
    if env[fname] then
-      print("CALLING")
       env[fname]()
    else
       logger:alert("Could not load.")
    end
-
+   
+   -- Bootstrap from build definition
    if build_definition.version ~= nil then
       self.version = build_definition.version
-      self.symbol_table:add_symbol("version", build_definition.version, true)
-   else
-      self.symbol_table:add_symbol("version", self.version)
    end
 
    if build_definition.url ~= nil then
       self.url = build_definition.url
    end
+   
+   self.nameversion = self.name .. "-" .. self.version
+   
+   -- Create symbol table
+   self.symbol_table:add_symbol("version"    , self.version)
+   self.symbol_table:add_symbol("nameversion", self.nameversion)
    
    local version_split = util.split(self.version, ".")
    if #version_split >= 1 then
@@ -506,19 +508,18 @@ function gpackage_class:load(gpackage_path, build_definition)
       end
    end
 
+   -- Substitute in self
    for k, v in pairs(self) do
-      if type(v) == "string" then
+      --if type(v) == "string" then
          self[k] = self.symbol_table:substitute(v)
-      end
+      --end
    end
 
    for k, v in pairs(self.lmod) do
-      if type(v) == "string" then
+      --if type(v) == "string" then
          self.lmod[k] = self.symbol_table:substitute(v)
-      end
+      --end
    end
-
-   self.nameversion = self.name .. "-" .. self.version
 end
 
 function gpackage_class:is_git()

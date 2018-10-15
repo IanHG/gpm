@@ -19,6 +19,14 @@ function command_class:__init()
    self.options = nil
 end
 
+function command_class:substitute(symbtab)
+   if self.options then
+      for k, v in pairs(self.options) do
+         self.options[k] = symbtab:substitute(v)
+      end
+   end
+end
+
 --- Class for creating commands.
 -- Commands are added with a label and a function, and can subsequently be created using the same label,
 -- and a dictionary with command options. Options may vary from command to command.
