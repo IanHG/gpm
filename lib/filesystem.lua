@@ -4,6 +4,27 @@ local _posix = assert(require "posix")
 local _lfs   = assert(require "lfs")
 local _path  = assert(require "lib.path")
 
+-- Check if string or table is empty.
+local function isempty(s)
+   if not s then
+      return true
+   end
+
+   if type(s) == "string" then
+      -- string
+      return s == nil or s == ''
+   elseif type(s) == "table" then
+      -- table
+      if next(s) == nil then
+         return true
+      else
+         return false
+      end
+   else
+      return false
+   end
+end
+
 --- Check existance of file object.
 --
 -- @param path   The file path.
@@ -115,7 +136,9 @@ local function mkdir(path, mode, recursively)
       -- If we are creating recursively, we recurse
       if recursively then
          base_path = string.gsub(_path.remove_dir_end(path), "/[^/]*$", "")
-         if not exists(base_path) then
+         print("BASE PATH : " .. base_path)
+         print("     PATH : " .. path)
+         if (not isempty(base_path)) and ( not (base_path == path)) and (not exists(base_path)) then
             mkdir(base_path, mode, recursively)
          end
       end

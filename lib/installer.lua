@@ -46,6 +46,8 @@ local function generate_ml_command(gpack)
    local ml_cmd = ". " .. global_config.stack_path .. "/bin/modules.sh --link-relative --force && "
    
    for k, v in pairs(gpack.dependencies.dependson) do
+      print(v.name)
+      print(v.version)
       ml_cmd = ml_cmd .. "ml " .. v.name .. "/" .. v.version .. " && "
    end
    
@@ -137,8 +139,10 @@ local function generate_module_install_path(gpack)
 end
 
 -- Generate setenv 
-local function generate_setenv(gpack, install_path)
-   local setenv = {}
+local function generate_setenv(gpack, install_path, setenv)
+   if setenv == nil then
+      setenv = {}
+   end
 
    if gpack.lmod.setenv then
       for _, v in pairs(gpack.lmod.setenv) do
@@ -225,8 +229,10 @@ end
 -- This is done based on the directories present in the install directory for the package.
 --
 -- @param  gpack   The gpackage we are installing.
-local function generate_prepend_path(gpack, install_path)
-   local prepend_path = {}
+local function generate_prepend_path(gpack, install_path, prepend_path)
+   if prepend_path == nil then
+      prepend_path = {}
+   end
    
    -- Try to auto-generate
    if gpack.lmod.autopath then
@@ -464,6 +470,11 @@ function builder_class:install(gpack, build_definition, build)
          for k, v in pairs(v.options.install) do
             table.insert(command_stack, self.creator:command("exec", { command = self:_generate_copy_exec_command(build, v)}))
          end
+      elseif v.command == "pushdir" then
+         table.insert(command_stack, self.creator:command("mkdir", { path = v.options.dir, mode = {}, recursive = true }))
+         table.insert(command_stack, self.creator:command("chdir", { path = v.options.dir }))
+      elseif v.command == "popdir" then
+         table.insert(command_stack, self.creator:command("popdir", { }))
       end
    end
 
@@ -642,7 +653,12 @@ function installer_class:__init()
       }
    end)
    self.creator:add("chdir", function(options, input, output)
-      self.pathhandler:push(options.dir)
+      self.pathhandler:push(options.path)
+      output.status = 0
+      output.output = {}
+   end)
+   self.creator:add("popdir", function(options, input, output)
+      self.pathhandler:pop()
       output.status = 0
       output.output = {}
    end)

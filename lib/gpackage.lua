@@ -218,7 +218,6 @@ function gpackage_builder_class:__init(btype, upstream_ftable, logger)
       
       with_directory = function(dir)
          table.insert(self.commands, { command = "pushdir", options = { dir = dir} })
-         --table.insert(self.storage, gpackage_directory_class:create(self.commands, self.ftable))
          self.ftable:push({
             popdir = function()
                table.insert(self.commands, { command = "popdir", options = { dir = dir} })
@@ -374,6 +373,7 @@ function gpackage_class:__init(logger)
 
       -- Depend
       dependson = self:dependson_setter(),
+      depends   = self:dependson_setter(),
       depend    = self:dependson_setter(),
 
       -- Build
@@ -413,6 +413,7 @@ function gpackage_class:dependson_setter()
       elseif dependency == "load" then
          table.insert(self.dependencies.load, depend_build_definition)
       else
+         print("Unknown dependency type '" .. dependency .. "'.")
          assert(false)
       end
    end
