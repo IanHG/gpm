@@ -830,9 +830,11 @@ function installer_class:install(gpack, build_definition)
    end
 
    self:build_gpack()
-
-   self.lmod_installer:install(self.gpack, self.build.build_path, self.build.install_path)
-   self.lmod_installer:update_cache()
+   
+   if self.gpack.lmod.is_set then
+      self.lmod_installer:install(self.gpack, self.build.build_path, self.build.install_path)
+      self.lmod_installer:update_cache()
+   end
    
    self:post()
    self:finalize()
@@ -867,7 +869,7 @@ local function check_and_fix_dependencies(args, gpack)
       --if not util.isempty(depend.tag) then
       --   name_version = name_version .. ":" .. depend.tag
       --end
-
+      
       local gpack_depend = gpackage.load_gpackage(depend)
 
       run_installer(args, gpack_depend, depend, util.conditional(args.force_dependencies, true, false))

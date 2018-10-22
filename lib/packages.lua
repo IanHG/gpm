@@ -206,7 +206,6 @@ local function bootstrap(args)
    local filepath = assert(locate_gpk_file(args, global_config))
    load_gpk_file(filepath, package)
    
-   
    -- Setup some version numbers and other needed variables
    package.definition.pkgversion = args.pkv
    version_array = util.split(args.pkv, ".")

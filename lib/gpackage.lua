@@ -265,6 +265,7 @@ local gpackage_lmod_class = class.create_class(gpackage_creator_class)
 function gpackage_lmod_class:__init(upstream_ftable, logger)
    -- Util
    self.logger = logger
+   self.is_set = false
 
    --
    self.help   = [[]]
@@ -385,6 +386,7 @@ function gpackage_class:__init(logger)
       
       -- Lmod
       lmod   = function() 
+         self.lmod.is_set = true
          return self.lmod.ftable:get()
       end,
 
