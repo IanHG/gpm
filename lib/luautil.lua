@@ -21,6 +21,13 @@ local function loadrequire(module, callback)
    return m
 end
 
+--- Sleep for amount of seconds
+--
+local function sleep(sec)
+   local socket = loadrequire("socket", function() assert(false) end)
+   socket.select(nil, nil, sec)
+end
+
 ---
 -- Get lua version
 local function version()
@@ -29,6 +36,7 @@ end
 
 -- Create module
 M.require = loadrequire
+M.sleep   = sleep
 M.version = version
 
 return M
