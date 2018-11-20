@@ -892,6 +892,9 @@ local function check_and_fix_dependencies(args, gpack)
       --end
       
       local gpack_depend = gpackage.load_gpackage(depend)
+      
+      -- Check dependencies
+      check_and_fix_dependencies(args, gpack_depend)
 
       run_installer(args, gpack_depend, depend, util.conditional(args.force_dependencies, true, false))
    end
