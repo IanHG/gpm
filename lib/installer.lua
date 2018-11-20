@@ -42,7 +42,7 @@ local function create_file(path, content)
    cfile:close()
 end
 
-local function generate_ml_command(gpack)
+local function generate_ml_command(gpack, include_self)
    local ml_cmd = ". " .. global_config.stack_path .. "/bin/modules.sh --link-relative --force && "
    
    for k, v in pairs(gpack.dependencies.dependson) do
@@ -53,6 +53,10 @@ local function generate_ml_command(gpack)
    
    for k, v in pairs(gpack.dependencies.load) do
       ml_cmd = ml_cmd .. "ml " .. v.name .. "/" .. v.version .. " && "
+   end
+
+   if include_self then
+      ml_cmd = ml_cmd .. "ml " .. gpack.name .. "/" .. gpack.version .. " && "
    end
    
    return ml_cmd
@@ -482,6 +486,7 @@ function builder_class:install(gpack, build_definition, build)
    local st = symbtab.create({})
    st:add_symbol("build"  , build.build_path)
    st:add_symbol("install", build.install_path)
+   st:add_symbol("install_dbl_slash", build.install_path:gsub("/", "\\/"))
    for k, v in pairs(command_stack) do
       v:substitute(st)
    end
@@ -817,7 +822,7 @@ end
 
 -- Do post install commands
 function installer_class:post()
-   local ml_cmd = generate_ml_command(self.gpack)
+   local ml_cmd = generate_ml_command(self.gpack, true)
 
    for k, v in pairs(self.gpack.post) do
       local cmd    = ml_cmd .. v[1]
