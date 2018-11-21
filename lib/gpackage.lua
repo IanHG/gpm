@@ -497,7 +497,9 @@ function gpackage_class:load(gpackage_path, build_definition)
    self.nameversion = self.name .. "-" .. self.version
    
    -- Create symbol table
+   print("VERSION" .. self.version)
    if (not self.symbol_table:contains_symbol(self.version)) then
+      print("ADDING VERSION")
       self.symbol_table:add_symbol("version"    , self.version)
    end
    self.symbol_table:add_symbol("nameversion", self.nameversion)
