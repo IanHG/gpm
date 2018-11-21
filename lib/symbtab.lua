@@ -130,6 +130,16 @@ function symbol_table_class:substitute(str)
    return str
 end
 
+function symbol_table_class:contains_symbol(str)
+   local pattern = self:escape(self.sbeg .. ".+" .. self.send)
+
+   if str:match(pattern) then
+      return true
+   else
+      return false
+   end
+end
+
 function symbol_table_class:merge(st)
    for k, v in pairs(st.symbols) do
       if not self.symbols[k] then
