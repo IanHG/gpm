@@ -518,6 +518,9 @@ function gpackage_class:load(gpackage_path, build_definition)
    -- Substitute in self
    for k, v in pairs(self) do
       --if type(v) == "string" then
+         pirnt("HERE")
+         print(k)
+         print(v)
          self[k] = self.symbol_table:substitute(v)
       --end
    end
