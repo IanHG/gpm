@@ -117,11 +117,7 @@ function main()
    parser_net_fast:option("--port", "Print only for specific ports (default print for all ports)."):count("*")
    
    -- Mem parser
-   local parser_mem       = parser:command("mem")
-   parser_mem:require_command(false)
-   parser_mem:option("-c --convert", "Convert to B, kB, MB, GB, TB, or PB.", "kB"):overwrite(false)
-   parser_mem:flag("--no-suffix", "Do not print unit suffix, only numeric value.")
-   parser_mem:argument("thing", "Thingy to print :D"):args("?")
+   local parser_mem = hwdetect.mem.create_mem_parser(parser)
       
    -- Parse arguments
    args = parser:parse()

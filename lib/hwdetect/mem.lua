@@ -46,9 +46,14 @@ function mem_class:print(args)
       print("   MEM_AVAILABLE : " .. self.mem.available)
       print("   MEM_FREE      : " .. self.mem.free)
    else
-      local str = self.mem[args.thing] * conversion_factor
-      if not args.no_suffix then
-         str = str .. unit
+      local str = ""
+      if not util.isempty(self.mem[args.thing]) then
+         str = self.mem[args.thing] * conversion_factor
+         if not args.no_suffix then
+            str = str .. unit
+         end
+      else
+         str = "'" .. args.thing .. "' not available in mem_info."
       end
       print(str)
    end
@@ -103,7 +108,27 @@ local function detect_mem()
    return mem_local
 end
 
+--
+local function create_mem_parser(parser)
+   -- Create parser
+   local parser_mem = nil
+   if parser ~= nil then
+      parser_mem = parser:command("mem")
+   else
+      parser_mem = argparse("mem_parser", "this does not happen :D")
+   end
+
+   -- Setup parser
+   parser_mem:require_command(false)
+   parser_mem:option("-c --convert", "Convert to B, kB, MB, GB, TB, or PB.", "kB"):overwrite(false)
+   parser_mem:flag("--no-suffix", "Do not print unit suffix, only numeric value.")
+   parser_mem:argument("thing", "What to print, e.g. 'total' for total memory."):args("?")
+   
+   return parser_mem
+end
+
 -- Load module
-M.detect_mem = detect_mem
+M.detect_mem        = detect_mem
+M.create_mem_parser = create_mem_parser
 
 return M
