@@ -40,7 +40,7 @@ function mem_class:print(args)
    local unit              = args.convert
    local conversion_factor = self:conversion_factor(self.saved_as, unit)
    
-   if util.isempty(args.thing) then
+   if (not args) or (util.isempty(args.thing)) then
       print("MEMINFO:")
       print("   MEM_TOTAL     : " .. self.mem.total)
       print("   MEM_AVAILABLE : " .. self.mem.available)
