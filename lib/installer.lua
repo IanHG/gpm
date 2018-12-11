@@ -709,7 +709,7 @@ function installer_class:initialize()
    self.symbtab:add_symbol("install", self.build.install_path)
 
    -- Change directory to build_path
-   filesystem.rmdir(self.build.build_path, false)
+   filesystem.rmdir(self.build.build_path, true)
    filesystem.mkdir(self.build.build_path, {}, true)
    filesystem.chdir(self.build.build_path)
    

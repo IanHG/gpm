@@ -81,6 +81,12 @@ local function command_net(args)
    --net_info:print()
 end
 
+local function command_mem(args)
+   local mem_info = hwdetect.mem.detect_mem()
+   
+   mem_info:print(args)
+end
+
 --- Main driver.
 function main()
    -- Arg parser
@@ -88,7 +94,6 @@ function main()
    
    -- Commands
    local parser_arch = parser:command("arch") 
-   local parser_net  = parser:command("net")
    
    -- Some general arguments
    parser:option("-c --config", "Provide config file."):overwrite(false)
@@ -104,11 +109,19 @@ function main()
    -- arch specific
    --parser_arch:flag("-a --all"   , "List all available stacks."):overwrite(false)
    
-   -- net specific
+   -- Net parser
+   local parser_net  = parser:command("net")
    parser_net:require_command(false)
    local parser_net_fast = parser_net:command("fast", "Detect fast network.")
    parser_net_fast:flag  ("--ib",   "Check for infiniband.")
    parser_net_fast:option("--port", "Print only for specific ports (default print for all ports)."):count("*")
+   
+   -- Mem parser
+   local parser_mem       = parser:command("mem")
+   parser_mem:require_command(false)
+   parser_mem:option("-c --convert", "Convert to B, kB, MB, GB, TB, or PB.", "kB"):overwrite(false)
+   parser_mem:flag("--no-suffix", "Do not print unit suffix, only numeric value.")
+   parser_mem:argument("thing", "Thingy to print :D"):args("?")
       
    -- Parse arguments
    args = parser:parse()
@@ -118,7 +131,7 @@ function main()
       logger:debug(util.print(args, "args")    , "fancy", io.stdout)
    end
 
-   settings.initialize(args)
+   --settings.initialize(args)
    
    exception.try(function()
       -- Bootstrap config
@@ -128,6 +141,8 @@ function main()
          show_arch()
       elseif args.net then
          command_net(args)
+      elseif args.mem then
+         command_mem(args)
       end
    end, function(e)
       -- Print exception
