@@ -493,6 +493,8 @@ function gpackage_class:load(gpackage_path, build_definition)
    if build_definition.url ~= nil then
       self.url = build_definition.url
    end
+
+   self.version = self.symbol_table:substitute(self.version)
    
    self.nameversion = self.name .. "-" .. self.version
    
@@ -505,6 +507,7 @@ function gpackage_class:load(gpackage_path, build_definition)
    self.symbol_table:add_symbol("nameversion", self.nameversion)
    
    local version_split = util.split(self.version, ".")
+   print(self.version)
    if #version_split >= 1 then
       self.symbol_table:add_symbol("version_major", version_split[1])
       if #version_split >= 2 then

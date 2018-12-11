@@ -110,6 +110,10 @@ function command_executor_class:_execute_command(command)
       self._last = { status = 0, output = { } }
       command.fn(command.options, input, self._last)
       self:_log_post_execute_command(command)
+      
+      if self._last.status == false then
+         assert(false)
+      end
    else
       if self._logger then
          self._logger:alert("Executor was passed something that is not a command!")

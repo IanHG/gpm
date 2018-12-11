@@ -223,6 +223,8 @@ local function generate_prepend_path_share(share, prepend_path, install_path)
          table.insert(prepend_path, {"INFOPATH", path.join(install_path, "share/info")})
       elseif f:match("man") then
          table.insert(prepend_path, {"MANPATH" , path.join(install_path, "share/man" )})
+      elseif f:match("pkgconfig") then
+         table.insert(prepend_path, {"PKG_CONFIG_PATH" , path.join(install_path, "share/pkgconfig" )})
       end
    end
 end
