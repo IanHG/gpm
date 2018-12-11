@@ -37,7 +37,12 @@ end
 
 -- Print
 function mem_class:print(args)
-   local unit              = args.convert
+   local unit = nil            
+   if args then
+      unit = args.convert
+   else
+      unit = "kB"
+   end
    local conversion_factor = self:conversion_factor(self.saved_as, unit)
    
    if (not args) or (util.isempty(args.thing)) then
