@@ -46,10 +46,17 @@ function mem_class:print(args)
    local conversion_factor = self:conversion_factor(self.saved_as, unit)
    
    if (not args) or (util.isempty(args.thing)) then
-      print("MEMINFO:")
-      print("   MEM_TOTAL     : " .. self.mem.total)
-      print("   MEM_AVAILABLE : " .. self.mem.available)
-      print("   MEM_FREE      : " .. self.mem.free)
+      print("mem_info : {")
+      local tab = "   "
+      for k, v in pairs(self.mem) do
+         local str = tab .. k .. " = " .. v * conversion_factor
+         if not args.no_suffix then
+            str = str .. unit
+         end
+         str = str .. ","
+         print(str)
+      end
+      print("}")
    else
       local str = ""
       if not util.isempty(self.mem[args.thing]) then
