@@ -50,7 +50,7 @@ function mem_class:print(args)
       local tab = "   "
       for k, v in pairs(self.mem) do
          local str = tab .. k .. " = " .. v * conversion_factor
-         if not args.no_suffix then
+         if (not args) or (not args.no_suffix) then
             str = str .. unit
          end
          str = str .. ","
