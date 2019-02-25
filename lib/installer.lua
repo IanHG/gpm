@@ -150,7 +150,7 @@ local function generate_setenv(gpack, install_path, setenv)
 
    if gpack.lmod.setenv then
       for _, v in pairs(gpack.lmod.setenv) do
-         if not util.isempty(v.value) then
+         if not util.isempty(v[2]) then
             table.insert(setenv, {v[1], path.join(install_path, v[2])})
          else
             table.insert(setenv, {v[1], install_path})
@@ -162,6 +162,8 @@ local function generate_setenv(gpack, install_path, setenv)
       for _, v in pairs(gpack.lmod.setenv_abs) do
          -- Abs path cannot be empty
          assert(not util.isempty(v[2]))
+         print("HERE")
+         print(v[1], v[2])
          table.insert(setenv, v)
       end
    end
@@ -770,7 +772,8 @@ function installer_class:unpack()
       local is_tar_xz = string.match(self.build.source_path, "tar.xz")
       local is_tar    = string.match(self.build.source_path, "tar")
       local is_zip    = string.match(self.build.source_path, "zip")
-      local tar_line = nil
+      local is_rpm    = string.match(self.build.source_path, "rpm")
+      local tar_line  = nil
       if is_tar_gz then
          tar_line = "tar -zxvf " .. self.build.source_path .. " -C " .. self.build.unpack_path .. " --strip-components=1"
       elseif is_tar_xz then
@@ -781,6 +784,8 @@ function installer_class:unpack()
          tar_line = "tar -xvf "  .. self.build.source_path .. " -C " .. self.build.unpack_path .. " --strip-components=1"
       elseif is_zip then
          tar_line = "unzip "     .. self.build.source_path
+      elseif is_rpm then
+         tar_line = "cd " .. self.build.unpack_path .. "; rpm2cpio " .. self.build.source_path .. " | cpio --no-absolute-filenames -idmv"
       end
       
       local status = util.execute_command(tar_line)
