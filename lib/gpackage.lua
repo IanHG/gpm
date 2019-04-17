@@ -354,7 +354,19 @@ function gpackage_class:__init(logger)
    self.ftable       = ftable.create_ftable({}, nil, self.logger)
    
    -- 
-   self.symbol_table = symbtab.create({}, self.ftable, self.logger)
+   self.symbol_table   = symbtab.create({}, nil, self.logger)
+   self.symbtab_ftable = ftable.create_ftable({}, nil, self.logger)
+   local symbtab_ftable_def = {
+      --
+      add_symbol = function(symb, ssymb, overwrite, format_fcn) 
+         self.symbol_table:add_symbol(symb, ssymb, overwrite, format_fcn)
+      end,
+      --
+      end_symbol = function()
+         return self.ftable:get()
+      end
+   }
+   self.symbtab_ftable:push(symbtab_ftable_def)
    
    -- Lmod 
    self.lmod         = gpackage_lmod_class:create({}, self.ftable, self.logger)

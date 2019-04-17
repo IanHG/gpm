@@ -879,7 +879,7 @@ local function run_installer(args, gpack, build_definition, force)
       installer.options.force_download = args.force_download
       installer.options.purge          = args.purge_build
       installer.options.keep_source    = not args.remove_source
-      installer.options.keep_build     = args.keep_build
+      installer.options.keep_build     = args.keep_build_directory
       installer:install(gpack, build_definition)
    
       database.insert_package(gpack)
