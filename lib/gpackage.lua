@@ -518,18 +518,43 @@ function gpackage_class:load(gpackage_path, build_definition)
       end
    end
 
-   -- Substitute in self
-   for k, v in pairs(self) do
-      --if type(v) == "string" then
-         self[k] = self.symbol_table:substitute(v)
-      --end
+   local function substitute_recursive(reference)
+      for k, v in pairs(reference.ref) do
+         if type(v) == "string" then
+            print("LOL")
+            print(k)
+            print(v)
+            reference.ref[k] = self.symbol_table:substitute(v)
+            print(reference.ref[k])
+         elseif type(v) == "table" then
+            local reference = { ref = v }
+            substitute_recursive(reference)
+         end
+      end
    end
 
-   for k, v in pairs(self.lmod) do
-      --if type(v) == "string" then
-         self.lmod[k] = self.symbol_table:substitute(v)
-      --end
-   end
+   -- Substitute in self
+   local reference = { ref = self }
+   substitute_recursive(reference)
+   --for k, v in pairs(self) do
+   --   --if type(v) == "string" then
+   --      self[k] = self.symbol_table:substitute(v)
+   --   --end
+   --end
+
+   --for k, v in pairs(self.lmod) do
+   --   if type(v) == "string" then
+   --      self.lmod[k] = self.symbol_table:substitute(v)
+   --   elseif type(v) == "table" then
+   --      for kk, vv in pairs(self.lmod[k]) do
+   --         print(kk)
+   --         print(vv)
+   --         self.lmod[k][kk] = self.symbol_table:substitute(vv)
+   --      end
+   --   end
+   --end
+
+   --exit(0)
 end
 
 function gpackage_class:is_git()
