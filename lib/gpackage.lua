@@ -353,16 +353,20 @@ function gpackage_class:__init(logger)
    -- Function table for loading package
    self.ftable       = ftable.create_ftable({}, nil, self.logger)
    
-   -- 
-   self.symbol_table   = symbtab.create({}, nil, self.logger)
+   --  Setup symbol table and function table for interacting with it
+   self.symbol_table   = symbtab.create(nil, self.logger)
    self.symbtab_ftable = ftable.create_ftable({}, nil, self.logger)
    local symbtab_ftable_def = {
       --
+      add = function(symb, ssymb, overwrite, format_fcn) 
+         self.symbol_table:add_symbol(symb, ssymb, overwrite, format_fcn)
+      end,
+      -- synonym for above
       add_symbol = function(symb, ssymb, overwrite, format_fcn) 
          self.symbol_table:add_symbol(symb, ssymb, overwrite, format_fcn)
       end,
       --
-      end_symbol = function()
+      symbolend = function()
          return self.ftable:get()
       end
    }
@@ -404,7 +408,7 @@ function gpackage_class:__init(logger)
 
       --
       symbol = function()
-         return self.symbol_table.ftable:get()
+         return self.symbtab_ftable:get()
       end,
    }
 

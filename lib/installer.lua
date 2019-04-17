@@ -487,7 +487,7 @@ function builder_class:install(gpack, build_definition, build)
    end
 
    -- Make substitutions in command stack
-   local st = symbtab.create({})
+   local st = symbtab.create()
    st:add_symbol("build"  , build.build_path)
    st:add_symbol("install", build.install_path)
    st:add_symbol("install_dbl_slash", build.install_path:gsub("/", "\\/"))
@@ -651,11 +651,11 @@ end
 local installer_class = class.create_class()
 
 function installer_class:__init()
-   self.symbtab        = symbtab.create({})
+   self.symbtab        = symbtab.create()
    print("HERE 1 : ")
    print(self.symbtab)
    self.lmod_installer = lmod_installer_class:create()
-   self.lmod_installer.symbtab = symbtab.create(nil, nil, self.symbtab)
+   self.lmod_installer.symbtab = symbtab.create(self.symbtab)
    print("HERE 2 : ")
    print(self.symbtab)
    self.pathhandler    = pathhandler.create()
