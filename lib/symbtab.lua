@@ -31,10 +31,16 @@ end
 --
 local symbol_table_class = class.create_class()
 
-function symbol_table_class:__init(upstream_ftable, logger)
+function symbol_table_class:__init(upstream_ftable, logger, upstream_symbtab)
    self.sbeg    = "%"
    self.send    = "%"
    self.symbols = { }
+   
+   if upstream_symbtab ~= nil and upstream_symbtab:is_a(symbol_table_class) then
+      self.upstream_symbtab = { upstream_symbtab }
+   else
+      self.upstream_symbtab = { }
+   end
    
    self.ftable  = ftable.create_ftable({}, nil, logger)
    self.ftable_def = {
@@ -125,6 +131,12 @@ function symbol_table_class:substitute(str)
       for k, v in pairs(str) do
          str[k] = self:substitute(v)
       end
+   end
+   
+   -- Call upstream
+   for k, v in pairs(self.upstream_symbtab) do
+      print("Calling upstream")
+      str = v:substitute(str)
    end
 
    return str
