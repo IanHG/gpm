@@ -353,8 +353,24 @@ function gpackage_class:__init(logger)
    -- Function table for loading package
    self.ftable       = ftable.create_ftable({}, nil, self.logger)
    
-   -- 
-   self.symbol_table = symbtab.create({}, self.ftable, self.logger)
+   --  Setup symbol table and function table for interacting with it
+   self.symbol_table   = symbtab.create(nil, self.logger)
+   self.symbtab_ftable = ftable.create_ftable({}, nil, self.logger)
+   local symbtab_ftable_def = {
+      --
+      add = function(symb, ssymb, overwrite, format_fcn) 
+         self.symbol_table:add_symbol(symb, ssymb, overwrite, format_fcn)
+      end,
+      -- synonym for above
+      add_symbol = function(symb, ssymb, overwrite, format_fcn) 
+         self.symbol_table:add_symbol(symb, ssymb, overwrite, format_fcn)
+      end,
+      --
+      symbolend = function()
+         return self.ftable:get()
+      end
+   }
+   self.symbtab_ftable:push(symbtab_ftable_def)
    
    -- Lmod 
    self.lmod         = gpackage_lmod_class:create({}, self.ftable, self.logger)
@@ -392,7 +408,7 @@ function gpackage_class:__init(logger)
 
       --
       symbol = function()
-         return self.symbol_table.ftable:get()
+         return self.symbtab_ftable:get()
       end,
    }
 
@@ -518,18 +534,43 @@ function gpackage_class:load(gpackage_path, build_definition)
       end
    end
 
-   -- Substitute in self
-   for k, v in pairs(self) do
-      --if type(v) == "string" then
-         self[k] = self.symbol_table:substitute(v)
-      --end
+   local function substitute_recursive(reference)
+      for k, v in pairs(reference.ref) do
+         if type(v) == "string" then
+            print("LOL")
+            print(k)
+            print(v)
+            reference.ref[k] = self.symbol_table:substitute(v)
+            print(reference.ref[k])
+         elseif type(v) == "table" then
+            local reference = { ref = v }
+            substitute_recursive(reference)
+         end
+      end
    end
 
-   for k, v in pairs(self.lmod) do
-      --if type(v) == "string" then
-         self.lmod[k] = self.symbol_table:substitute(v)
-      --end
-   end
+   -- Substitute in self
+   local reference = { ref = self }
+   substitute_recursive(reference)
+   --for k, v in pairs(self) do
+   --   --if type(v) == "string" then
+   --      self[k] = self.symbol_table:substitute(v)
+   --   --end
+   --end
+
+   --for k, v in pairs(self.lmod) do
+   --   if type(v) == "string" then
+   --      self.lmod[k] = self.symbol_table:substitute(v)
+   --   elseif type(v) == "table" then
+   --      for kk, vv in pairs(self.lmod[k]) do
+   --         print(kk)
+   --         print(vv)
+   --         self.lmod[k][kk] = self.symbol_table:substitute(vv)
+   --      end
+   --   end
+   --end
+
+   --exit(0)
 end
 
 function gpackage_class:is_git()

@@ -487,7 +487,7 @@ function builder_class:install(gpack, build_definition, build)
    end
 
    -- Make substitutions in command stack
-   local st = symbtab.create({})
+   local st = symbtab.create()
    st:add_symbol("build"  , build.build_path)
    st:add_symbol("install", build.install_path)
    st:add_symbol("install_dbl_slash", build.install_path:gsub("/", "\\/"))
@@ -521,7 +521,7 @@ function lmod_installer_class:__init()
    -- Internal work 
    self.modulefile   = nil
 
-   self.symbtab = symbtab.create({})
+   self.symbtab = nil
 end
 
 function lmod_installer_class:file_build_path()
@@ -583,7 +583,12 @@ function lmod_installer_class:write_modulefile()
    
    -- Alias
    for k, v in pairs(self.gpack.lmod.alias) do
-      self.modulefile:write("alias('" .. v[1] .. "')\n")
+      print("HERE ")
+      print(k)
+      print(v[1])
+      print(v[2])
+      print(self.symbtab:substitute(v[2]))
+      self.modulefile:write("set_alias('" .. v[1] .. "', '" .. self.symbtab:substitute(v[2]) .. "')\n")
    end
    
    -- Setenv
@@ -646,7 +651,13 @@ end
 local installer_class = class.create_class()
 
 function installer_class:__init()
+   self.symbtab        = symbtab.create()
+   print("HERE 1 : ")
+   print(self.symbtab)
    self.lmod_installer = lmod_installer_class:create()
+   self.lmod_installer.symbtab = symbtab.create(self.symbtab)
+   print("HERE 2 : ")
+   print(self.symbtab)
    self.pathhandler    = pathhandler.create()
    self.downloader     = downloader.create()
    self.executor       = commander.create_executor({}, logger)
@@ -697,7 +708,6 @@ function installer_class:__init()
       unpack_path = "",
    }
 
-   self.symbtab = symbtab.create({})
 end
 
 --- Initialize installation of package.
@@ -709,7 +719,9 @@ function installer_class:initialize()
    self.build.install_path = generate_install_path(self.gpack)
    
    -- Add symbols to symbol table
-   self.symbtab:add_symbol("build",   self.build.build_path)
+   print("HERE 3 : ")
+   print(self.symbtab)
+   self.symbtab:add_symbol("build",   self.build.build_path  )
    self.symbtab:add_symbol("install", self.build.install_path)
 
    -- Change directory to build_path
