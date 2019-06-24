@@ -245,21 +245,22 @@ local function generate_prepend_path(gpack, install_path, prepend_path)
    -- Try to auto-generate
    if gpack.lmod.autopath then
       for directory in lfs.dir(install_path) do
-         if directory:match("bin") then
+         if directory:match("^bin$") then
             table.insert(prepend_path, {"PATH", path.join(install_path, "bin")})
-         elseif directory:match("include") then
+         elseif directory:match("^include$") then
             generate_prepend_path_include("include", prepend_path, install_path)
-         elseif directory:match("lib64") then
+         elseif directory:match("^lib64$") then
             generate_prepend_path_lib("lib64", prepend_path, install_path)
-         elseif directory:match("lib$") then
+         elseif directory:match("^lib$") then
+            print(directory)
             generate_prepend_path_lib("lib", prepend_path, install_path)
-         elseif directory:match("share") then
+         elseif directory:match("^share$") then
             generate_prepend_path_share("share", prepend_path, install_path)
-         elseif directory:match("libexec") then
+         elseif directory:match("^libexec$") then
             -- do nothing
-         elseif directory:match("etc") then
+         elseif directory:match("^etc$") then
             -- do nothing
-         elseif directory:match("var") then
+         elseif directory:match("^var$") then
             -- do nothing
          end
       end
