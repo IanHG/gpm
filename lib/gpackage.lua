@@ -229,7 +229,9 @@ function gpackage_builder_class:__init(btype, upstream_ftable, logger)
          table.insert(self.commands, { command = "chdir", options = { dir = dir } })
          return self.ftable
       end,
-
+      prepend_path = function(name, value)
+         table.insert(self.commands, { command = "prepend_path", options = { name = name, value = value } })
+      end,
       buildend = function()
          return upstream_ftable:get()
       end,
