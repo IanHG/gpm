@@ -37,14 +37,30 @@ local downloader_class = class.create_class()
 function downloader_class:__init()
    -- Source and destination
    self.url         = ""
-   self.signature   = ""
    self.url_type    = nil -- "git", "http", or "local"
    self.destination = ""
+   
+   -- Signature
+   self.url_signature = ""
 
    -- Some internal settings 
    --self.has_luasocket_http   = http and true or false
    self.has_luasocket_http   = false
    self.external_http_method = "wget"
+end
+
+--- Internal function to clean-up if download failed.
+--    
+--    Will remove anything that was downloaded.
+function downloader_class:__cleanup_on_fail()
+   if filesystem.exists(self.destination) then
+      filesystem.remove(self.destination)
+   end
+   
+   ---- Do something else here...
+   --if filesystem.exists(self.signature) then
+   --   filesystem.remove(self.signature)
+   --end
 end
 
 --- Create command for downloading using git

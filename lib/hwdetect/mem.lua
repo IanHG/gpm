@@ -4,6 +4,7 @@ local math  = assert(require "math")
 
 local class = assert(require "lib.class")
 local util  = assert(require "lib.hwdetect.util")
+local sudo  = assert(require "lib.hwdetect.sudo")
 
 --- Mem class
 local mem_class = class.create_class()
@@ -110,12 +111,33 @@ local function detect_mem_from_meminfo(mem_local)
    end
 end
 
+--- Detect from dmidecode
+--  types: memory      
+--    5     Memory Controller
+--    6     Memory Module
+--    16    Physical Memory Array
+--    17    Memory Device
+--
+local function detect_mem_from_dmidecode(mem_local)
+   --local pipe0     = io.popen(sudo("dmidecode --type 17"))
+   local pipe0     = io.popen("dmidecode --type 17")
+   local dmidecode = pipe0:read("*all") or "0"
+   local rc = { pipe0:close() }
+   
+   print(dmidecode)
+   print(rc[1])
+   print(rc[2])
+   print(rc[3])
+   print(rc[4])
+end
+
 --- Detect memory
 --
 local function detect_mem()
    local mem_local = mem_class:create({})
    
-   detect_mem_from_meminfo(mem_local)
+   detect_mem_from_meminfo  (mem_local)
+   detect_mem_from_dmidecode(mem_local)
 
    return mem_local
 end

@@ -385,7 +385,8 @@ function gpackage_class:__init(logger)
       name        = self:string_setter("name"),
       homepage    = self:string_setter("homepage"),
       url         = self:string_setter("url"),
-      version     = self:string_setter("version", "signature"),
+      version     = self:string_setter("version"),
+      signature   = self:string_setter("signature"),
       description = self:string_setter("description"),
 
       -- Depend
