@@ -15,6 +15,7 @@ local commander  = assert(require "lib.commander")
 local execcmd    = assert(require "lib.execcmd")
 local pathhandler = assert(require "lib.pathhandler")
 local symbtab    = assert(require "lib.symbtab")
+local env    = assert(require "lib.env")
 
 local M = {}
 
@@ -484,6 +485,8 @@ function builder_class:install(gpack, build_definition, build)
          table.insert(command_stack, self.creator:command("chdir", { path = v.options.dir }))
       elseif v.command == "popdir" then
          table.insert(command_stack, self.creator:command("popdir", { }))
+      elseif v.command == "popdir" then
+         table.insert(command_stack, self.creator:command("prepend_path", v.options ))
       end
    end
 
@@ -685,6 +688,11 @@ function installer_class:__init()
    end)
    self.creator:add("mkdir", function(options, input, output)
       local status = filesystem.mkdir(options.path, options.mode, options.recursive)
+      output.status = status
+      output.output = {}
+   end)
+   self.creator:add("prepend_path", function(options, input, output)
+      local status = env.prepend_path(options.name, options.value)
       output.status = status
       output.output = {}
    end)
