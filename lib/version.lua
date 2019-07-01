@@ -3,7 +3,7 @@ local M = {}
 -- Define version number
 local version = {  
    major = 2,
-   minor = 0,
+   minor = 1,
    patch = 0,
 }
 
