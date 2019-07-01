@@ -485,8 +485,10 @@ function builder_class:install(gpack, build_definition, build)
          table.insert(command_stack, self.creator:command("chdir", { path = v.options.dir }))
       elseif v.command == "popdir" then
          table.insert(command_stack, self.creator:command("popdir", { }))
-      elseif v.command == "popdir" then
-         table.insert(command_stack, self.creator:command("prepend_path", v.options ))
+      elseif v.command == "prepend_env" then
+         table.insert(command_stack, self.creator:command("prepend_env", v.options ))
+      elseif v.command == "set_env" then
+         table.insert(command_stack, self.creator:command("set_env", v.options ))
       end
    end
 
@@ -691,8 +693,13 @@ function installer_class:__init()
       output.status = status
       output.output = {}
    end)
-   self.creator:add("prepend_path", function(options, input, output)
-      local status = env.prepend_path(options.name, options.value)
+   self.creator:add("prepend_env", function(options, input, output)
+      local status = env.prepend_env(options.name, options.value)
+      output.status = status
+      output.output = {}
+   end)
+   self.creator:add("set_env", function(options, input, output)
+      local status = env.set_env(options.name, options.value)
       output.status = status
       output.output = {}
    end)

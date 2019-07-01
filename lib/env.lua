@@ -14,9 +14,16 @@ end
 setup_posix_binds()
 
 -- Functions
-local function prepend_path(name, value)
+local function prepend_env(name, value)
    local path = posix_getenv(name)
    path = value .. ":" .. path
+   local status = posix_setenv(name, path, true)
+
+   return status
+end
+
+-- 
+local function set_env(name, value)
    local status = posix_setenv(name, path, true)
 
    return status
@@ -25,6 +32,7 @@ end
 -- Create module
 local M = {}
 
-M.prepend_path = prepend_path
+M.prepend_env = prepend_env
+M.set_env     = set_env
 
 return M

@@ -230,7 +230,13 @@ function gpackage_builder_class:__init(btype, upstream_ftable, logger)
          return self.ftable
       end,
       prepend_path = function(name, value)
-         table.insert(self.commands, { command = "prepend_path", options = { name = name, value = value } })
+         table.insert(self.commands, { command = "prepend_env", options = { name = name, value = value } })
+      end,
+      prepend_env = function(name, value)
+         table.insert(self.commands, { command = "prepend_env", options = { name = name, value = value } })
+      end,
+      set_env = function(name, value)
+         table.insert(self.commands, { command = "set_env", options = { name = name, value = value } })
       end,
       buildend = function()
          return upstream_ftable:get()
