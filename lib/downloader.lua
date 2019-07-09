@@ -12,7 +12,8 @@ local http       = luautil.require("socket.http")
 --- Determine the type of url ("git", "http", or "local")
 local function determine_url_type(url)
    local function is_git(url)
-      return url:match("git$")
+      return   (  url:match("git$")
+               )
    end
 
    local function is_http(url)

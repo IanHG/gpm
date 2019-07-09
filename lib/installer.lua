@@ -1,22 +1,22 @@
 local lfs = assert(require "lfs")
 
-local util       = assert(require "lib.util")
-local path       = assert(require "lib.path")
-local filesystem = assert(require "lib.filesystem")
-local exception  = assert(require "lib.exception")
-local logging    = assert(require "lib.logging")
-local logger     = logging.logger
-local database   = assert(require "lib.database")
-local lmod       = assert(require "lib.lmod")
-local downloader = assert(require "lib.downloader")
-local class      = assert(require "lib.class")
-local gpackage   = assert(require "lib.gpackage")
-local commander  = assert(require "lib.commander")
-local execcmd    = assert(require "lib.execcmd")
+local util        = assert(require "lib.util")
+local path        = assert(require "lib.path")
+local filesystem  = assert(require "lib.filesystem")
+local exception   = assert(require "lib.exception")
+local logging     = assert(require "lib.logging")
+local logger      = logging.logger
+local database    = assert(require "lib.database")
+local lmod        = assert(require "lib.lmod")
+local downloader  = assert(require "lib.downloader")
+local class       = assert(require "lib.class")
+local gpackage    = assert(require "lib.gpackage")
+local commander   = assert(require "lib.commander")
+local execcmd     = assert(require "lib.execcmd")
 local pathhandler = assert(require "lib.pathhandler")
-local symbtab    = assert(require "lib.symbtab")
-local env    = assert(require "lib.env")
-local version    = assert(require "lib.version")
+local symbtab     = assert(require "lib.symbtab")
+local env         = assert(require "lib.env")
+local version     = assert(require "lib.version")
 
 local M = {}
 
@@ -718,7 +718,7 @@ function installer_class:__init()
 
    self.build = {
       build_path   = "",
-      source_path  = "",
+      --source_path  = "",
       unpack_path  = "",
       install_path = "",
       
@@ -730,11 +730,12 @@ end
 
 --- Initialize installation of package.
 function installer_class:initialize()
-   self.build.build_path   = generate_build_path(self.gpack)
-   self.build.source_path  = path.join(self.build.build_path, self.gpack.nameversion .. "." .. get_extension(self.gpack.url))
-   self.build.unpack_path  = path.join(self.build.build_path, self.gpack.nameversion)
-   self.build.log_path     = path.join(self.build.build_path, self.gpack.nameversion .. ".log")
-   self.build.install_path = generate_install_path(self.gpack)
+   self.build.build_path     = generate_build_path(self.gpack)
+   --self.build.source_path    = path.join(self.build.build_path, self.gpack.nameversion .. "." .. get_extension(self.gpack.urls[1].url))
+   self.build.unpack_path    = path.join(self.build.build_path, self.gpack.nameversion)
+   --self.build.signature_path = path.join(self.build.build_path, self.gpack.nameversion .. ".sig")
+   self.build.log_path       = path.join(self.build.build_path, self.gpack.nameversion .. ".log")
+   self.build.install_path   = generate_install_path(self.gpack)
    
    -- Add symbols to symbol table
    print("HERE 3 : ")
@@ -753,7 +754,7 @@ function installer_class:initialize()
    -- Log initialization
    logger:message("Gpackage installer initialized.")
    logger:message("   build_path   : " .. self.build.build_path)
-   logger:message("   source_path  : " .. self.build.source_path)
+   --logger:message("   source_path  : " .. self.build.source_path)
    logger:message("   unpack_path  : " .. self.build.unpack_path)
    logger:message("   install_path : " .. self.build.install_path)
 end
@@ -771,10 +772,14 @@ function installer_class:finalize()
       filesystem.rmdir(self.build.build_path, true)
    else
       if not self.options.keep_source then
-         filesystem.remove(self.build.source_path)
+         for key, value in pairs(self.sources) do
+            filesystem.remove(value.source_path)
+         end
       end
       if not self.options.keep_build then
-         filesystem.rmdir(self.build.unpack_path, true)
+         for key, value in pairs(self.sources) do
+            filesystem.rmdir(value.unpack_path, true)
+         end
       end
    end
    
@@ -792,36 +797,47 @@ function installer_class:unpack()
    if self.options.force_unpack then
       filesystem.rmdir(self.build.unpack_path, true)
    end
+   
+   -- Define local function for unpacking
+   local function unpack_source_file(source_path, unpack_path)
+      if not unpack_path then
+         unpack_path = self.build.unpack_path
+      end
 
-   -- do unpack
-   if not lfs.attributes(self.build.unpack_path, 'mode') then
-      filesystem.mkdir(self.build.unpack_path, {}, true)
-
-      local is_tar_gz = string.match(self.build.source_path, "tar.gz" ) or string.match(self.build.source_path, "tgz")
-      local is_tar_bz = string.match(self.build.source_path, "tar.bz2") or string.match(self.build.source_path, "tbz2")
-      local is_tar_xz = string.match(self.build.source_path, "tar.xz")
-      local is_tar    = string.match(self.build.source_path, "tar")
-      local is_zip    = string.match(self.build.source_path, "zip")
-      local is_rpm    = string.match(self.build.source_path, "rpm")
+      local is_tar_gz = string.match(source_path, "tar.gz" ) or string.match(source_path, "tgz")
+      local is_tar_bz = string.match(source_path, "tar.bz2") or string.match(source_path, "tbz2")
+      local is_tar_xz = string.match(source_path, "tar.xz")
+      local is_tar    = string.match(source_path, "tar")
+      local is_zip    = string.match(source_path, "zip")
+      local is_rpm    = string.match(source_path, "rpm")
       local tar_line  = nil
       if is_tar_gz then
-         tar_line = "tar -zxvf " .. self.build.source_path .. " -C " .. self.build.unpack_path .. " --strip-components=1"
+         tar_line = "tar -zxvf " .. source_path .. " -C " .. unpack_path .. " --strip-components=1"
       elseif is_tar_xz then
-         tar_line = "tar -xvf "  .. self.build.source_path .. " -C " .. self.build.unpack_path .. " --strip-components=1"
+         tar_line = "tar -xvf "  .. source_path .. " -C " .. unpack_path .. " --strip-components=1"
       elseif is_tar_bz then
-         tar_line = "tar -jxvf " .. self.build.source_path .. " -C " .. self.build.unpack_path .. " --strip-components=1"
+         tar_line = "tar -jxvf " .. source_path .. " -C " .. unpack_path .. " --strip-components=1"
       elseif is_tar then
-         tar_line = "tar -xvf "  .. self.build.source_path .. " -C " .. self.build.unpack_path .. " --strip-components=1"
+         tar_line = "tar -xvf "  .. source_path .. " -C " .. unpack_path .. " --strip-components=1"
       elseif is_zip then
-         tar_line = "unzip "     .. self.build.source_path
+         tar_line = "unzip "     .. source_path
       elseif is_rpm then
-         tar_line = "cd " .. self.build.unpack_path .. "; rpm2cpio " .. self.build.source_path .. " | cpio --no-absolute-filenames -idmv"
+         tar_line = "cd " .. unpack_path .. "; rpm2cpio " .. source_path .. " | cpio --no-absolute-filenames -idmv"
       end
       
       local status = util.execute_command(tar_line)
       if status == nil then
-         logger:alert("Failed to unpack source file '" .. self.build.source_path .. "'")
+         logger:alert("Failed to unpack source file '" .. source_path .. "'")
          error("FAIL")
+      end
+   end
+
+   -- do unpack
+   for key, value in pairs(self.sources) do
+      if not lfs.attributes(self.build.unpack_path, 'mode') then
+         filesystem.mkdir(self.build.unpack_path, {}, true)
+         
+         unpack_source_file(value.source_path, value.unpack_path)
       end
    end
 end
@@ -836,17 +852,39 @@ end
 
 -- Download source code
 function installer_class:download(is_git)
-   local status = nil
-   if is_git then
-      status = self.downloader:download(self.gpack.url, self.build.unpack_path, self.options.force_download)
-   else
-      status = self.downloader:download(self.gpack.url, self.build.source_path, self.options.force_download)
+   self.sources = {}
+   
+   local count = 1
+   for key, value in pairs(self.gpack.urls) do
+      local source_path = nil
+      if is_git then
+         source_path = self.build.unpack_path
+      else
+         source_path     = path.join(self.build.build_path, self.gpack.nameversion) 
+         local extension = get_extension(value.url)
+         if not util.isempty(extension) then
+            source_path = source_path .. "." .. extension
+         end
+      end
+
+      local status = self.downloader:download(value.url, source_path, self.options.force_download)
+      
+      -- download signature file
+      if value.sig then
+         status = self.downloader:download(value.sig, self.build.signature_path, self.options.force_download)
+      end
+
+      -- check signature
+      -- not implemented
+
+      if not status then
+         logger:alert("Could not download package : '" .. value.url .. "'.")
+         assert(false)
+      end
+
+      table.insert(self.sources, {source_path = source_path, unpack_path = unpack_path})
    end
 
-   if not status then
-      logger:alert("Could not download package : '" .. self.gpack.url .. "'.")
-      assert(false)
-   end
 end
 
 -- Build the package

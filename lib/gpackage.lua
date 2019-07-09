@@ -340,7 +340,7 @@ function gpackage_class:__init(logger)
    -- General stuff
    self.name        = ""
    self.homepage    = nil
-   self.url         = nil
+   self.urls        = {}
    self.version     = nil
    self.signature   = nil
    self.description = ""
@@ -392,7 +392,7 @@ function gpackage_class:__init(logger)
       -- General
       name        = self:string_setter("name"),
       homepage    = self:string_setter("homepage"),
-      url         = self:string_setter("url"),
+      url         = self:url_setter(),
       version     = self:string_setter("version"),
       signature   = self:string_setter("signature"),
       description = self:string_setter("description"),
@@ -490,6 +490,12 @@ function gpackage_class:build_setter()
    end
 end
 
+function gpackage_class:url_setter()
+   return function(url, sig)
+      table.insert(self.urls, { url = url, sig = sig} )
+   end
+end
+
 function gpackage_class:load(gpackage_path, build_definition)
    assert(type(gpackage_path) == "string")
    self.path = gpackage_path
@@ -516,7 +522,7 @@ function gpackage_class:load(gpackage_path, build_definition)
    end
 
    if build_definition.url ~= nil then
-      self.url = build_definition.url
+      table.insert(self.urls, { url = build_definition.url, sig = nil})
    end
 
    self.version = self.symbol_table:substitute(self.version)
@@ -546,11 +552,7 @@ function gpackage_class:load(gpackage_path, build_definition)
    local function substitute_recursive(reference)
       for k, v in pairs(reference.ref) do
          if type(v) == "string" then
-            print("LOL")
-            print(k)
-            print(v)
             reference.ref[k] = self.symbol_table:substitute(v)
-            print(reference.ref[k])
          elseif type(v) == "table" then
             local reference = { ref = v }
             substitute_recursive(reference)
@@ -561,29 +563,10 @@ function gpackage_class:load(gpackage_path, build_definition)
    -- Substitute in self
    local reference = { ref = self }
    substitute_recursive(reference)
-   --for k, v in pairs(self) do
-   --   --if type(v) == "string" then
-   --      self[k] = self.symbol_table:substitute(v)
-   --   --end
-   --end
-
-   --for k, v in pairs(self.lmod) do
-   --   if type(v) == "string" then
-   --      self.lmod[k] = self.symbol_table:substitute(v)
-   --   elseif type(v) == "table" then
-   --      for kk, vv in pairs(self.lmod[k]) do
-   --         print(kk)
-   --         print(vv)
-   --         self.lmod[k][kk] = self.symbol_table:substitute(vv)
-   --      end
-   --   end
-   --end
-
-   --exit(0)
 end
 
 function gpackage_class:is_git()
-   return self.url:match("git$")
+   return self.urls[1].url:match("git$")
 end
 
 -- Check validity of gpackage
@@ -592,8 +575,13 @@ function gpackage_class:is_valid()
       logger:alert("No name in Gpack.")
       assert(false)
    end
+   
+   local count = 0
+   for key, value in pairs(self.urls) do
+      count = count + 1
+   end
 
-   if util.isempty(self.url) then
+   if count == 0 then
       logger:alert("No url given in Gpack.")
       assert(false)
    end
@@ -602,7 +590,13 @@ end
 function gpackage_class:print()
    logger:message("Name      : " .. self.name)
    logger:message("Homepage  : " .. self.homepage)
-   logger:message("Url       : " .. self.url)
+   logger:message("Urls      : ")
+   for key, value in pairs(self.urls) do
+      logger:message("   Source   : " .. value.url)
+      if value.sig then
+         logger:message("   Signature: " .. value.sig)
+      end
+   end
    logger:message("Version   : " .. self.version)
 
    if self.signature then
