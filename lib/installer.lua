@@ -830,11 +830,10 @@ function installer_class:unpack()
 
    -- do unpack
    for key, value in pairs(self.sources) do
-      if not lfs.attributes(self.build.unpack_path, 'mode') then
-         filesystem.mkdir(self.build.unpack_path, {}, true)
-         
+      --if not lfs.attributes(value.unpack_path, 'mode') then
+         filesystem.mkdir(value.unpack_path, {}, true)
          unpack_source_file(value.source_path, value.unpack_path)
-      end
+      --end
    end
 end
 
