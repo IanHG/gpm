@@ -718,7 +718,6 @@ function installer_class:__init()
 
    self.build = {
       build_path   = "",
-      --source_path  = "",
       unpack_path  = "",
       install_path = "",
       
@@ -731,9 +730,7 @@ end
 --- Initialize installation of package.
 function installer_class:initialize()
    self.build.build_path     = generate_build_path(self.gpack)
-   --self.build.source_path    = path.join(self.build.build_path, self.gpack.nameversion .. "." .. get_extension(self.gpack.urls[1].url))
    self.build.unpack_path    = path.join(self.build.build_path, self.gpack.nameversion)
-   --self.build.signature_path = path.join(self.build.build_path, self.gpack.nameversion .. ".sig")
    self.build.log_path       = path.join(self.build.build_path, self.gpack.nameversion .. ".log")
    self.build.install_path   = generate_install_path(self.gpack)
    
@@ -754,7 +751,6 @@ function installer_class:initialize()
    -- Log initialization
    logger:message("Gpackage installer initialized.")
    logger:message("   build_path   : " .. self.build.build_path)
-   --logger:message("   source_path  : " .. self.build.source_path)
    logger:message("   unpack_path  : " .. self.build.unpack_path)
    logger:message("   install_path : " .. self.build.install_path)
 end
@@ -856,6 +852,12 @@ function installer_class:download(is_git)
    
    local count = 1
    for key, value in pairs(self.gpack.urls) do
+      local unpack_path = nil
+      if value.unpack then
+         unpack_path = value.unpack
+      else
+         unpack_path = self.build.unpack_path
+      end
       local source_path = nil
       if is_git then
          source_path = self.build.unpack_path

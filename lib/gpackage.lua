@@ -491,8 +491,8 @@ function gpackage_class:build_setter()
 end
 
 function gpackage_class:url_setter()
-   return function(url, sig)
-      table.insert(self.urls, { url = url, sig = sig} )
+   return function(url, sig, unpack)
+      table.insert(self.urls, { url = url, sig = sig, unpack = unpack} )
    end
 end
 
