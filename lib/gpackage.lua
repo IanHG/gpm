@@ -10,6 +10,7 @@ local downloader  = assert(require "lib.downloader")
 local symbtab     = assert(require "lib.symbtab")
 local ftable = assert(require "lib.ftable" )
 local luautil = assert(require "lib.luautil" )
+local env     = assert(require "lib.env")
 
 local function get_gpack_name_version(name)
    local split = util.split(name, "@")
@@ -408,6 +409,7 @@ function gpackage_class:__init(logger)
       build       = self:build_setter(),
       file        = self:element_setter("files", 2),
       post        = self:element_setter("post", 1),
+      get_env     = env.get_env,
       
       -- Lmod
       lmod   = function() 
