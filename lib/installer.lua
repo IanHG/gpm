@@ -861,8 +861,8 @@ function installer_class:download(is_git)
       if is_git then
          source_path = self.build.unpack_path
       else
-         source_path     = path.join(self.build.build_path, self.gpack.nameversion) 
-         local extension = get_extension(value.url)
+         local _, filename, extension = path.split_filename(value.url)
+         source_path     = path.join(self.build.build_path, filename) 
          if not util.isempty(extension) then
             source_path = source_path .. "." .. extension
          end
