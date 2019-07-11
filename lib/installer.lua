@@ -828,12 +828,21 @@ function installer_class:unpack()
       end
    end
 
-   -- do unpack
+   -- Check what to unpack
    for key, value in pairs(self.sources) do
-      --if not lfs.attributes(value.unpack_path, 'mode') then
+      if not lfs.attributes(value.unpack_path, 'mode') then
+         self.sources[key].mark_for_unpack = true
+      else
+         self.sources[key].mark_for_unpack = false
+      end
+   end
+
+   -- Do unpacking
+   for key, value in pairs(self.sources) do
+      if value.mark_for_unpack then
          filesystem.mkdir(value.unpack_path, {}, true)
          unpack_source_file(value.source_path, value.unpack_path)
-      --end
+      end
    end
 end
 

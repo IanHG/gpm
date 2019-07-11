@@ -29,10 +29,18 @@ local function set_env(name, value)
    return status
 end
 
+--
+local function get_env(name)
+   local env = posix_getenv(name)
+
+   return env
+end
+
 -- Create module
 local M = {}
 
 M.prepend_env = prepend_env
 M.set_env     = set_env
+M.get_env     = get_env
 
 return M
