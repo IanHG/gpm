@@ -293,6 +293,7 @@ function builder_class:__init(executor, creator, options)
    self.creator  = creator
 
    self.tag = options.tag
+   self.n_jobs = options.n_jobs
    
    -- Some internals
    self._ml_cmd   = nil
@@ -320,7 +321,7 @@ function builder_class:_generate_configure_exec_command(build, configargs)
 end
 
 function builder_class:_generate_make_exec_command()
-   local  make_command = self._ml_cmd .. "make -j" .. global_config.nprocesses
+   local  make_command = self._ml_cmd .. "make -j" .. self.n_jobs
    return make_command
 end
 
@@ -903,7 +904,7 @@ end
 function installer_class:build_gpack()
    filesystem.chdir(self.build.unpack_path)
    
-   local builder = builder_class:create(nil, self.executor, self.creator, { tag = self.tag })
+   local builder = builder_class:create(nil, self.executor, self.creator, { tag = self.tag, n_jobs = self.gpack.n_jobs})
    builder:install(self.gpack, self.build_definition, self.build)
 end
 

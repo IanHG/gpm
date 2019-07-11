@@ -346,6 +346,7 @@ function gpackage_class:__init(logger)
    self.signature   = nil
    self.description = ""
    self.nameversion = ""
+   self.n_jobs      = global_config.nprocesses
 
    -- Build
    self.builds   = {}
@@ -410,6 +411,7 @@ function gpackage_class:__init(logger)
       file        = self:element_setter("files", 2),
       post        = self:element_setter("post", 1),
       get_env     = env.get_env,
+      set_n_jobs  = self:n_jobs_setter(),
       
       -- Lmod
       lmod   = function() 
@@ -495,6 +497,12 @@ end
 function gpackage_class:url_setter()
    return function(url, sig, unpack)
       table.insert(self.urls, { url = url, sig = sig, unpack = unpack} )
+   end
+end
+
+function gpackage_class:n_jobs_setter()
+   return function(n_jobs)
+      self.n_jobs = n_jobs
    end
 end
 
