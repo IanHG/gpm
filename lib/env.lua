@@ -16,7 +16,11 @@ setup_posix_binds()
 -- Functions
 local function prepend_env(name, value)
    local path = posix_getenv(name)
-   path = value .. ":" .. path
+   if path then
+      path = value .. ":" .. path
+   else
+      path = value
+   end
    local status = posix_setenv(name, path, true)
 
    return status
@@ -24,7 +28,7 @@ end
 
 -- 
 local function set_env(name, value)
-   local status = posix_setenv(name, path, true)
+   local status = posix_setenv(name, value, true)
 
    return status
 end

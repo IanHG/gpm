@@ -701,7 +701,9 @@ function installer_class:__init()
       output.output = {}
    end)
    self.creator:add("set_env", function(options, input, output)
+      input.logger:message("Set ENV : '" .. options.name .. " = " .. options.value .. "'.")
       local status = env.set_env(options.name, options.value)
+      input.logger:message("     status : '" .. tostring(status))
       output.status = status
       output.output = {}
    end)
