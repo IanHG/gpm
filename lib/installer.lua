@@ -732,16 +732,27 @@ end
 
 --- Initialize installation of package.
 function installer_class:initialize()
+   -- Generate paths
    self.build.build_path     = generate_build_path(self.gpack)
    self.build.unpack_path    = path.join(self.build.build_path, self.gpack.nameversion)
    self.build.log_path       = path.join(self.build.build_path, self.gpack.nameversion .. ".log")
    self.build.install_path   = generate_install_path(self.gpack)
-   
+
    -- Add symbols to symbol table
-   print("HERE 3 : ")
-   print(self.symbtab)
    self.symbtab:add_symbol("build",   self.build.build_path  )
    self.symbtab:add_symbol("install", self.build.install_path)
+   
+   -- Assert that we have access to different paths
+   if filesystem.exists(self.build.build_path) then
+      if filesystem.owner(self.build.build_path) ~= global_config.user.euid then
+         error("Build path '" .. self.build.build_path .. "' not owned by current user.")
+      end
+   end
+   if filesystem.exists(self.build.install_path) then
+      if filesystem.owner(self.build.install_path) ~= global_config.user.euid then
+         error("Install path '" .. self.build.install_path .. "' not owned by current user.")
+      end
+   end
 
    -- Change directory to build_path
    filesystem.rmdir(self.build.build_path, true)

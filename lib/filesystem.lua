@@ -236,6 +236,22 @@ local function chmod(path, mode)
    return _posix.sys.stat.chmod(path, mode)
 end
 
+---
+--
+local function owner(path)
+   return _lfs.attributes(path, "uid")
+end
+
+---
+--
+local function group(path)
+   return _lfs.attributes(path, "gid")
+end
+
+local function permissions(path)
+   return _lfs.attributes(path, "permissions")
+end
+
 --- Load module
 M.exists    = exists
 M.isfile    = isfile
@@ -250,5 +266,8 @@ M.rmdir     = rmdir
 M.chdir     = chdir
 M.cwd       = cwd
 M.chmod     = chmod
+M.owner     = owner
+M.group     = group
+M.permissions = permissions
 
 return M

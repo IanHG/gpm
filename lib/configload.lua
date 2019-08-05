@@ -1,12 +1,28 @@
 -- Create module
 local M = {}
 
+local posix      = assert(require "posix")
+
 -- Load local packages
 local filesystem = assert(require "lib.filesystem")
 local util       = assert(require "lib.util")
 local path       = assert(require "lib.path")
 local logging    = assert(require "lib.logging")
 local logger     = logging.logger
+
+local function setup_posix_binds()
+   if posix.unistd then
+      posix_getuid  = posix.unistd.getuid
+      posix_geteuid = posix.unistd.geteuid
+      posix_getgroups = posix.unistd.getgroups
+   else
+      posix_getuid  = posix.getuid
+      posix_geteuid = posix.geteuid
+      posix_getgroups = posix.getgroups
+   end
+end
+
+setup_posix_binds()
 
 -- Helper function to find folder of current script.
 local function folder_of_this()
@@ -39,12 +55,19 @@ local global_default_config = {
    repo = "https://raw.githubusercontent.com/IanHG/gpm-gpackages/master",
    -- As of now we must give the hierarchical keyword, so we just default to empty
    heirarchical = {},
-
+   
    -- Meta stack
    meta_stack = {
       parent = nil,
       allow_registration = false,
       register = true,
+   },
+
+   -- User id
+   user = {
+      uid  = nil,
+      euid = nil,
+      groups = nil,
    }
 }
 
@@ -93,6 +116,35 @@ local function configpath(args)
    
    -- Return path to check
    return config_path
+end
+
+---
+--
+local function check(config)
+   -- Assert that current user has write access to base build path
+   local function check_owned_by_group()
+      local group = filesystem.group(config.base_build_directory)
+      for k, v in pairs(config.user.groups) do
+         if v == group then
+            return true
+         end
+      end
+      return false
+   end
+   
+   local owned_by_user  = (filesystem.owner(config.base_build_directory) == config.user.euid)
+   local owned_by_group = check_owned_by_group()
+
+   local build_path_permissions = filesystem.permissions(config.base_build_directory)
+   
+   local build_path_rw_permission 
+      =  (owned_by_user  and string.find(build_path_permissions, "rw......."))
+      or (owned_by_group and string.find(build_path_permissions, "...rw...."))
+      or string.find(build_path_permissions, "......rw.")
+   
+   if not build_path_rw_permission then
+      error("Current user does not have RW permission for build path '" .. config.base_build_directory .. "'")
+   end
 end
 
 --- Boostrap config dictionary.
@@ -230,10 +282,18 @@ bootstrap = function (config_path, args, default_config, set_global)
    if set_global then
       global_config = local_config
    end
+
+   local_config.user.uid  = posix_getuid()
+   local_config.user.euid = posix_geteuid()
+   local_config.user.groups = posix_getgroups()
+
+   -- Check sanity of config
+   check(local_config)
    
    -- Return the created config (return can be ignored if setting global config).
    return local_config
 end
+
 
 --- Print configuration.
 --
@@ -250,6 +310,7 @@ end
 -- Load module
 M.configpath   = configpath
 M.bootstrap    = bootstrap
+M.check        = check
 M.print_config = print_config
 
 return M
