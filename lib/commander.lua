@@ -2,6 +2,15 @@ local M = {}
 
 local class   = require "lib.class"
 
+---
+--
+local counter = 0
+
+local function get_uid()
+   counter = counter + 1
+   return counter
+end
+
 --- Class to hold single commands.
 -- A command definition includes a 'fn' taking up to 3 arguments:
 --    options
@@ -17,6 +26,7 @@ function command_class:__init()
    self.ctype   = nil
    self.fn      = nil
    self.options = nil
+   self.uid     = get_uid()
 end
 
 function command_class:substitute(symbtab)
@@ -83,9 +93,13 @@ function command_executor_class:__init(logger)
    }
 end
 
+function command_executor_class:_command_uid(command)
+   return "[" .. tostring(command.uid) .. "]"
+end
+
 function command_executor_class:_log_pre_execute_command(command)
    if self._logger then
-      self._logger:message("Running command : '" .. command.ctype .. "'.")
+      self._logger:message(self:_command_uid(command) .. " Running command : '" .. command.ctype .. "'.")
    end
 end
 
@@ -95,9 +109,9 @@ function command_executor_class:_log_post_execute_command(command)
          self._logger:message(tostring(self._last.output.stdout), "raw")
       end
       if not self._last.status then
-         self._logger:alert("   Exit status : " .. tostring(self._last.status))
+         self._logger:alert  (self:_command_uid(command) .. "   Exit status : " .. tostring(self._last.status))
       else
-         self._logger:message("   Exit status : " .. tostring(self._last.status))
+         self._logger:message(self:_command_uid(command) .. "   Exit status : " .. tostring(self._last.status))
       end
    end
 end

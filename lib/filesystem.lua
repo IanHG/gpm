@@ -130,7 +130,9 @@ local function mkdir(path, mode, recursively)
 
    if does_exist then
       if not isdir(path) then
-         return nil, "Cannot create directory: File exists."
+         return nil, "Cannot create directory: File exists and is not 'directory'.", -1
+      else 
+         return true
       end
    else
       -- If we are creating recursively, we recurse
@@ -139,14 +141,17 @@ local function mkdir(path, mode, recursively)
          print("BASE PATH : " .. base_path)
          print("     PATH : " .. path)
          if (not isempty(base_path)) and ( not (base_path == path)) and (not exists(base_path)) then
-            mkdir(base_path, mode, recursively)
+            local status, error_msg, error_code = mkdir(base_path, mode, recursively)
+            if (not status) then
+               return status, error_msg, error_code
+            end
          end
       end
    end
 
    -- Create directory
-   local status = _lfs.mkdir(path)
-   return status
+   local  status, error_msg, error_code = _lfs.mkdir(path)
+   return status, error_msg, error_code
 end
 
 --- Remove a directory.

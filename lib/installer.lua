@@ -692,8 +692,9 @@ function installer_class:__init()
       output.output = {}
    end)
    self.creator:add("mkdir", function(options, input, output)
-      local status = filesystem.mkdir(options.path, options.mode, options.recursive)
+      local status, error_msg, error_code  = filesystem.mkdir(options.path, options.mode, options.recursive)
       output.status = status
+      output.stdout = error_msg
       output.output = {}
    end)
    self.creator:add("prepend_env", function(options, input, output)
@@ -744,12 +745,12 @@ function installer_class:initialize()
    
    -- Assert that we have access to different paths
    if filesystem.exists(self.build.build_path) then
-      if filesystem.owner(self.build.build_path) ~= global_config.user.euid then
+      if (global_config.user.euid ~= -1) and (filesystem.owner(self.build.build_path) ~= global_config.user.euid) then
          error("Build path '" .. self.build.build_path .. "' not owned by current user.")
       end
    end
    if filesystem.exists(self.build.install_path) then
-      if filesystem.owner(self.build.install_path) ~= global_config.user.euid then
+      if (global_config.user.euid ~= -1) and (filesystem.owner(self.build.install_path) ~= global_config.user.euid) then
          error("Install path '" .. self.build.install_path .. "' not owned by current user.")
       end
    end
@@ -757,7 +758,13 @@ function installer_class:initialize()
    -- Change directory to build_path
    filesystem.rmdir(self.build.build_path, true)
    filesystem.mkdir(self.build.build_path, {}, true)
-   filesystem.chdir(self.build.build_path)
+   logger:message("SEEE MEEEE")
+   logger:message("SEEE MEEEE")
+   logger:message("SEEE MEEEE")
+   logger:message("SEEE MEEEE")
+   logger:message("SEEE MEEEE")
+   logger:message("Pushing: " .. self.build.build_path)
+   self.pathhandler:push(self.build.build_path)
    
    -- Open package log file
    logger:open_logfile("package", self.build.log_path)
@@ -807,7 +814,7 @@ function installer_class:unpack()
    if self.options.force_unpack then
       filesystem.rmdir(self.build.unpack_path, true)
    end
-   
+
    -- Define local function for unpacking
    local function unpack_source_file(source_path, unpack_path)
       if not unpack_path then
@@ -820,15 +827,41 @@ function installer_class:unpack()
       local is_tar    = string.match(source_path, "tar")
       local is_zip    = string.match(source_path, "zip")
       local is_rpm    = string.match(source_path, "rpm")
+
+      local tar_line_strip = nil
+      local n_strip = 0
+      if is_tar_gz then
+         tar_line_strip = "tar -ztf "
+      elseif is_tar_gz then
+         tar_line_strip = "tar -jtf "
+      elseif is_tar_xz or is_tar then
+         tar_line_strip = "tar -tf "
+      end
+      
+      if tar_line_strip then
+         tar_line_strip = tar_line_strip .. source_path
+         
+         local stdout = ""
+         local status = util.execute_command(tar_line_strip, stdout)
+         if status then
+            local prefix = util.lcp(util.split(stdout, "\n"))
+            if util.isempty(prefix) then
+               n_strip = 0
+            else
+               n_strip = 1
+            end
+         end
+      end
+
       local tar_line  = nil
       if is_tar_gz then
-         tar_line = "tar -zxvf " .. source_path .. " -C " .. unpack_path .. " --strip-components=1"
+         tar_line = "tar -zxvf " .. source_path .. " -C " .. unpack_path .. " --strip-components=" .. tostring(n_strip)
       elseif is_tar_xz then
-         tar_line = "tar -xvf "  .. source_path .. " -C " .. unpack_path .. " --strip-components=1"
+         tar_line = "tar -xvf "  .. source_path .. " -C " .. unpack_path .. " --strip-components=" .. tostring(n_strip)
       elseif is_tar_bz then
-         tar_line = "tar -jxvf " .. source_path .. " -C " .. unpack_path .. " --strip-components=1"
+         tar_line = "tar -jxvf " .. source_path .. " -C " .. unpack_path .. " --strip-components=" .. tostring(n_strip)
       elseif is_tar then
-         tar_line = "tar -xvf "  .. source_path .. " -C " .. unpack_path .. " --strip-components=1"
+         tar_line = "tar -xvf "  .. source_path .. " -C " .. unpack_path .. " --strip-components=" .. tostring(n_strip)
       elseif is_zip then
          tar_line = "unzip "     .. source_path
       elseif is_rpm then
@@ -913,7 +946,8 @@ end
 
 -- Build the package
 function installer_class:build_gpack()
-   filesystem.chdir(self.build.unpack_path)
+   self.pathhandler:push(self.build.unpack_path)
+   --filesystem.chdir(self.build.unpack_path)
    
    local builder = builder_class:create(nil, self.executor, self.creator, { tag = self.tag, n_jobs = self.gpack.n_jobs})
    builder:install(self.gpack, self.build_definition, self.build)

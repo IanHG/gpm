@@ -20,6 +20,22 @@ local function setup_posix_binds()
       posix_geteuid = posix.geteuid
       posix_getgroups = posix.getgroups
    end
+
+   if not posix_getuid then
+      posix_getuid = function() 
+         return -1
+      end
+   end
+   if not posix_geteuid then
+      posix_geteuid = function() 
+         return -1
+      end
+   end
+   if not posix_getgroups then
+      posix_getgroups = function() 
+         return -1
+      end
+   end
 end
 
 setup_posix_binds()
@@ -143,7 +159,7 @@ local function check(config)
       or string.find(build_path_permissions, "......rw.")
    
    if not build_path_rw_permission then
-      error("Current user does not have RW permission for build path '" .. config.base_build_directory .. "'")
+      --error("Current user does not have RW permission for build path '" .. config.base_build_directory .. "'")
    end
 end
 
@@ -283,8 +299,8 @@ bootstrap = function (config_path, args, default_config, set_global)
       global_config = local_config
    end
 
-   local_config.user.uid  = posix_getuid()
-   local_config.user.euid = posix_geteuid()
+   local_config.user.uid    = posix_getuid()
+   local_config.user.euid   = posix_geteuid()
    local_config.user.groups = posix_getgroups()
 
    -- Check sanity of config

@@ -228,7 +228,7 @@ local function conditional(condition, if_true, if_false)
    end
 end
 
-function deepcompare(t1,t2,ignore_mt)
+local function deepcompare(t1,t2,ignore_mt)
    local ty1 = type(t1)
    local ty2 = type(t2)
    if ty1 ~= ty2 then return false end
@@ -248,7 +248,35 @@ function deepcompare(t1,t2,ignore_mt)
    return true
 end
 
+local function lcp(str_list)
+   local shortest, prefix, first = math.huge, ""
 
+   -- Find shortest string in list
+   for _, str in pairs(str_list) do
+      if std:len() < shortest then 
+         shortest = str:len()
+      end
+   end
+
+   -- Find common prefix
+   for str_pos = 1, shortest do
+      if str_list[1] then
+         first = str_list[1]:sub(str_pos, str_pos)
+      else
+         return prefix
+      end
+
+      for list_pos = 1, #str_list do
+         if str_list[list_pos]:sub(str_pos, str_pos) ~= first then
+            return prefix
+         end
+      end
+
+      prefix = prefix .. first
+   end
+
+   return prefix
+end
 
 -- Load module functions
 M.print = table_print
@@ -262,5 +290,6 @@ M.ordered = ordered
 M.conditional = conditional
 M.deepcompare = deepcompare
 M.isempty = hwdetect_util.isempty
+M.lcp     = lcp
 
 return M

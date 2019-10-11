@@ -13,6 +13,11 @@ function path_handler_class:__init(st, add_cwd)
    self.paths = {}
 
    if add_cwd then
+      local cwd, error_msg = filesystem.cwd()
+      if not cwd then
+         logger:alert(error_msg)
+         assert(false)
+      end
       self:push(filesystem.cwd())
    end
    
@@ -32,8 +37,10 @@ function path_handler_class:push(ppath)
       self.symbol_table:add_symbol("cwd", self.paths[#self.paths], true)
    end
 
-   local status = filesystem.chdir(self.paths[#self.paths])
+   local status, error_msg = filesystem.chdir(self.paths[#self.paths])
+   
    if status == nil then
+      logger:alert("Filesystem: " .. error_msg)
       assert(false)
    end
 end
@@ -43,12 +50,16 @@ function path_handler_class:pop()
       logger:message(" Popping path : '" .. self.paths[#self.paths] .. "'.")
       self.paths[#self.paths] = nil
       if #self.paths > 0 then
-         self.symbol_table:add_symbol("cwd", self.paths[#self.paths], true)
+         if self.symbol_table then
+            self.symbol_table:add_symbol("cwd", self.paths[#self.paths], true)
+         end
          local status = filesystem.chdir(self.paths[#self.paths])
          if status == nil then
             assert(false)
          end
          logger:message(" New path is: '" .. self.paths[#self.paths] .. "'.")
+      else
+         logger:message(" No new path to chdir to :C.")
       end
    else
       logger:message(" Popping nothing.")

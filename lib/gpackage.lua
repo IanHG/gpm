@@ -223,6 +223,10 @@ function gpackage_builder_class:__init(btype, upstream_ftable, logger)
             popdir = function()
                table.insert(self.commands, { command = "popdir", options = { dir = dir} })
                self.ftable:pop()
+            end,
+            pop_directory = function()
+               table.insert(self.commands, { command = "popdir", options = { dir = dir} })
+               self.ftable:pop()
             end
          })
       end,
