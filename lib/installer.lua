@@ -827,7 +827,8 @@ function installer_class:unpack()
       local is_tar    = string.match(source_path, "tar")
       local is_zip    = string.match(source_path, "zip")
       local is_rpm    = string.match(source_path, "rpm")
-
+      
+      -- Find longest common prefix, if not empty will strip 1 directory
       local tar_line_strip = nil
       local n_strip = 0
       if is_tar_gz then
@@ -841,10 +842,23 @@ function installer_class:unpack()
       if tar_line_strip then
          tar_line_strip = tar_line_strip .. source_path
          
-         local stdout = ""
-         local status = util.execute_command(tar_line_strip, stdout)
+         local output = { output = tostring("") }
+         local status = util.execute_command(tar_line_strip, true, output)
          if status then
-            local prefix = util.lcp(util.split(stdout, "\n"))
+            local split  = util.split(output.output, "\n")
+            local size   = #split
+            
+            -- Remove lines start with '+' (this is the tar command itself)
+            for i = 1, size do
+               if split[i]:gmatch("^+") then
+                  for j = i + 1, size do
+                     split[j - 1] = split[j]
+                  end
+                  size = size - 1
+               end
+            end
+
+            local prefix = util.lcp(split)
             if util.isempty(prefix) then
                n_strip = 0
             else

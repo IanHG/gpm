@@ -116,12 +116,25 @@ end
 --- Run command in shell.
 --
 -- @param command    The command to run.
+-- @param check      Check status.
 -- @param log        An optional log.
 --
 -- @return Returns status of command.
-local function execute_command(command, check)
+local function execute_command(command, check, log)
    if check == nil then
       check = true
+   end
+
+   if log then
+      if type(log) ~= "table" then
+         log = { log = log }
+      end
+   else 
+      log = {}
+   end
+
+   for key, value in pairs(logger.logs) do
+      log[key] = value
    end
 
    -- Do some pre-logging
@@ -129,7 +142,8 @@ local function execute_command(command, check)
 
    -- Run the command
    --bool, msg, status = execcmd.execcmd_shexec(command, logger.logs)
-   bool, msg, status = execcmd.execcmd_bashexec(command, logger.logs)
+   --bool, msg, status = execcmd.execcmd_bashexec(command, logger.logs)
+   bool, msg, status = execcmd.execcmd_bashexec(command, log)
    
    -- Do some post logging
    if (not check) or bool then
@@ -253,7 +267,7 @@ local function lcp(str_list)
 
    -- Find shortest string in list
    for _, str in pairs(str_list) do
-      if std:len() < shortest then 
+      if str:len() < shortest then 
          shortest = str:len()
       end
    end

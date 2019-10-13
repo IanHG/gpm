@@ -264,7 +264,7 @@ local function execcmd_impl(cmd, log)
       -- Wait for child
       wpid, msg, status = execwait(pid)
    end
-      
+
    -- Return status of call
    if status == 0 then
       return true, msg, status
