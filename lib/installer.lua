@@ -758,12 +758,6 @@ function installer_class:initialize()
    -- Change directory to build_path
    filesystem.rmdir(self.build.build_path, true)
    filesystem.mkdir(self.build.build_path, {}, true)
-   logger:message("SEEE MEEEE")
-   logger:message("SEEE MEEEE")
-   logger:message("SEEE MEEEE")
-   logger:message("SEEE MEEEE")
-   logger:message("SEEE MEEEE")
-   logger:message("Pushing: " .. self.build.build_path)
    self.pathhandler:push(self.build.build_path)
    
    -- Open package log file
