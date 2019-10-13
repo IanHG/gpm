@@ -432,10 +432,16 @@ local function setup_lmod_for_lmod(package)
    local modulefile_directory = package.lmod.modulefile_directory
    filesystem.mkdir(modulefile_directory, "", true)
    
-   --local lmod_filename     = path.join(package.definition.pkginstall .. "/lmod/" .. package.definition.pkgversion .. "/modulefiles/Core/lmod/", package.definition.pkgversion .. ".lua")
-   local lmod_filename     = package.definition.pkginstall .. "/lmod/" .. package.definition.pkgversion .. "/modulefiles/Core/lmod.lua"
+   local lmod_filename_1   = package.definition.pkginstall .. "/lmod/" .. package.definition.pkgversion .. "/modulefiles/Core/lmod.lua"
    local lmod_filename_new = path.join(modulefile_directory, package.definition.pkgversion .. ".lua")
-   filesystem.copy(lmod_filename, lmod_filename_new)
+   local status            = filesystem.copy(lmod_filename_1, lmod_filename_new)
+   if not status then
+      local lmod_filename_2 = path.join(package.definition.pkginstall .. "/lmod/" .. package.definition.pkgversion .. "/modulefiles/Core/lmod/", package.definition.pkgversion .. ".lua")
+      local status          = filesystem.copy(lmod_filename_2, lmod_filename_new)
+      if not status then
+         error("Cannot copy lmod modules file.")
+      end
+   end
    
    -- Create settarg modules directory
    local settarg_modulefile_directory = package.lmod.modulefile_directory:gsub("lmod", "settarg")
