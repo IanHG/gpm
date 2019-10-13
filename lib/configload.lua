@@ -137,13 +137,15 @@ local function check(config)
 
    local build_path_permissions = filesystem.permissions(config.base_build_directory)
    
-   local build_path_rw_permission 
-      =  (owned_by_user  and string.find(build_path_permissions, "rw......."))
-      or (owned_by_group and string.find(build_path_permissions, "...rw...."))
-      or string.find(build_path_permissions, "......rw.")
-   
-   if not build_path_rw_permission then
-      error("Current user does not have RW permission for build path '" .. config.base_build_directory .. "'")
+   if build_path_permissions then
+      local build_path_rw_permission 
+         =  (owned_by_user  and string.find(build_path_permissions, "rw......."))
+         or (owned_by_group and string.find(build_path_permissions, "...rw...."))
+         or string.find(build_path_permissions, "......rw.")
+      
+      if not build_path_rw_permission then
+         error("Current user does not have RW permission for build path '" .. config.base_build_directory .. "'")
+      end
    end
 end
 

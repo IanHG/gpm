@@ -1,5 +1,5 @@
-local lfs = assert(require "lfs")
 
+local filesystem = assert(require "lib.filesystem")
 local util       = assert(require "lib.util")
 local path       = assert(require "lib.path")
 local version    = assert(require "lib.version")
@@ -27,6 +27,15 @@ local function get_parent_configs(config)
    end
 
    return parent_configs
+end
+
+---
+--
+--
+local function create_directory(path)
+   if not filesystem.exists(path) then
+      filesystem.mkdir(path)
+   end
 end
 
 -------------------------------------
@@ -439,16 +448,21 @@ end
 local function initialize(args)
    -- Try
    exception.try(function() 
-      -- Create a build directory
-      if not lfs.attributes(global_config.base_build_directory) then
-         lfs.mkdir(global_config.base_build_directory)
+      -- Create directories
+      create_directory(global_config.base_build_directory)
+      create_directory(global_config.gpk_path)
+      create_directory(global_config.gps_path)
+      create_directory(global_config.lmod_directory)
+      
+      for k,v in pairs(global_config.groups) do
+         create_directory(path.join(global_config.stack_path, v))
+         create_directory(path.join(global_config.lmod_directory, v))
       end
 
       -- Check that required luapackages exist
       --check_luapackages(args)
       local parent_configs = get_parent_configs(global_config)
       
-      print("CREATE SHELL")
       -- Create shell file to source new software tree
       create_shell_environment(parent_configs)
       
@@ -459,16 +473,7 @@ local function initialize(args)
          register_in_parents(parent_configs)
       end
 
-      -- Create directories
-      if not lfs.attributes(global_config.lmod_directory) then
-         lfs.mkdir(global_config.lmod_directory)
-      end
-      
-      for k,v in pairs(global_config.groups) do
-         lfs.mkdir(path.join(global_config.stack_path, v))
-         lfs.mkdir(path.join(global_config.lmod_directory, v))
-      end
-
+      -- Write the lmodrc
       write_lmodrc()
 
       -- Create module file for gpm

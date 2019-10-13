@@ -68,15 +68,21 @@ end
 --
 -- @return 
 local function copy(src, dest)
-   infile = io.open(src, "r")
-   instr = infile:read("*a")
+   -- Open file
+   local infile, eror_msg, error_code = io.open(src, "r")
+   if not infile then
+      return false, error_msg, error_code
+   end
+
+   -- copy the file
+   local instr  = infile:read("*a")
    infile:close()
 
-   outfile = io.open(dest, "w")
+   local outfile = io.open(dest, "w")
    outfile:write(instr)
    outfile:close()
 
-   return 0
+   return true
 end
 
 --- Remove a file.
