@@ -64,7 +64,7 @@ end
 ---
 --
 --
-local function split_filename(strFilename)
+local function split_file_name(strFilename)
    -- Returns the Path, Filename, and Extension as 3 values
    if lfs.attributes(strFilename, "mode") == "directory" then
       local strPath = strFilename:gsub("[\\/]$","")
@@ -76,19 +76,40 @@ end
 ---
 --
 --
-local function get_filename(url)
+local function get_file_name(url)
   --return url:match("^.+/(.+)$")
-  local _, file, _ = split_filename(url)
+  local _, file, _ = split_file_name(url)
   return file
 end
 
----
+--- Get file extension from url.
+--  
+-- @param url   The url to check.
 --
---
-local function get_file_extension(url)
-  --return url:match("^.+(%..+)$")
-  local path, file, ext = split_filename(url)
+-- @return   Returns extension as string.
+local function get_file_ext(url)
+  local path, file, ext = split_file_name(url)
   return ext
+end
+
+--- Check if url has extension.
+--
+-- @param url   The url to check.
+--
+-- @return      Returns true if url has extension, otherwise returns false.
+local function has_file_ext(url)
+   local  path, file, ext = split_file_name(url)
+   return not util.isempty(ext)
+end
+
+--- Remove file extension from url if present.
+--
+-- @param url   The url to remove extension from.
+--
+-- @return      Return url without extension.
+local function remove_file_ext(url)
+   local  path, file, ext = split_file_name(url)
+   return string.gsub(url, "." .. ext, "")
 end
 
 --- Take a separated string of paths and return an iterator to loop over the paths.
@@ -112,9 +133,11 @@ M.has_dir_end    = has_dir_end
 M.remove_dir_end = remove_dir_end
 M.join           = join
 
-M.filename       = get_filename
-M.extension      = get_file_extension
-M.split_filename = split_filename
+M.get_file_name   = get_file_name
+M.get_file_ext    = get_file_ext
+M.has_file_ext    = has_file_ext
+M.remove_file_ext = remove_file_ext
+M.split_filename  = split_file_name
 
 M.iterator       = iterator
 

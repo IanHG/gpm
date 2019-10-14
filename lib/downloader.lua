@@ -78,7 +78,7 @@ function downloader_class:http_download_command()
       print("curl download not implemented yet")
       assert(false)
    else
-      print("Unknown http_donwload method")
+      print("Unknown http_download method")
       assert(false)
    end
 end
