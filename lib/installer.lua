@@ -92,12 +92,10 @@ local function generate_install_path(gpack)
    if gpack.lmod.group then
       install_path = path.join(global_config.stack_path, gpack.lmod.group)
       
-      --if is_heirarchical(gpack.lmod.group) then
-      --   for key,prereq in util.ordered(gpack.prerequisite) do
-      --      assert(false) -- not tested
-      --      install_path = path.join(install_path, string.gsub(prereq, "/", "-"))
-      --   end
-      --end
+      -- Take care of heirachical dependencies
+      for prereq, _ in util.ordered(gpack.dependencies.heirarchical) do
+         install_path = path.join(install_path, prereq.name .. "-" .. prereq.version)
+      end
       
       install_path = path.join(path.join(install_path, gpack.name), gpack.version)
    else
@@ -117,27 +115,28 @@ end
 local function generate_module_install_path(gpack)
    -- Lmod stuff
    local module_install_path = global_config.lmod_directory
-   module_install_path = path.join(module_install_path, gpack.lmod.group)
+   local module_group  = gpack.lmod.group
    
-   --if is_heirarchical(package.definition.pkggroup) then
-   --   if prerequisite then
-   --      nprereq = #prerequisite
-   --   else
-   --      nprereq = 0
-   --   end
+   -- Take care of heirarchial dependencies
+   local heirarchical = gpack.dependencies.heirarchical
+   
+   if #heirarchical > 0 then
+      nprereq = #heirarchical
+   else
+      nprereq = 0
+   end
 
-   --   if nprereq ~= 0 then
-   --      lmod_base = prerequisite[nprereq]
-   --   end
-   --end
+   if nprereq ~= 0 then
+      module_group = heirarchical[nprereq].group
+   end
+   
+   module_install_path = path.join(module_install_path, module_group)
 
-   
-   --if is_heirarchical(package.definition.pkggroup) then
-   --   for key,prereq in util.ordered(package.prerequisite) do
-   --      package.lmod.modulefile_directory = path.join(package.lmod.modulefile_directory, prereq)
-   --   end
-   --end
-   
+   for prereq, _ in util.ordered(heirarchical) do
+      module_install_path = path.join(module_install_path, path.join(prereq.name, prereq.version))
+   end
+  
+   -- Append name of new package
    module_install_path = path.join(module_install_path, gpack.name)
 
    return module_install_path
@@ -565,9 +564,16 @@ function lmod_installer_class:write_modulefile()
    self.modulefile:write("]])\n")
    self.modulefile:write("\n")
    self.modulefile:write("-- Set family\n")
+   self.modulefile:write("local fam")
+   local first = true
    for k, v in pairs(self.gpack.lmod.family) do
       self.modulefile:write("family(\"" .. v[1] .. "\")\n")
+      if first then
+         "fam = " .. v[1]
+      end
+      first = false
    end
+
    self.modulefile:write("\n")
    self.modulefile:write("-- Basic module setup\n")
    self.modulefile:write("local version       = myModuleVersion()\n")
@@ -579,7 +585,7 @@ function lmod_installer_class:write_modulefile()
    -- Heirarchial
    self.modulefile:write("\n")
    self.modulefile:write("-- Heirarchical modules setup\n")
-   self.modulefile:write("local dir = pathJoin(name, packagePrereq)\n")
+   self.modulefile:write("local dir = pathJoin(fam and fam or name, packagePrereq)\n")
    self.modulefile:write("for str in os.getenv(\"MODULEPATH_ROOT\"):gmatch(\"([^:]+)\") do\n")
    self.modulefile:write("   prepend_path('MODULEPATH', pathJoin(str, dir))\n")
    self.modulefile:write("end\n")

@@ -41,14 +41,27 @@ local function dofile_into_environment(filename, env)
       return content
    end
 
+   function assert_load(loaded, err)
+      if not loaded then
+         error("GPack is buggy: '" .. err .. "'.")
+      end
+   end
+
    setmetatable ( env, { __index = _G } )
    local status = nil
    local result = nil
+
+   logger:message("Trying to load file : '" .. filename .. "'.")
+
    if luautil.version() == "Lua 5.1" then
-      status, result = assert(pcall(setfenv(assert(loadfile(filename)), env)))
+      local loaded, err = loadfile(filename)
+      assert_load(loaded, err)
+      status, result = assert(pcall(setfenv(loaded, env)))
    else
-      local content  = readall(filename)
-      status, result = assert(pcall(load(content, nil, nil, env)))
+      local content     = readall(filename)
+      local loaded, err = load(content, nil, nil, env)
+      assert_load(loaded, err)
+      status, result    = assert(pcall(loaded))
    end
    setmetatable(env, nil)
    return result
@@ -70,6 +83,7 @@ function build_definition_class:__init(args)
    self.name     = nil
    self.version  = nil
    self.tag      = nil
+   self.group    = nil
    
    if args ~= nil then
       self.url      = args.url
@@ -365,7 +379,7 @@ function gpackage_class:__init(logger)
 
    -- Dependencies
    self.dependencies = {
-      heirarchical = {},
+      heirarchical = util.ordered_table({}),
       dependson    = {},
       load         = {},
    }
@@ -410,9 +424,10 @@ function gpackage_class:__init(logger)
       description = self:string_setter("description"),
 
       -- Depend
-      dependson = self:dependson_setter(),
-      depends   = self:dependson_setter(),
-      depend    = self:dependson_setter(),
+      depends_on = self:dependson_setter(),
+      dependson  = self:dependson_setter(),
+      depends    = self:dependson_setter(),
+      depend     = self:dependson_setter(),
 
       -- Build
       autoconf    = self:autoconf_setter(),
@@ -447,7 +462,9 @@ function gpackage_class:dependson_setter()
       local depend_build_definition = build_definition_class:create({})
       depend_build_definition:initialize(gpack_name_version_tag)
 
-      if dependency == "heirarchical" then
+      if string.match(dependency, "heirarchical") then
+         local split = util.split(dependency, ":")
+         depend_build_definition.group = split[2]
          table.insert(self.dependencies.heirarchical, depend_build_definition)
       elseif dependency == "dependson" then
          table.insert(self.dependencies.dependson, depend_build_definition)
@@ -588,6 +605,10 @@ end
 function gpackage_class:is_git()
    return self.urls[1].url:match("git$")
 end
+
+--function gpackage_class:get_heirarchical()
+--   return self.dependencies.heirarchical
+--end
 
 -- Check validity of gpackage
 function gpackage_class:is_valid()
