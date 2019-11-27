@@ -569,7 +569,7 @@ function lmod_installer_class:write_modulefile()
    for k, v in pairs(self.gpack.lmod.family) do
       self.modulefile:write("family(\"" .. v[1] .. "\")\n")
       if first then
-         "fam = " .. v[1]
+         self.modulefile:write("fam = " .. v[1] .. "\n")
       end
       first = false
    end
