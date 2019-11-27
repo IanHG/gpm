@@ -312,6 +312,7 @@ function gpackage_lmod_class:__init(upstream_ftable, logger)
    self.prepend_path_abs = {}
    self.alias            = {}
    self.autopath         = true
+   self.autopaths        = {}
    
    --
    self.ftable     = ftable.create_ftable(nil, nil, logger)
@@ -330,6 +331,7 @@ function gpackage_lmod_class:__init(upstream_ftable, logger)
       prepend_path_abs = self:element_setter("prepend_path_abs", 2),
       alias            = self:element_setter("alias"           , 2),
       noautopath       = self:false_setter("autopath"),
+      autopath         = function(path) table.insert(self.autopaths, path) end
 
       lmodend = function()
          return upstream_ftable:get()

@@ -242,9 +242,8 @@ local function generate_prepend_path(gpack, install_path, prepend_path)
    if prepend_path == nil then
       prepend_path = {}
    end
-   
-   -- Try to auto-generate
-   if gpack.lmod.autopath then
+
+   local function generate_prepend_path_auto(install_path)
       for directory in lfs.dir(install_path) do
          if directory:match("^bin$") then
             table.insert(prepend_path, {"PATH", path.join(install_path, "bin")})
@@ -265,6 +264,18 @@ local function generate_prepend_path(gpack, install_path, prepend_path)
             -- do nothing
          end
       end
+   end
+   
+   -- Try to auto-generate
+   if gpack.lmod.autopath then
+      generate_prepend_path_auto(install_path)
+   end
+
+   for key, value in pairs(gpack.lmod.autopaths) do
+      if path.is_relative(value) then
+         value = path.join(install_path, value)
+      end
+      generate_prepend_path_auto(value)
    end
    
    -- Add paths from package
