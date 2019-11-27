@@ -564,7 +564,7 @@ function lmod_installer_class:write_modulefile()
    self.modulefile:write("]])\n")
    self.modulefile:write("\n")
    self.modulefile:write("-- Set family\n")
-   self.modulefile:write("local fam")
+   self.modulefile:write("local fam\n")
    local first = true
    for k, v in pairs(self.gpack.lmod.family) do
       self.modulefile:write("family(\"" .. v[1] .. "\")\n")
