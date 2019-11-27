@@ -41,14 +41,27 @@ local function dofile_into_environment(filename, env)
       return content
    end
 
+   function assert_load(loaded, err)
+      if not loaded then
+         error("GPack is buggy: '" .. err .. "'.")
+      end
+   end
+
    setmetatable ( env, { __index = _G } )
    local status = nil
    local result = nil
+
+   logger:message("Trying to load file : '" .. filename .. "'.")
+
    if luautil.version() == "Lua 5.1" then
-      status, result = assert(pcall(setfenv(assert(loadfile(filename)), env)))
+      local loaded, err = loadfile(filename)
+      assert_load(loaded, err)
+      status, result = assert(pcall(setfenv(loaded, env)))
    else
-      local content  = readall(filename)
-      status, result = assert(pcall(load(content, nil, nil, env)))
+      local content     = readall(filename)
+      local loaded, err = load(content, nil, nil, env)
+      assert_load(loaded, err)
+      status, result    = assert(pcall(loaded))
    end
    setmetatable(env, nil)
    return result
@@ -70,6 +83,7 @@ function build_definition_class:__init(args)
    self.name     = nil
    self.version  = nil
    self.tag      = nil
+   self.group    = nil
    
    if args ~= nil then
       self.url      = args.url
@@ -103,7 +117,7 @@ function build_definition_class:initialize(name_version_tag)
    end
    
    -- What is left is the name
-   self.name = name_version_tag
+   self.name = path.remove_file_ext(name_version_tag)
 end
 
 
@@ -210,6 +224,9 @@ function gpackage_builder_class:__init(btype, upstream_ftable, logger)
       makeinstall = function() 
          table.insert(self.commands, { command = "makeinstall" }) 
       end,
+      make_install = function() 
+         table.insert(self.commands, { command = "makeinstall" }) 
+      end,
       shell = function(cmd)
          table.insert(self.commands, { command = "shell", options = { cmd = cmd } })
       end,
@@ -244,6 +261,9 @@ function gpackage_builder_class:__init(btype, upstream_ftable, logger)
          table.insert(self.commands, { command = "set_env", options = { name = name, value = value } })
       end,
       buildend = function()
+         return upstream_ftable:get()
+      end,
+      build_end = function()
          return upstream_ftable:get()
       end,
    }
@@ -359,7 +379,7 @@ function gpackage_class:__init(logger)
 
    -- Dependencies
    self.dependencies = {
-      heirarchical = {},
+      heirarchical = util.ordered_table({}),
       dependson    = {},
       load         = {},
    }
@@ -404,9 +424,10 @@ function gpackage_class:__init(logger)
       description = self:string_setter("description"),
 
       -- Depend
-      dependson = self:dependson_setter(),
-      depends   = self:dependson_setter(),
-      depend    = self:dependson_setter(),
+      depends_on = self:dependson_setter(),
+      dependson  = self:dependson_setter(),
+      depends    = self:dependson_setter(),
+      depend     = self:dependson_setter(),
 
       -- Build
       autoconf    = self:autoconf_setter(),
@@ -441,7 +462,9 @@ function gpackage_class:dependson_setter()
       local depend_build_definition = build_definition_class:create({})
       depend_build_definition:initialize(gpack_name_version_tag)
 
-      if dependency == "heirarchical" then
+      if string.match(dependency, "heirarchical") then
+         local split = util.split(dependency, ":")
+         depend_build_definition.group = split[2]
          table.insert(self.dependencies.heirarchical, depend_build_definition)
       elseif dependency == "dependson" then
          table.insert(self.dependencies.dependson, depend_build_definition)
@@ -583,6 +606,10 @@ function gpackage_class:is_git()
    return self.urls[1].url:match("git$")
 end
 
+--function gpackage_class:get_heirarchical()
+--   return self.dependencies.heirarchical
+--end
+
 -- Check validity of gpackage
 function gpackage_class:is_valid()
    if util.isempty(self.name) then
@@ -638,6 +665,16 @@ function gpackage_locator_class:__init()
    self.ext    = ".lua"
 end
 
+-- 
+function gpackage_locator_class:name_list(name)
+   local list = {}
+
+   table.insert(list, name)
+   table.insert(list, path.join(string.sub(name, 1, 1), name))
+
+   return list
+end
+
 -- Try to find package locally
 function gpackage_locator_class:try_local()
    -- Try to locate gpk file
@@ -665,18 +702,31 @@ end
 
 -- Try to download package
 function gpackage_locator_class:try_download()
-   local source      = path.join(global_config.repo  , self.name .. self.ext)
-   local destination = path.join(self.config.gpk_path, self.name .. self.ext)
- 
-   logger:message(" Source      gpack : '" .. source      .. "'.")
-   logger:message(" Destination gpack : '" .. destination .. "'.")
+   logger:message("Trying to download gpack.")
+
+   -- Destination path
+   local gpk_path_download = util.split(self.config.gpk_path)[1]
+   local destination       = path.join(gpk_path_download , self.name .. self.ext)
+   logger:message(" Download destination : '" .. destination .. "'.")
    
+   -- Create downloader
    local dl = downloader:create()
    dl.has_luasocket_http = false
-   dl:download(source, destination)
    
-   if filesystem.exists(destination) then
-      return destination
+   local list = self:name_list(self.name .. self.ext)
+
+   for key, value in pairs(list) do
+      local source = path.join(global_config.repo, value)
+      logger:message(" Trying source destination : '" .. source .. "'.")
+      
+      local status = dl:download(source, destination)
+      
+      if status and filesystem.exists(destination) then
+         logger:message(" Source '" .. source .. "' SUCCESS!")
+         return destination
+      else
+         logger:message(" Source '" .. source .. "' failed...")
+      end
    end
 
    return nil
@@ -696,6 +746,7 @@ function gpackage_locator_class:locate(name, config)
    -- Try to find package locally
    local filepath = self:try_local()
    if filepath ~= nil then
+      logger:message("Package '" .. self.name .. "' found locally.")
       return filepath
    end
    
@@ -703,9 +754,12 @@ function gpackage_locator_class:locate(name, config)
    logger:message("Package not found locally, trying remotely.")
    
    filepath = self:try_download()
+   
    if filepath == nil then
       logger:alert("No Gpackage with name '" .. self.name .. "' was found.")
       assert(false)
+   else
+      logger:message("Package '" .. self.name .. "' found remotely and was downloaded.")
    end
    
    -- Return found path

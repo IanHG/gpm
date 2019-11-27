@@ -450,9 +450,15 @@ local function initialize(args)
    exception.try(function() 
       -- Create directories
       create_directory(global_config.base_build_directory)
-      create_directory(global_config.gpk_path)
-      create_directory(global_config.gps_path)
       create_directory(global_config.lmod_directory)
+      
+      for gpk_path in path.iterator(global_config.gpk_path) do
+         create_directory(gpk_path)
+      end
+
+      for gps_path in path.iterator(global_config.gps_path) do
+         create_directory(gps_path)
+      end
       
       for k,v in pairs(global_config.groups) do
          create_directory(path.join(global_config.stack_path, v))
