@@ -41,9 +41,6 @@ function downloader_class:__init()
    self.url_type    = nil -- "git", "http", or "local"
    self.destination = ""
    
-   -- Signature
-   self.url_signature = ""
-
    -- Some internal settings 
    --self.has_luasocket_http   = http and true or false
    self.has_luasocket_http   = false
@@ -57,11 +54,6 @@ function downloader_class:__cleanup_on_fail()
    if filesystem.exists(self.destination) then
       filesystem.remove(self.destination)
    end
-   
-   ---- Do something else here...
-   --if filesystem.exists(self.signature) then
-   --   filesystem.remove(self.signature)
-   --end
 end
 
 --- Create command for downloading using git
@@ -124,7 +116,7 @@ function downloader_class:download_external()
    end
    
    -- Execute command
-   local  status = util.execute_command(cmd, false)
+   local status = util.execute_command(cmd, false)
    
    return status
 end
@@ -157,7 +149,7 @@ function downloader_class:download(url, dest, force, hardfail)
       end
    end
    
-   -- 
+   -- Try to donwload the file.
    local status = nil
    if self.url_type == "git" then
       status = self:download_external()
@@ -166,6 +158,13 @@ function downloader_class:download(url, dest, force, hardfail)
          status = self:download_internal()
       else
          status = self:download_external()
+      end
+   end
+   
+   -- Remove file on fail. 'wget' will create an empty file on failure, so we remove it.
+   if (not status) then
+      if filesystem.exists(self.destination) then
+         filesystem.remove(self.destination)
       end
    end
    
