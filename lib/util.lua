@@ -137,13 +137,16 @@ local function execute_command(command, check, log)
       log[key] = value
    end
 
-   -- Do some pre-logging
+   -- Do command header 
+   logger:message("#=============================================================================")
    logger:message("EXECUTING COMMAND : " .. command)
 
    -- Run the command
+   logger:message("#-----------------------------------------------------------------------------")
    --bool, msg, status = execcmd.execcmd_shexec(command, logger.logs)
    --bool, msg, status = execcmd.execcmd_bashexec(command, logger.logs)
    bool, msg, status = execcmd.execcmd_bashexec(command, log)
+   logger:message("#-----------------------------------------------------------------------------")
    
    -- Do some post logging
    if (not check) or bool then
@@ -160,6 +163,7 @@ local function execute_command(command, check, log)
       logger:alert(status)
       error("Command '" .. command .. "' exited with errors.")
    end
+   logger:message("#=============================================================================")
    
    -- Return status
    return status

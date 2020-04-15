@@ -86,7 +86,7 @@ function main()
    end
 
    if not args.quiet then
-      logger:add_log("stdout", io.stdout)
+      logger:add_log("stdout", {filter = function(self, msg) return msg:gsub("^++(.*)", "") end, write = function(self, msg) io.stdout:write(msg) end})
    end
    
    exception.try(function()

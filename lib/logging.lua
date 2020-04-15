@@ -285,6 +285,9 @@ end
 
 function logger_class:write(msg)
    for k, v in pairs(self.logs) do
+      if v.filter ~= nil then
+         msg = v:filter(msg)
+      end
       v:write(msg)
    end
 end

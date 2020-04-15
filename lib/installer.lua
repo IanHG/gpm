@@ -17,6 +17,7 @@ local pathhandler = assert(require "lib.pathhandler")
 local symbtab     = assert(require "lib.symbtab")
 local env         = assert(require "lib.env")
 local version     = assert(require "lib.version")
+local signature   = assert(require "lib.signature")
 
 local M = {}
 
@@ -948,24 +949,40 @@ function installer_class:download(is_git)
       else
          local _, filename, extension = path.split_filename(value.url)
          source_path     = path.join(self.build.build_path, filename) 
-         if not util.isempty(extension) then
+         if not string.match(filename, extension) then
             source_path = source_path .. "." .. extension
          end
       end
 
       local status = self.downloader:download(value.url, source_path, self.options.force_download)
       
-      -- download signature file
-      if value.sig then
-         status = self.downloader:download(value.sig, self.build.signature_path, self.options.force_download)
-      end
-
-      -- check signature
-      -- not implemented
-
       if not status then
          logger:alert("Could not download package : '" .. value.url .. "'.")
          assert(false)
+      end
+      
+      -- download signature file
+      if value.sig then
+         logger:message("Checking file signature")
+         local _, filename, extension = path.split_filename(value.sig)
+         local sig_path = path.join(self.build.build_path, filename) 
+
+         status = self.downloader:download(value.sig, sig_path, self.options.force_download)
+         if not status then
+            logger:alert("Could not download file signature : '" .. value.sig .. "'.")
+            assert(false)
+         end
+
+         local sig_checker = signature.create()
+         local is_signed   = sig_checker:check_signature(source_path, sig_path)
+         
+         -- check signature
+         if (not is_signed) then
+            logger:alert("Could not verify source signature.")
+            assert(false)
+         end
+      else
+         logger:message("Not checking file signature")
       end
 
       table.insert(self.sources, {source_path = source_path, unpack_path = unpack_path})
