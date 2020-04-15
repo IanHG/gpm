@@ -47,6 +47,10 @@ end
 local function generate_ml_command(gpack, include_self)
    local ml_cmd = ". " .. global_config.stack_path .. "/bin/modules.sh --link-relative --force && "
    
+   for k, _ in util.ordered(gpack.dependencies.heirarchical) do
+      ml_cmd = ml_cmd .. "ml " .. k.name .. "/" .. k.version .. " && "
+   end
+   
    for k, v in pairs(gpack.dependencies.dependson) do
       print(v.name)
       print(v.version)
@@ -272,7 +276,7 @@ local function generate_prepend_path(gpack, install_path, prepend_path)
    end
 
    for key, value in pairs(gpack.lmod.autopaths) do
-      if path.is_relative(value) then
+      if path.is_rel_path(value) then
          value = path.join(install_path, value)
       end
       generate_prepend_path_auto(value)
