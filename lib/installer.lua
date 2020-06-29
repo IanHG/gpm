@@ -48,6 +48,10 @@ end
 local function generate_ml_command(gpack, include_self)
    local ml_cmd = ". " .. global_config.stack_path .. "/bin/modules.sh --link-relative --force && "
    
+   for k, _ in util.ordered(gpack.dependencies.heirarchical) do
+      ml_cmd = ml_cmd .. "ml " .. k.name .. "/" .. k.version .. " && "
+   end
+   
    for k, v in pairs(gpack.dependencies.dependson) do
       print(v.name)
       print(v.version)
@@ -273,7 +277,7 @@ local function generate_prepend_path(gpack, install_path, prepend_path)
    end
 
    for key, value in pairs(gpack.lmod.autopaths) do
-      if path.is_relative(value) then
+      if path.is_rel_path(value) then
          value = path.join(install_path, value)
       end
       generate_prepend_path_auto(value)
@@ -404,16 +408,27 @@ function builder_class:_locate_build(gpack, build_definition)
 
          local match_split = util.split(match_version, ".")
          local check_split = util.split(check_version, ".")
-         assert(#check_split >= #match_split)
-         for i = 1, #match_split do
-            if match(match_split[i], check_split[i], true) then
-               if match_split[i] ~= check_split[i] then
-                  return true
-               end
-            else
-               return false
-            end
-         end
+         --print("check")
+         --for k,v in pairs(check_split) do
+         --   print(k)
+         --   print(v)
+         --end
+         --print("match")
+         --for k,v in pairs(match_split) do
+         --   print(k)
+         --   print(v)
+         --end
+         --assert(#check_split >= #match_split)
+         --local n_min = math.min(#check_split, #match_split)
+         --for i = 1, n_min do
+         --   if match(match_split[i], check_split[i], true) then
+         --      if match_split[i] ~= check_split[i] then
+         --         return true
+         --      end
+         --   else
+         --      return false
+         --   end
+         --end
 
          return false
       end
@@ -576,12 +591,11 @@ function lmod_installer_class:write_modulefile()
    self.modulefile:write("]])\n")
    self.modulefile:write("\n")
    self.modulefile:write("-- Set family\n")
-   self.modulefile:write("local fam\n")
    local first = true
    for k, v in pairs(self.gpack.lmod.family) do
       self.modulefile:write("family(\"" .. v[1] .. "\")\n")
       if first then
-         self.modulefile:write("fam = \"" .. v[1] .. "\"\n")
+         self.modulefile:write("local fam = \"" .. v[1] .. "\"\n")
       end
       first = false
    end
