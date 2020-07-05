@@ -335,8 +335,11 @@ function builder_class:_generate_configure_exec_command(build, configargs)
    return configure_command
 end
 
-function builder_class:_generate_make_exec_command()
+function builder_class:_generate_make_exec_command(makeargs)
    local  make_command = self._ml_cmd .. "make -j" .. self.n_jobs
+   for k, v in pairs(makeargs) do
+      make_command = make_command .. " " .. v
+   end
    return make_command
 end
 
@@ -496,7 +499,7 @@ function builder_class:install(gpack, build_definition, build)
       elseif v.command == "configure" then
          table.insert(command_stack, self.creator:command("exec", { command = self:_generate_configure_exec_command(build, v.options.options) }))
       elseif v.command == "make" then
-         table.insert(command_stack, self.creator:command("exec", { command = self:_generate_make_exec_command() }))
+         table.insert(command_stack, self.creator:command("exec", { command = self:_generate_make_exec_command(v.options.options) }))
       elseif v.command == "makeinstall" then
          table.insert(command_stack, self.creator:command("exec", { command = self:_generate_exec_command("make install") }))
       elseif v.command == "shell" then
