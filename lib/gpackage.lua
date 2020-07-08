@@ -221,11 +221,11 @@ function gpackage_builder_class:__init(btype, upstream_ftable, logger)
       make = function()
          table.insert(self.commands, { command = "make" }) 
       end,
-      makeinstall = function() 
-         table.insert(self.commands, { command = "makeinstall" }) 
+      makeinstall = function(...) 
+         table.insert(self.commands, { command = "makeinstall", options = { options = pack(...) } }) 
       end,
-      make_install = function() 
-         table.insert(self.commands, { command = "makeinstall" }) 
+      make_install = function(...) 
+         table.insert(self.commands, { command = "makeinstall", options = { options = pack(...) } } ) 
       end,
       shell = function(cmd)
          table.insert(self.commands, { command = "shell", options = { cmd = cmd } })
