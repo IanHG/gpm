@@ -218,8 +218,8 @@ function gpackage_builder_class:__init(btype, upstream_ftable, logger)
          table.insert(self.commands, { command = "configure", options = { options = pack(...) } })
          self.configargs = pack(...)
       end,
-      make = function()
-         table.insert(self.commands, { command = "make" }) 
+      make = function(...)
+         table.insert(self.commands, { command = "make", options = {options = pack(...) } }) 
       end,
       makeinstall = function(...) 
          table.insert(self.commands, { command = "makeinstall", options = { options = pack(...) } }) 

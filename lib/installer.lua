@@ -504,7 +504,7 @@ function builder_class:install(gpack, build_definition, build)
       elseif v.command == "configure" then
          table.insert(command_stack, self.creator:command("exec", { command = self:_generate_configure_exec_command(build, v.options.options) }))
       elseif v.command == "make" then
-         table.insert(command_stack, self.creator:command("exec", { command = self:_generate_make_exec_command() }))
+         table.insert(command_stack, self.creator:command("exec", { command = self:_generate_make_exec_command(nil,       v.options.options) }))
       elseif v.command == "makeinstall" then
          table.insert(command_stack, self.creator:command("exec", { command = self:_generate_make_exec_command("install", v.options.options) }))
       elseif v.command == "shell" then
