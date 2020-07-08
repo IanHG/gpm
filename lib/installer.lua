@@ -571,7 +571,14 @@ function lmod_installer_class:file_build_path()
 end
 
 function lmod_installer_class:file_install_path()
-   return path.join(self.module_install_path, self.gpack.version .. ".lua")
+   local filename
+   if self.gpack.lmod.name then
+      filename = self.gpack.lmod.name
+   else
+      filename = self.gpack.version
+   end
+
+   return path.join(self.module_install_path, filename .. ".lua")
 end
 
 function lmod_installer_class:open_modulefile()

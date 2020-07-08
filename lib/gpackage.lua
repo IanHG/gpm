@@ -72,6 +72,25 @@ local function get_name(gpackage_path)
    return f:gsub("." .. e, "")
 end
 
+math.randomseed(os.clock()+os.time())
+
+local function generate_uid(template)
+   if util.isempty(template) then
+      template ='xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'
+   end
+
+   local random = math.random
+   
+   local function uuid()
+      return string.gsub(template, '[xy]', function (c)
+         local v = (c == 'x') and random(0, 0xf) or random(8, 0xb)
+         return string.format('%x', v)
+      end)
+   end
+
+   return uuid()
+end
+
 local build_definition_class = class.create_class()
 
 function build_definition_class:__init(args)
@@ -304,6 +323,7 @@ function gpackage_lmod_class:__init(upstream_ftable, logger)
    self.family = {}
    self.group  = "core"
    self.heirarchical = false
+   self.name   = nil
    
    -- Some env stuff
    self.setenv           = {}
@@ -323,6 +343,7 @@ function gpackage_lmod_class:__init(upstream_ftable, logger)
       family       = self:element_setter("family", 1),
       group        = self:string_setter ("group"),
       heirarchical = self:true_setter   ("heirarchical"),
+      name         = self:string_setter ("name"),
 
       -- Path
       setenv           = self:element_setter("setenv"          , 2),
@@ -587,6 +608,8 @@ function gpackage_class:load(gpackage_path, build_definition)
          end
       end
    end
+
+   self.symbol_table:add_symbol("uid", generate_uid("xxxxxx"))
 
    local function substitute_recursive(reference)
       for k, v in pairs(reference.ref) do
