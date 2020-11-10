@@ -251,11 +251,19 @@ function gpackage_builder_class:__init(btype, upstream_ftable, logger)
          table.insert(self.commands, { command = "chdir", options = { dir = dir } })
          return self.ftable
       end,
-      prepend_path = function(name, value)
-         table.insert(self.commands, { command = "prepend_env", options = { name = name, value = value } })
+      prepend_path = function(name, value, delimeter)
+         if(delimeter) then
+            table.insert(self.commands, { command = "prepend_env", options = { name = name, value = value, delimeter = delimeter } })
+         else
+            table.insert(self.commands, { command = "prepend_env", options = { name = name, value = value, delimeter = ":" } })
+         end
       end,
-      prepend_env = function(name, value)
-         table.insert(self.commands, { command = "prepend_env", options = { name = name, value = value } })
+      prepend_env = function(name, value, delimeter)
+         if(delimeter) then
+            table.insert(self.commands, { command = "prepend_env", options = { name = name, value = value, delimeter = delimeter } })
+         else
+            table.insert(self.commands, { command = "prepend_env", options = { name = name, value = value, delimeter = ":" } })
+         end
       end,
       set_env = function(name, value)
          table.insert(self.commands, { command = "set_env", options = { name = name, value = value } })
@@ -327,8 +335,8 @@ function gpackage_lmod_class:__init(upstream_ftable, logger)
       -- Path
       setenv           = self:element_setter("setenv"          , 2),
       setenv_abs       = self:element_setter("setenv_abs"      , 2),
-      prepend_path     = self:element_setter("prepend_path"    , 2),
-      prepend_path_abs = self:element_setter("prepend_path_abs", 2),
+      prepend_path     = self:element_setter("prepend_path"    , 3),
+      prepend_path_abs = self:element_setter("prepend_path_abs", 3),
       alias            = self:element_setter("alias"           , 2),
       noautopath       = self:false_setter("autopath"),
       autopath         = function(path) table.insert(self.autopaths, path) end,

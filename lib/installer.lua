@@ -286,7 +286,7 @@ local function generate_prepend_path(gpack, install_path, prepend_path)
    -- Add paths from package
    if gpack.lmod.prepend_path then
       for _, v in pairs(gpack.lmod.prepend_path) do
-         table.insert(prepend_path, { v[1], path.join(install_path, v[2])} )
+         table.insert(prepend_path, { v[1], path.join(install_path, v[2]), v[3]} )
       end
    end
    
@@ -649,7 +649,11 @@ function lmod_installer_class:write_modulefile()
          self.modulefile:write("if os.getenv(\"GPM_USE_LD_RUN_PATH\") == \"1\" then\n")
          tab = "   "
       end
-      self.modulefile:write(tab .. "prepend_path('" .. v[1] .. "', '" .. self.symbtab:substitute(v[2]) .. "')\n")
+      if(v[3]) then
+         self.modulefile:write(tab .. "prepend_path('" .. v[1] .. "', '" .. self.symbtab:substitute(v[2]) .. "', '" .. v[3] .. "')\n")
+      else
+         self.modulefile:write(tab .. "prepend_path('" .. v[1] .. "', '" .. self.symbtab:substitute(v[2]) .. "')\n")
+      end
       if v[1] == "LD_RUN_PATH" then
          self.modulefile:write("end\n")
       end
