@@ -144,8 +144,6 @@ local function mkdir(path, mode, recursively)
       -- If we are creating recursively, we recurse
       if recursively then
          base_path = string.gsub(_path.remove_dir_end(path), "/[^/]*$", "")
-         print("BASE PATH : " .. base_path)
-         print("     PATH : " .. path)
          if (not isempty(base_path)) and ( not (base_path == path)) and (not exists(base_path)) then
             local status, error_msg, error_code = mkdir(base_path, mode, recursively)
             if (not status) then

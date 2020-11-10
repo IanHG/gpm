@@ -712,12 +712,8 @@ local installer_class = class.create_class()
 
 function installer_class:__init()
    self.symbtab        = symbtab.create()
-   print("HERE 1 : ")
-   print(self.symbtab)
    self.lmod_installer = lmod_installer_class:create()
    self.lmod_installer.symbtab = symbtab.create(self.symbtab)
-   print("HERE 2 : ")
-   print(self.symbtab)
    self.pathhandler    = pathhandler.create()
    self.downloader     = downloader.create()
    self.executor       = commander.create_executor({}, logger)
@@ -844,9 +840,14 @@ function installer_class:finalize()
          end
       end
    end
-   
+
    -- Change directory back to where we started
    filesystem.chdir(global_config.current_directory)
+   
+   -- Print name and version of the package we just installed
+   if(self.gpack) then
+      logger:message("Installed " .. self.gpack.nameversion);
+   end
 end
 
 -- Create unpacking command
