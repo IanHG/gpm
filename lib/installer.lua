@@ -335,10 +335,15 @@ function builder_class:_generate_configure_exec_command(build, configargs)
    return configure_command
 end
 
-function builder_class:_generate_make_exec_command(makeargs)
+function builder_class:_generate_make_exec_command(make_type, args)
    local  make_command = self._ml_cmd .. "make -j" .. self.n_jobs
-   for k, v in pairs(makeargs) do
-      make_command = make_command .. " " .. v
+   if args then
+      for key, value in pairs(args) do
+         make_command = make_command .. " " .. value
+      end
+   end
+   if make_type then
+      make_command = make_command .. " " .. make_type
    end
    return make_command
 end
@@ -499,9 +504,9 @@ function builder_class:install(gpack, build_definition, build)
       elseif v.command == "configure" then
          table.insert(command_stack, self.creator:command("exec", { command = self:_generate_configure_exec_command(build, v.options.options) }))
       elseif v.command == "make" then
-         table.insert(command_stack, self.creator:command("exec", { command = self:_generate_make_exec_command(v.options.options) }))
+         table.insert(command_stack, self.creator:command("exec", { command = self:_generate_make_exec_command(nil,       v.options.options) }))
       elseif v.command == "makeinstall" then
-         table.insert(command_stack, self.creator:command("exec", { command = self:_generate_exec_command("make install") }))
+         table.insert(command_stack, self.creator:command("exec", { command = self:_generate_make_exec_command("install", v.options.options) }))
       elseif v.command == "shell" then
          table.insert(command_stack, self.creator:command("exec", { command = self:_generate_exec_command(v.options.cmd) }))
       elseif v.command == "chdir" then
@@ -566,7 +571,14 @@ function lmod_installer_class:file_build_path()
 end
 
 function lmod_installer_class:file_install_path()
-   return path.join(self.module_install_path, self.gpack.version .. ".lua")
+   local filename
+   if self.gpack.lmod.name then
+      filename = self.gpack.lmod.name
+   else
+      filename = self.gpack.version
+   end
+
+   return path.join(self.module_install_path, filename .. ".lua")
 end
 
 function lmod_installer_class:open_modulefile()
