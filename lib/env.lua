@@ -14,10 +14,14 @@ end
 setup_posix_binds()
 
 -- Functions
-local function prepend_env(name, value)
+local function prepend_env(name, value, delimeter)
    local path = posix_getenv(name)
    if path then
-      path = value .. ":" .. path
+      if delimeter then
+         path = value .. delimeter .. path
+      else
+         path = value .. ":" .. path
+      end
    else
       path = value
    end

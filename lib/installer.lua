@@ -745,7 +745,7 @@ function installer_class:__init()
       output.output = {}
    end)
    self.creator:add("prepend_env", function(options, input, output)
-      local status = env.prepend_env(options.name, options.value)
+      local status = env.prepend_env(options.name, options.value, options.delimeter)
       output.status = status
       output.output = {}
    end)
