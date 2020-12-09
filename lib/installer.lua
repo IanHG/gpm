@@ -937,8 +937,12 @@ function installer_class:unpack()
 
    -- Check what to unpack
    for key, value in pairs(self.sources) do
-      if not lfs.attributes(value.unpack_path, 'mode') then
-         self.sources[key].mark_for_unpack = true
+      if value.unpack_path then
+         if not lfs.attributes(value.unpack_path, 'mode') then
+            self.sources[key].mark_for_unpack = true
+         else
+            self.sources[key].mark_for_unpack = false
+         end
       else
          self.sources[key].mark_for_unpack = false
       end
@@ -969,7 +973,11 @@ function installer_class:download(is_git)
    for key, value in pairs(self.gpack.urls) do
       local unpack_path = nil
       if value.unpack then
-         unpack_path = value.unpack
+         if (not is_git) and (value.unpack == "do_not_unpack") then
+            unpack_path = nil
+         else
+            unpack_path = value.unpack
+         end
       else
          unpack_path = self.build.unpack_path
       end
