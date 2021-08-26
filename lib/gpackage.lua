@@ -181,13 +181,17 @@ function gpackage_creator_class:string_setter(...)
    end
 end
 
-function gpackage_creator_class:element_setter(var, num)
+function gpackage_creator_class:element_setter(var, num_min, num_max)
    assert(type(var) == "string")
+
+   if not num_max then
+      num_max = num_min
+   end
 
    return function(...)
       local t_inner = pack(...)
       
-      assert(#t_inner == num)
+      assert((#t_inner >= num_min) and (#t_inner <= num_max))
 
       table.insert(self[var], t_inner)
    end
@@ -356,8 +360,8 @@ function gpackage_lmod_class:__init(upstream_ftable, logger)
       -- Path
       setenv           = self:element_setter("setenv"          , 2),
       setenv_abs       = self:element_setter("setenv_abs"      , 2),
-      prepend_path     = self:element_setter("prepend_path"    , 3),
-      prepend_path_abs = self:element_setter("prepend_path_abs", 3),
+      prepend_path     = self:element_setter("prepend_path"    , 2, 3),
+      prepend_path_abs = self:element_setter("prepend_path_abs", 2, 3),
       alias            = self:element_setter("alias"           , 2),
       noautopath       = self:false_setter("autopath"),
       autopath         = function(path) table.insert(self.autopaths, path) end,

@@ -874,6 +874,11 @@ function installer_class:unpack()
       local is_zip    = string.match(source_path, "zip")
       local is_rpm    = string.match(source_path, "rpm")
       
+      -- If its not something we know how to unpack (e.g. a .sh script), we just return 
+      if not (is_tar_gz or is_tar_bz or is_tar_xz or is_tar or is_zip or is_rpm) then
+         return
+      end
+      
       -- Find longest common prefix, if not empty will strip 1 directory
       local tar_line_strip = nil
       local n_strip = 0
