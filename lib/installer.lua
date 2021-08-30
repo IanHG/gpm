@@ -249,7 +249,9 @@ local function generate_prepend_path(gpack, install_path, prepend_path)
    end
 
    local function generate_prepend_path_auto(install_path)
+      logger:message(" AutoPath for path : '" .. install_path .. "'.")
       for directory in lfs.dir(install_path) do
+
          if directory:match("^bin$") then
             table.insert(prepend_path, {"PATH", path.join(install_path, "bin")})
          elseif directory:match("^include$") then
@@ -295,7 +297,7 @@ local function generate_prepend_path(gpack, install_path, prepend_path)
          table.insert(prepend_path, v)
       end
    end
-   
+
    -- At last we return the constructed prepend_path table
    return prepend_path
 end
@@ -956,9 +958,15 @@ function installer_class:unpack()
    -- Do unpacking
    for key, value in pairs(self.sources) do
       if value.mark_for_unpack then
+         logger:message("Creating path '" .. value.unpack_path .. "'")
          filesystem.mkdir(value.unpack_path, {}, true)
          unpack_source_file(value.source_path, value.unpack_path)
       end
+   end
+
+   -- Check that we created at least self.build.unpack_path
+   if not lfs.attributes(self.build.unpack_path, 'mode') then
+      filesystem.mkdir(self.build.unpack_path, {}, true)
    end
 end
 
@@ -971,12 +979,13 @@ function installer_class:create_files()
 end
 
 -- Download source code
-function installer_class:download(is_git)
+function installer_class:download()
    self.sources = {}
    
    local count = 1
    for key, value in pairs(self.gpack.urls) do
       local unpack_path = nil
+      local is_git      = value.url:match("git$")
       if value.unpack then
          if (not is_git) and (value.unpack == "do_not_unpack") then
             unpack_path = nil
@@ -1065,12 +1074,13 @@ function installer_class:install(gpack, build_definition)
    
    self:create_files()
    
-   if self.gpack:is_git() then
-      self:download(true)
-   else
-      self:download(false)
+   --if self.gpack:is_git() then
+   --   self:download(true)
+   --else
+      --self:download(false)
+      self:download()
       self:unpack()
-   end
+   --end
 
    self:build_gpack()
    

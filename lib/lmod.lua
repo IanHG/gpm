@@ -38,10 +38,11 @@ local function update_lmod_cache()
    -- Get some lmod directories
    local cache_dir, cache_timestamp  = generate_cache_paths()
    local modulepath_root, modulepath = generate_module_paths()
+   local lmod_version = global_config.lmod.version;
    
    -- Create command
    local cmd = ". " .. global_config.stack_path .. "/bin/modules.sh --link-relative --force && "
-   cmd       = cmd .. "ml lmod && update_lmod_system_cache_files -d " .. cache_dir .. " -t " .. cache_timestamp .. " " .. modulepath
+   cmd       = cmd .. "ml lmod/" .. lmod_version .. " && update_lmod_system_cache_files -d " .. cache_dir .. " -t " .. cache_timestamp .. " " .. modulepath
    
    -- Run command
    local status = util.execute_command(cmd)

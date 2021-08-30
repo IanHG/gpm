@@ -358,13 +358,13 @@ function gpackage_lmod_class:__init(upstream_ftable, logger)
       name         = self:string_setter ("name"),
 
       -- Path
-      setenv           = self:element_setter("setenv"          , 2),
-      setenv_abs       = self:element_setter("setenv_abs"      , 2),
-      prepend_path     = self:element_setter("prepend_path"    , 2, 3),
-      prepend_path_abs = self:element_setter("prepend_path_abs", 2, 3),
-      alias            = self:element_setter("alias"           , 2),
-      noautopath       = self:false_setter("autopath"),
-      autopath         = function(path) table.insert(self.autopaths, path) end,
+      setenv             = self:element_setter("setenv"            , 2),
+      setenv_abs         = self:element_setter("setenv_abs"        , 2),
+      prepend_path       = self:element_setter("prepend_path"      , 2, 3),
+      prepend_path_abs   = self:element_setter("prepend_path_abs"  , 2, 3),
+      alias              = self:element_setter("alias"             , 2),
+      noautopath         = self:false_setter("autopath"),
+      autopath           = function(path) table.insert(self.autopaths, path) end,
 
       lmodend = function()
          return upstream_ftable:get()
@@ -658,7 +658,7 @@ function gpackage_class:is_valid()
 
    if count == 0 then
       logger:alert("No url given in Gpack.")
-      assert(false)
+      --assert(false)
    end
 end
 

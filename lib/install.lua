@@ -314,7 +314,9 @@ local function build_lmod_modulefile(package)
    lmod_file:write("-- -*- lua -*-\n")
    lmod_file:write("help(\n")
    lmod_file:write("[[\n")
-   lmod_file:write(util.substitute_placeholders(package.definition, package.lmod.help) .. "\n")
+   if package.lmod.help then
+      lmod_file:write(util.substitute_placeholders(package.definition, package.lmod.help) .. "\n")
+   end
    lmod_file:write("]])\n")
    lmod_file:write("------------------------------------------------------------------------\n")
    lmod_file:write("-- This file was generated automagically by Grendel Package Manager (GPM)\n")
