@@ -142,19 +142,24 @@ end
 --- Set build path for package
 -- 
 -- @param package   The package to set build directory for.
-local function set_build_path(package)
+local function set_build_path(package, args_buildpath)
    -- Create build path
    local build_directory = "build-"
-   for key,prereq in util.ordered(package.prerequisite) do
-      build_directory = build_directory .. string.gsub(prereq, "/", "-") .. "-"
+   
+   if args_buildpath then
+      build_directory = build_directory .. args_buildpath .. "-" .. package.definition.pkgversion
+   else
+      for key,prereq in util.ordered(package.prerequisite) do
+         build_directory = build_directory .. string.gsub(prereq, "/", "-") .. "-"
+      end
+      for key,prereq in util.ordered(package.dependson) do
+         build_directory = build_directory .. string.gsub(prereq, "/", "-") .. "-"
+      end
+      for key,prereq in util.ordered(package.moduleload) do
+         build_directory = build_directory .. string.gsub(prereq, "/", "-") .. "-"
+      end
+      build_directory = build_directory .. package.definition.pkg
    end
-   for key,prereq in util.ordered(package.dependson) do
-      build_directory = build_directory .. string.gsub(prereq, "/", "-") .. "-"
-   end
-   for key,prereq in util.ordered(package.moduleload) do
-      build_directory = build_directory .. string.gsub(prereq, "/", "-") .. "-"
-   end
-   build_directory = build_directory .. package.definition.pkg
 
    -- Set build path in package table
    package.build_directory = path.join(global_config.base_build_directory, build_directory)
@@ -285,9 +290,9 @@ local function bootstrap(args)
          end
       end
    end
-   
+
    -- Setup build, install and modulefile directories
-   set_build_path  (package)
+   set_build_path  (package, args.buildpath)
    set_install_path(package)
    
    -- Lmod stuff

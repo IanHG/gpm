@@ -259,7 +259,6 @@ local function generate_prepend_path(gpack, install_path, prepend_path)
          elseif directory:match("^lib64$") then
             generate_prepend_path_lib("lib64", prepend_path, install_path)
          elseif directory:match("^lib$") then
-            print(directory)
             generate_prepend_path_lib("lib", prepend_path, install_path)
          elseif directory:match("^share$") then
             generate_prepend_path_share("share", prepend_path, install_path)

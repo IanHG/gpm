@@ -64,7 +64,9 @@ end
 --- Create command for downloading with http
 function downloader_class:http_download_command()
    if self.external_http_method == "wget" then
-      return "wget --progress=dot -O " .. self.destination .. " " .. self.url
+      local cmd = "wget --progress=dot " .. "--no-check-certificate "
+      cmd = cmd .. "-O " .. self.destination .. " " .. self.url 
+      return cmd
    elseif self.external_http_method == "curl" then
       -- not implemented yet
       print("curl download not implemented yet")

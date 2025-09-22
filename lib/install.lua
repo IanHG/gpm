@@ -202,12 +202,12 @@ end
 --
 -- @param{String}  include             "include".
 -- @param{Table}   prepend_path        Will be appended with new paths for lmod to prepend.
--- @param{String}  install_directory   The directory.
-local function generate_prepend_path_include(include, prepend_path, install_directory)
+-- @param{String}  install_path   The directory.
+local function generate_prepend_path_include(include, prepend_path, install_path)
    -- Insert in paths
-   table.insert(prepend_path, {"INCLUDE", include})
-   table.insert(prepend_path, {"C_INCLUDE_PATH", include})
-   table.insert(prepend_path, {"CPLUS_INCLUDE_PATH", include})
+   table.insert(prepend_path, {"INCLUDE"           , path.join(install_path, include)})
+   table.insert(prepend_path, {"C_INCLUDE_PATH"    , path.join(install_path, include)})
+   table.insert(prepend_path, {"CPLUS_INCLUDE_PATH", path.join(install_path, include)})
 end
 
 --- Helper function to generate prepend_path for lmod.
@@ -219,17 +219,17 @@ end
 --
 -- @param{String}  lib                 "lib" or "lib64".
 -- @param{Table}   prepend_path        Will be appended with new paths for lmod to prepend.
--- @param{String}  install_directory   The directory.
-local function generate_prepend_path_lib(lib, prepend_path, install_directory)
+-- @param{String}  install_path   The directory.
+local function generate_prepend_path_lib(lib, prepend_path, install_path)
    -- Insert in paths
-   table.insert(prepend_path, {"LIBRARY_PATH", lib})
-   table.insert(prepend_path, {"LD_LIBRARY_PATH", lib})
-   table.insert(prepend_path, {"LD_RUN_PATH", lib})
+   table.insert(prepend_path, {"LIBRARY_PATH"   , path.join(install_path, lib)})
+   table.insert(prepend_path, {"LD_LIBRARY_PATH", path.join(install_path, lib)})
+   table.insert(prepend_path, {"LD_RUN_PATH"    , path.join(install_path, lib)})
    
    -- Check for pgkconfig
-   for file in lfs.dir(path.join(install_directory, lib)) do
+   for file in lfs.dir(path.join(install_path, lib)) do
       if file:match("pkgconfig") then
-         table.insert(prepend_path, {"PKG_CONFIG_PATH", path.join(lib, "pkgconfig")})
+         table.insert(prepend_path, {"PKG_CONFIG_PATH", path.join(install_path, path.join(lib, "pkgconfig"))})
       end
    end
 end
@@ -242,13 +242,15 @@ end
 --
 -- @param{String}  share               Always "share" (for now).
 -- @param{Table}   prepend_path        Will be appended with new paths for lmod to prepend.
--- @param{String}  install_directory   The directory.
-local function generate_prepend_path_share(share, prepend_path, install_directory)
-   for f in lfs.dir(path.join(install_directory, "share")) do
+-- @param{String}  install_path   The directory.
+local function generate_prepend_path_share(share, prepend_path, install_path)
+   for f in lfs.dir(path.join(install_path, "share")) do
       if f:match("info") then
-         table.insert(prepend_path, {"INFOPATH", "share/info"})
+         table.insert(prepend_path, {"INFOPATH", path.join(install_path, "share/info")})
       elseif f:match("man") then
-         table.insert(prepend_path, {"MANPATH", "share/man"})
+         table.insert(prepend_path, {"MANPATH" , path.join(install_path, "share/man" )})
+      elseif f:match("pkgconfig") then
+         table.insert(prepend_path, {"PKG_CONFIG_PATH" , path.join(install_path, "share/pkgconfig" )})
       end
    end
 end
@@ -261,40 +263,60 @@ end
 -- @param{Table}  package  The package we are installing.
 local function generate_prepend_path(package)
    -- If .gpk provides one we just use that
-   if package.lmod.prepend_path then
-      if global_config.debug then
-         logger:debug("Taking prepend_path from .gpk file ( no auto-generation ).", nil, {io.stdout})
+   if package.lmod then
+      if package.lmod.prepend_path then
+         if global_config.debug then
+            logger:debug("Taking prepend_path from .gpk file ( no auto-generation ).", nil, {io.stdout})
+         end
+         return package.lmod.prepend_path
       end
-      return package.lmod.prepend_path
+   end
+
+   prepend_path = {}
+
+   local function generate_prepend_path_auto(install_path)
+      logger:message(" AutoPath for path : '" .. install_path .. "'.")
+      for directory in lfs.dir(install_path) do
+         if directory:match("^bin$") then
+            table.insert(prepend_path, {"PATH", path.join(install_path, "bin")})
+         elseif directory:match("^include$") then
+            generate_prepend_path_include("include", prepend_path, install_path)
+         elseif directory:match("^lib64$") then
+            generate_prepend_path_lib("lib64", prepend_path, install_path)
+         elseif directory:match("^lib$") then
+            generate_prepend_path_lib("lib", prepend_path, install_path)
+         elseif directory:match("^share$") then
+            generate_prepend_path_share("share", prepend_path, install_path)
+         elseif directory:match("^libexec$") then
+            -- do nothing
+         elseif directory:match("^etc$") then
+            -- do nothing
+         elseif directory:match("^var$") then
+            -- do nothing
+         end
+      end
    end
 
    -- Else we try to generate one auto-magically
-   prepend_path = {}
-   install_directory = package.definition.pkginstall
-   for directory in lfs.dir(install_directory) do
-      if directory:match("bin") then
-         table.insert(prepend_path, {"PATH", "bin"})
-      elseif directory:match("include") then
-         generate_prepend_path_include("include", prepend_path, install_directory)
-      elseif directory:match("lib64") then
-         generate_prepend_path_lib("lib64", prepend_path, install_directory)
-      elseif directory:match("lib$") then
-         generate_prepend_path_lib("lib", prepend_path, install_directory)
-      elseif directory:match("share") then
-         generate_prepend_path_share("share", prepend_path, install_directory)
-      elseif directory:match("libexec") then
-         -- do nothing
-      elseif directory:match("etc") then
-         -- do nothing
-      elseif directory:match("var") then
-         -- do nothing
+   if package.lmod.autopaths then
+      for _, autodir in pairs(package.lmod.autopaths) do
+         generate_prepend_path_auto(autodir)
       end
    end
+
+   generate_prepend_path_auto(package.definition.pkginstall)
 
    -- Add any additions from .gpk
    if package.lmod.prepend_path_add then
       for _,v in pairs(package.lmod.prepend_path_add) do 
          table.insert(prepend_path, v)
+      end
+   end
+      
+   for _,path in pairs(prepend_path) do
+      for k, v in pairs(path) do
+         print(k)
+         print(v)
       end
    end
    
@@ -400,10 +422,18 @@ local function build_lmod_modulefile(package)
       dir = util.substitute_placeholders(package.definition, value[2])
       if value[1] == "LD_RUN_PATH" then
          lmod_file:write("if os.getenv(\"GPM_USE_LD_RUN_PATH\") == \"1\" then\n")
-         lmod_file:write("   prepend_path('" .. value[1] .. "', pathJoin(installDir, '" .. dir .. "'))\n")
+         if path.is_abs_path(dir) then
+            lmod_file:write("   prepend_path('" .. value[1] .. "', '" .. dir .. "')\n")
+         else
+            lmod_file:write("   prepend_path('" .. value[1] .. "', pathJoin(installDir '" .. dir .. "'))\n")
+         end
          lmod_file:write("end\n")
       else
-         lmod_file:write("prepend_path('" .. value[1] .. "', pathJoin(installDir, '" .. dir .. "'))\n")
+         if path.is_abs_path(dir) then
+            lmod_file:write("prepend_path('" .. value[1] .. "', '" .. dir .. "')\n")
+         else
+            lmod_file:write("prepend_path('" .. value[1] .. "', pathJoin(installDir, '" .. dir .. "'))\n")
+         end
       end
    end
 
